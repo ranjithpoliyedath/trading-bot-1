@@ -32,7 +32,21 @@ FEATURE_COLUMNS = [
     "price_change_5d",
     "high_low_ratio",
     "close_to_vwap",
+    # Sentiment features — added by sentiment pipeline
+    "news_sentiment_mean",
+    "news_sentiment_std",
+    "news_count",
+    "reddit_sentiment_mean",
+    "reddit_sentiment_std",
+    "reddit_score_sum",
+    "combined_sentiment",
+    "sentiment_momentum",
+    "sentiment_change",
+    "sentiment_accel",
 ]
+
+# Core technical columns only — used for dropna (sentiment cols may be 0 legitimately)
+TECHNICAL_COLUMNS = FEATURE_COLUMNS[:17]
 
 
 def add_all_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -63,11 +77,21 @@ def add_all_features(df: pd.DataFrame) -> pd.DataFrame:
     df = _add_ratio_features(df)
 
     before = len(df)
-    df.dropna(subset=FEATURE_COLUMNS, inplace=True)
+    df.dropna(subset=TECHNICAL_COLUMNS, inplace=True)
     dropped = before - len(df)
 
     if dropped:
         logger.debug("Dropped %d warm-up rows after feature engineering.", dropped)
+
+    # Fill sentiment columns with 0 if not yet collected
+    try:
+        from bot.sentiment.sentiment_features import SENTIMENT_COLUMNS, add_sentiment_momentum
+        for col in SENTIMENT_COLUMNS + ["sentiment_momentum", "sentiment_change", "sentiment_accel"]:
+            if col not in df.columns:
+                df[col] = 0.0
+        df = add_sentiment_momentum(df)
+    except Exception as exc:
+        logger.debug("Sentiment features skipped: %s", exc)
 
     logger.info("Feature engineering complete. %d rows, %d features.", len(df), len(FEATURE_COLUMNS))
     return df

@@ -31,10 +31,10 @@ logger = logging.getLogger(__name__)
 # ── Config ─────────────────────────────────────────────────────────────────────
 
 # Symbols to fetch — update this list as your strategy grows
-SYMBOLS = ["AAPL", "TSLA", "MSFT", "NVDA", "SPY"]
+
 
 # Days of history to pull (365 = 1 year of daily bars for training)
-LOOKBACK_DAYS = 365
+from bot.config import SYMBOLS, DATA_LOOKBACK_DAYS as LOOKBACK_DAYS
 
 
 # ── Pipeline ───────────────────────────────────────────────────────────────────

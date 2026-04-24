@@ -83,6 +83,7 @@ class DataFetcher:
             timeframe=timeframe,
             start=start,
             end=end,
+            feed='iex',
         )
 
         try:
@@ -91,16 +92,42 @@ class DataFetcher:
             logger.error("Failed to fetch bars from Alpaca: %s", exc, exc_info=True)
             raise
 
+        # Convert to DataFrame — handles both BarSet .df accessor and list-of-bars
+        try:
+            df_all = bars.df
+        except AttributeError:
+            # Older/different SDK version returns dict of lists
+            rows = []
+            for sym, bar_list in bars.items() if hasattr(bars, 'items') else []:
+                items = bar_list if isinstance(bar_list, list) else [bar_list]
+                for b in items:
+                    row = {"symbol": sym}
+                    if isinstance(b, dict):
+                        row.update(b)
+                    else:
+                        for f in ["open","high","low","close","volume","trade_count","vwap"]:
+                            row[f] = getattr(b, f, None)
+                        row["timestamp"] = getattr(b, "timestamp", None)
+                    rows.append(row)
+            if rows:
+                df_all = pd.DataFrame(rows)
+                df_all.set_index("timestamp", inplace=True)
+            else:
+                df_all = pd.DataFrame()
+
         result = {}
         for symbol in symbols:
             try:
-                df = bars[symbol].df.copy()
+                if "symbol" in df_all.columns:
+                    df = df_all[df_all["symbol"] == symbol].drop(columns=["symbol"]).copy()
+                else:
+                    df = df_all.loc[symbol].copy() if symbol in df_all.index.get_level_values(0) else pd.DataFrame()
                 df.index = pd.to_datetime(df.index)
                 df.sort_index(inplace=True)
                 result[symbol] = df
                 logger.info("Fetched %d bars for %s.", len(df), symbol)
-            except KeyError:
-                logger.warning("No data returned for symbol: %s", symbol)
+            except (KeyError, Exception) as exc:
+                logger.warning("No data for %s: %s", symbol, exc)
                 result[symbol] = pd.DataFrame()
 
         return result
