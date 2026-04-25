@@ -2,96 +2,90 @@
 bot/config.py
 --------------
 Central configuration for the trading bot.
-Edit this file to change symbols, lookback period, and other settings.
-All pipeline modules read from here — change once, applies everywhere.
+Edit this file to change universe size, lookback, and other settings.
 """
-
-# ── Symbols ────────────────────────────────────────────────────────────────────
-
-TECH_SYMBOLS = [
-    "AAPL",   # Apple
-    "MSFT",   # Microsoft
-    "NVDA",   # Nvidia
-    "TSLA",   # Tesla
-    "GOOGL",  # Alphabet
-    "META",   # Meta
-    "AMZN",   # Amazon
-]
-
-ETF_SYMBOLS = [
-    "SPY",    # S&P 500
-    "QQQ",    # Nasdaq 100
-    "IWM",    # Russell 2000
-    "DIA",    # Dow Jones
-    "VTI",    # Total US Market
-]
-
-FINANCE_SYMBOLS = [
-    # Uncomment to enable
-    # "JPM", "GS", "BAC", "V", "MA",
-]
-
-# Active symbols used by all pipelines
-SYMBOLS = TECH_SYMBOLS + ETF_SYMBOLS + FINANCE_SYMBOLS
-
-
-# ── Lookback periods ───────────────────────────────────────────────────────────
-
-# Days of OHLCV + technical feature history to fetch and store
-DATA_LOOKBACK_DAYS = 730          # 2 years
-
-# Days of news history to fetch from Alpaca News API
-NEWS_LOOKBACK_DAYS = 60           # 2 months (API limits older free-tier history)
-
-# StockTwits always returns latest 30 posts per symbol (API limitation)
-
-
-# ── Feature engineering ────────────────────────────────────────────────────────
-
-# Minimum confidence threshold for ML signals (0.0 - 1.0)
-SIGNAL_CONFIDENCE_THRESHOLD = 0.65
-
-# Sentiment rolling window for momentum features (trading days)
-SENTIMENT_MOMENTUM_WINDOW = 3
-
-
-# ── Data paths ─────────────────────────────────────────────────────────────────
 
 from pathlib import Path
 
-ROOT_DIR      = Path(__file__).parent.parent
-DATA_DIR      = ROOT_DIR / "data" / "processed"
-MODELS_DIR    = ROOT_DIR / "models" / "saved"
-BACKTEST_DIR  = ROOT_DIR / "dashboard" / "backtests"
-LOG_DIR       = ROOT_DIR / "logs"
 
-# Create directories if they don't exist
-for _dir in [DATA_DIR, MODELS_DIR, BACKTEST_DIR, LOG_DIR]:
+# ── Universe ──────────────────────────────────────────────────────────────────
+
+# How many top symbols to keep from the eligible universe
+# (sorted by 14-day avg volume — highest liquidity first)
+INITIAL_UNIVERSE_SIZE  = 100   # Phase 1 — fetch data for these now
+TARGET_UNIVERSE_SIZE   = 700   # Total target — remaining ~600 fetched on schedule
+
+
+# ── Lookback periods ──────────────────────────────────────────────────────────
+
+# Years of OHLCV history to fetch for each symbol
+DATA_LOOKBACK_YEARS = 6
+DATA_LOOKBACK_DAYS  = DATA_LOOKBACK_YEARS * 365
+
+# Days of news history to fetch from Alpaca News API
+NEWS_LOOKBACK_DAYS = 60
+
+
+# ── Feature engineering ───────────────────────────────────────────────────────
+
+SIGNAL_CONFIDENCE_THRESHOLD = 0.65
+SENTIMENT_MOMENTUM_WINDOW   = 3
+
+
+# ── Data paths ────────────────────────────────────────────────────────────────
+
+ROOT_DIR        = Path(__file__).parent.parent
+DATA_DIR        = ROOT_DIR / "data" / "processed"
+RAW_DIR         = ROOT_DIR / "data" / "raw"
+UNIVERSE_FILE   = ROOT_DIR / "data" / "universe.parquet"
+MODELS_DIR      = ROOT_DIR / "models" / "saved"
+BACKTEST_DIR    = ROOT_DIR / "dashboard" / "backtests"
+LOG_DIR         = ROOT_DIR / "logs"
+
+for _dir in [DATA_DIR, RAW_DIR, MODELS_DIR, BACKTEST_DIR, LOG_DIR]:
     _dir.mkdir(parents=True, exist_ok=True)
 
 
-# ── Logging ────────────────────────────────────────────────────────────────────
+# ── Logging ───────────────────────────────────────────────────────────────────
 
 LOG_LEVEL  = "INFO"
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 
 
-# ── Alpaca ─────────────────────────────────────────────────────────────────────
+# ── Alpaca ────────────────────────────────────────────────────────────────────
 
-# Timeframe for OHLCV bars ("1Day", "1Hour", "15Min")
 BAR_TIMEFRAME = "1Day"
 
-# Alpaca data feed — free tier must use iex, paid tier can use sip
+# Free tier must use 'iex'; paid tier can use 'sip' for full market coverage
 ALPACA_FEED = "iex"
 
+# Rate limiting — Alpaca free tier: 200 req/min
+ALPACA_BATCH_SIZE        = 100
+ALPACA_BATCH_DELAY_SECS  = 0.5
 
-# ── Risk management ────────────────────────────────────────────────────────────
 
-# Max % of portfolio to allocate per trade
-MAX_POSITION_PCT  = 0.10    # 10%
+# ── Risk management ───────────────────────────────────────────────────────────
 
-# Stop loss % below entry price
+MAX_POSITION_PCT  = 0.10    # 10% max per trade
 STOP_LOSS_PCT     = 0.05    # 5%
-
-# Take profit % above entry price
 TAKE_PROFIT_PCT   = 0.15    # 15%
+
+
+# ── Backwards compatibility ───────────────────────────────────────────────────
+# Existing code uses bot.config.SYMBOLS — provide it dynamically from universe
+
+def _load_symbols():
+    """Dynamically load symbols from universe file."""
+    try:
+        from bot.universe import get_top_n_by_volume
+        symbols = get_top_n_by_volume(n=INITIAL_UNIVERSE_SIZE, eligible_only=True)
+        if symbols:
+            return symbols
+    except Exception:
+        pass
+    # Fallback for first run when universe doesn't exist yet
+    return ["AAPL", "MSFT", "NVDA", "TSLA", "GOOGL", "META", "AMZN",
+            "SPY", "QQQ", "IWM", "DIA", "VTI"]
+
+
+SYMBOLS = _load_symbols()
