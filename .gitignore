@@ -5,3 +5,4 @@ models/saved/
 *.pyc
 data/processed/
 logs/
+dashboard/custom_models/
