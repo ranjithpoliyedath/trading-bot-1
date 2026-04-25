@@ -1,0 +1,11 @@
+alpaca-py
+pandas
+pyarrow
+numpy
+scikit-learn
+python-dotenv
+pytest
+flake8
+dash
+dash-bootstrap-components
+plotly
