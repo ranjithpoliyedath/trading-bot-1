@@ -201,10 +201,11 @@ def run_filtered_backtest(
         for idx, row in scored.iterrows():
             if row["trade_pl"] != 0:
                 sym_trades.append({
-                    "date":   str(idx.date()) if hasattr(idx, "date") else str(idx),
-                    "symbol": symbol,
-                    "pl":     round(float(row["trade_pl"]), 2),
-                    "win":    bool(row["trade_pl"] > 0),
+                    "date":        str(idx.date()) if hasattr(idx, "date") else str(idx),
+                    "symbol":      symbol,
+                    "pl":          round(float(row["trade_pl"]), 2),
+                    "win":         bool(row["trade_pl"] > 0),
+                    "exit_reason": str(row.get("exit_reason", "")),
                 })
         all_trades.extend(sym_trades)
 
@@ -281,36 +282,74 @@ def _rule_based_signals(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _simulate_trades(df: pd.DataFrame, initial_cash: float = 10_000.0) -> pd.DataFrame:
-    """Walk through signals and simulate buy/sell trades."""
+def _simulate_trades(
+    df:              pd.DataFrame,
+    initial_cash:    float = 10_000.0,
+    take_profit_pct: float = 0.15,
+    stop_loss_pct:   float = 0.07,
+    time_stop_days:  int   = 30,
+) -> pd.DataFrame:
+    """
+    Walk through signals and simulate buy / sell trades with proper exits.
+
+    Exit rules (whichever fires first wins):
+      1. Model sell signal
+      2. Take-profit:  price >= entry * (1 + take_profit_pct)
+      3. Stop-loss:    price <= entry * (1 - stop_loss_pct)
+      4. Time-stop:    bars_held >= time_stop_days
+
+    Each exit also tags the resulting trade with an `exit_reason` so the
+    trade log can show why we left the position.  Without these the
+    breakout models had no profit target and would ride a winner forever
+    while losers cut at the model's own stop — guaranteed negative
+    expectancy on small samples.
+    """
     df = df.copy()
     df["position"]    = 0.0
     df["cash"]        = initial_cash
     df["portfolio"]   = initial_cash
     df["trade_pl"]    = 0.0
+    df["exit_reason"] = ""
     df["in_trade"]    = False
 
-    position  = 0.0
-    cash      = initial_cash
+    position    = 0.0
+    cash        = initial_cash
     entry_price = 0.0
+    entry_idx   = None
 
     for i, (idx, row) in enumerate(df.iterrows()):
         price = row["close"]
         sig   = row["signal"]
 
+        # Try to enter
         if sig == "buy" and position == 0 and cash > price:
             shares      = int(cash * 0.95 / price)
             position    = shares
             cash       -= shares * price
             entry_price = price
+            entry_idx   = i
             df.at[idx, "in_trade"] = True
 
-        elif sig == "sell" and position > 0:
-            pl        = (price - entry_price) * position
-            cash     += position * price
-            df.at[idx, "trade_pl"] = pl
-            position  = 0
-            entry_price = 0.0
+        # Try to exit
+        elif position > 0:
+            pl_per_share = price - entry_price
+            ret_pct      = pl_per_share / entry_price if entry_price else 0.0
+            held_days    = i - (entry_idx or i)
+
+            exit_reason = ""
+            if   sig == "sell":                          exit_reason = "signal"
+            elif ret_pct >=  take_profit_pct:            exit_reason = "take_profit"
+            elif ret_pct <= -stop_loss_pct:              exit_reason = "stop_loss"
+            elif held_days >= time_stop_days:            exit_reason = "time_stop"
+
+            if exit_reason:
+                pl        = pl_per_share * position
+                cash     += position * price
+                df.at[idx, "trade_pl"]    = pl
+                df.at[idx, "exit_reason"] = exit_reason
+                position  = 0
+                entry_price = 0.0
+                entry_idx   = None
 
         df.at[idx, "position"]  = position
         df.at[idx, "cash"]      = cash
@@ -324,10 +363,11 @@ def _extract_trades(df: pd.DataFrame) -> list[dict]:
     for idx, row in df.iterrows():
         if row["trade_pl"] != 0:
             trades.append({
-                "date":     str(idx.date()) if hasattr(idx, "date") else str(idx),
-                "symbol":   "—",
-                "pl":       round(float(row["trade_pl"]), 2),
-                "win":      row["trade_pl"] > 0,
+                "date":        str(idx.date()) if hasattr(idx, "date") else str(idx),
+                "symbol":      "—",
+                "pl":          round(float(row["trade_pl"]), 2),
+                "win":         bool(row["trade_pl"] > 0),
+                "exit_reason": str(row.get("exit_reason", "")),
             })
     return trades
 
@@ -348,7 +388,7 @@ def _calc_monthly_returns(equity_curve: list) -> list[dict]:
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
     df = df.dropna(subset=["date"])
     df.set_index("date", inplace=True)
-    monthly = df["value"].resample("ME").last().pct_change().dropna()
+    monthly = df["value"].resample("ME").last().pct_change(fill_method=None).dropna()
     return [{"month": str(m)[:7], "return": round(v * 100, 2)} for m, v in monthly.items()]
 
 

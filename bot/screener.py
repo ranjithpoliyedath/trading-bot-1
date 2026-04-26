@@ -126,16 +126,37 @@ def _load_latest(symbol: str) -> Optional[pd.Series]:
 
 
 def _candidate_symbols(symbols: Optional[Iterable[str]] = None) -> list[str]:
+    """
+    Return the symbol scan list, ordered most-tradeable first.
+
+    Behaviour:
+      * If ``symbols`` is given explicitly, use that list verbatim.
+      * Otherwise read the eligible universe and sort by 14-day average
+        volume descending so the most liquid names get scanned first.
+      * Filter out symbols that don't have a processed features parquet
+        on disk — those would just `continue` in the scan loop and
+        silently shrink the effective universe size, which makes
+        ``max_symbols`` accidentally drop the names you actually want.
+      * Fall back to whatever has been processed on disk if the
+        universe parquet is unavailable.
+    """
     if symbols is not None:
         return [s.upper() for s in symbols]
+
+    on_disk = {
+        p.name.split("_")[0]
+        for p in Path(DATA_DIR).glob("*_features*.parquet")
+    }
+
     universe = load_universe(eligible_only=True)
     if universe.empty:
-        # Fall back to whatever has been processed on disk
-        return sorted({
-            p.name.split("_")[0]
-            for p in Path(DATA_DIR).glob("*_features*.parquet")
-        })
-    return universe["symbol"].tolist()
+        return sorted(on_disk)
+
+    df = universe.copy()
+    if "avg_volume_14d" in df.columns:
+        df = df.sort_values("avg_volume_14d", ascending=False)
+    ordered = df["symbol"].tolist()
+    return [s for s in ordered if s in on_disk] if on_disk else ordered
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
