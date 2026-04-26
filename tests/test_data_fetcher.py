@@ -20,9 +20,14 @@ def mock_fetcher():
     return fetcher
 
 
-def _make_bar_df(n: int = 10) -> pd.DataFrame:
-    """Helper: create a minimal OHLCV DataFrame."""
-    dates = pd.date_range("2024-01-01", periods=n, freq="D")
+def _make_bar_df(n: int = 10, symbol: str = "AAPL") -> pd.DataFrame:
+    """
+    Helper: create a multi-indexed OHLCV DataFrame matching the shape
+    Alpaca's BarSet.df returns (MultiIndex of (symbol, timestamp)).
+    """
+    dates = pd.date_range("2024-01-01", periods=n, freq="D", tz="UTC")
+    idx = pd.MultiIndex.from_product([[symbol], dates],
+                                     names=["symbol", "timestamp"])
     return pd.DataFrame(
         {
             "open":   [100.0 + i for i in range(n)],
@@ -32,15 +37,21 @@ def _make_bar_df(n: int = 10) -> pd.DataFrame:
             "volume": [1_000_000 + i * 1000 for i in range(n)],
             "vwap":   [101.5 + i for i in range(n)],
         },
-        index=dates,
+        index=idx,
     )
+
+
+def _mock_bars(df: pd.DataFrame):
+    """Wrap a DataFrame in a BarSet-shaped mock (exposes .df)."""
+    bars = MagicMock()
+    bars.df = df
+    return bars
 
 
 def test_fetch_bars_returns_dataframe(mock_fetcher):
     """fetch_bars should return a dict mapping symbol to DataFrame."""
-    fake_df = _make_bar_df()
-    mock_bars = {"AAPL": MagicMock(df=fake_df)}
-    mock_fetcher.client.get_stock_bars = MagicMock(return_value=mock_bars)
+    fake_df = _make_bar_df(10, "AAPL")
+    mock_fetcher.client.get_stock_bars = MagicMock(return_value=_mock_bars(fake_df))
 
     result = mock_fetcher.fetch_bars(symbols=["AAPL"])
 
@@ -51,7 +62,11 @@ def test_fetch_bars_returns_dataframe(mock_fetcher):
 
 def test_fetch_bars_missing_symbol_returns_empty(mock_fetcher):
     """fetch_bars should return an empty DataFrame for symbols with no data."""
-    mock_fetcher.client.get_stock_bars = MagicMock(return_value={})
+    empty = pd.DataFrame(
+        columns=["open", "high", "low", "close", "volume", "vwap"],
+        index=pd.MultiIndex.from_arrays([[], []], names=["symbol", "timestamp"]),
+    )
+    mock_fetcher.client.get_stock_bars = MagicMock(return_value=_mock_bars(empty))
 
     result = mock_fetcher.fetch_bars(symbols=["UNKNOWN"])
 
@@ -61,9 +76,8 @@ def test_fetch_bars_missing_symbol_returns_empty(mock_fetcher):
 
 def test_fetch_single_returns_dataframe(mock_fetcher):
     """fetch_single should return a single DataFrame for one symbol."""
-    fake_df = _make_bar_df(20)
-    mock_bars = {"TSLA": MagicMock(df=fake_df)}
-    mock_fetcher.client.get_stock_bars = MagicMock(return_value=mock_bars)
+    fake_df = _make_bar_df(20, "TSLA")
+    mock_fetcher.client.get_stock_bars = MagicMock(return_value=_mock_bars(fake_df))
 
     result = mock_fetcher.fetch_single("TSLA")
 

@@ -9,8 +9,16 @@ import pandas as pd
 import pytest
 from unittest.mock import patch, MagicMock
 
-from bot.universe                    import _apply_filters, build_universe
+from bot.universe                    import _apply_filters, build_universe, MIN_AVG_VOLUME, MIN_PRICE
 from bot.scrapers.sp_constituents    import _normalise_columns
+
+
+# Test fixtures key off the live thresholds so the suite stays green if
+# we re-tune MIN_AVG_VOLUME / MIN_PRICE in production.
+LOW_VOL  = MIN_AVG_VOLUME  // 2     # below threshold
+HIGH_VOL = MIN_AVG_VOLUME  * 100    # well above
+LOW_PRICE  = MIN_PRICE - 1.0        # penny
+HIGH_PRICE = MIN_PRICE * 36         # comfortably above
 
 
 # ── Filter tests ──────────────────────────────────────────────────────────────
@@ -20,8 +28,8 @@ class TestApplyFilters:
     def test_eligible_when_volume_and_price_pass(self):
         df = pd.DataFrame({
             "symbol":         ["AAPL"],
-            "avg_volume_14d": [50_000_000],
-            "current_price":  [180.0],
+            "avg_volume_14d": [HIGH_VOL],
+            "current_price":  [HIGH_PRICE],
         })
         result = _apply_filters(df)
         assert result["eligible"].iloc[0] == True
@@ -30,8 +38,8 @@ class TestApplyFilters:
     def test_ineligible_when_volume_below_threshold(self):
         df = pd.DataFrame({
             "symbol":         ["LOWVOL"],
-            "avg_volume_14d": [500_000],
-            "current_price":  [50.0],
+            "avg_volume_14d": [LOW_VOL],
+            "current_price":  [HIGH_PRICE],
         })
         result = _apply_filters(df)
         assert result["eligible"].iloc[0] == False
@@ -40,8 +48,8 @@ class TestApplyFilters:
     def test_ineligible_when_penny_stock(self):
         df = pd.DataFrame({
             "symbol":         ["PENNY"],
-            "avg_volume_14d": [10_000_000],
-            "current_price":  [2.50],
+            "avg_volume_14d": [HIGH_VOL],
+            "current_price":  [LOW_PRICE],
         })
         result = _apply_filters(df)
         assert result["eligible"].iloc[0] == False
@@ -61,8 +69,8 @@ class TestApplyFilters:
         # If both fail, volume reason should be set first
         df = pd.DataFrame({
             "symbol":         ["BOTH"],
-            "avg_volume_14d": [100_000],
-            "current_price":  [2.0],
+            "avg_volume_14d": [LOW_VOL],
+            "current_price":  [LOW_PRICE],
         })
         result = _apply_filters(df)
         assert result["eligible"].iloc[0] == False
@@ -70,9 +78,9 @@ class TestApplyFilters:
 
     def test_multiple_symbols(self):
         df = pd.DataFrame({
-            "symbol":         ["AAPL",      "PENNY",  "LOWVOL", "UNKNOWN"],
-            "avg_volume_14d": [50_000_000, 10_000_000, 500_000, None],
-            "current_price":  [180.0,      2.50,       50.0,    None],
+            "symbol":         ["AAPL",   "PENNY",    "LOWVOL", "UNKNOWN"],
+            "avg_volume_14d": [HIGH_VOL, HIGH_VOL,   LOW_VOL,  None],
+            "current_price":  [HIGH_PRICE, LOW_PRICE, HIGH_PRICE, None],
         })
         result = _apply_filters(df)
         assert result["eligible"].tolist() == [True, False, False, False]
@@ -120,9 +128,9 @@ class TestBuildUniverse:
             "index":        ["sp500", "sp600"],
         })
         mock_market.return_value = pd.DataFrame({
-            "symbol":         ["AAPL", "PENNY"],
-            "avg_volume_14d": [50_000_000, 100_000],
-            "current_price":  [180.0, 1.50],
+            "symbol":         ["AAPL",   "PENNY"],
+            "avg_volume_14d": [HIGH_VOL, HIGH_VOL],
+            "current_price":  [HIGH_PRICE, LOW_PRICE],
         })
 
         result = build_universe(save=False)

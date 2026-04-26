@@ -101,5 +101,11 @@ def add_sentiment_momentum(df: pd.DataFrame, window: int = 3) -> pd.DataFrame:
     df["sentiment_change"]   = df["combined_sentiment"].diff(1)
     df["sentiment_accel"]    = df["sentiment_change"].diff(1)
 
+    # The first few rows are NaN because rolling/diff need lookback.
+    # Treat "no prior data" as zero momentum so downstream models and
+    # the no-NaN invariant hold.
+    for col in ("sentiment_momentum", "sentiment_change", "sentiment_accel"):
+        df[col] = df[col].fillna(0.0)
+
     logger.debug("Added sentiment momentum features (window=%d).", window)
     return df

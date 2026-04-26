@@ -230,18 +230,23 @@ def _apply_filters(df: pd.DataFrame) -> pd.DataFrame:
     df["eligible"] = True
     df["reason"]   = ""
 
+    # Coerce to numeric upfront so .fillna on object dtype doesn't
+    # trigger the pandas Downcasting FutureWarning.
+    vol   = pd.to_numeric(df["avg_volume_14d"], errors="coerce")
+    price = pd.to_numeric(df["current_price"],  errors="coerce")
+
     # Filter 1: missing market data
-    mask_no_data = df["avg_volume_14d"].isna() | df["current_price"].isna()
+    mask_no_data = vol.isna() | price.isna()
     df.loc[mask_no_data, "eligible"] = False
     df.loc[mask_no_data, "reason"]   = "no market data"
 
     # Filter 2: volume below threshold
-    mask_low_vol = (df["avg_volume_14d"].fillna(0) < MIN_AVG_VOLUME) & ~mask_no_data
+    mask_low_vol = (vol.fillna(0) < MIN_AVG_VOLUME) & ~mask_no_data
     df.loc[mask_low_vol, "eligible"] = False
     df.loc[mask_low_vol, "reason"]   = f"volume below {MIN_AVG_VOLUME:,}"
 
     # Filter 3: penny stock
-    mask_penny = (df["current_price"].fillna(0) < MIN_PRICE) & ~mask_no_data & ~mask_low_vol
+    mask_penny = (price.fillna(0) < MIN_PRICE) & ~mask_no_data & ~mask_low_vol
     df.loc[mask_penny, "eligible"] = False
     df.loc[mask_penny, "reason"]   = f"price below ${MIN_PRICE}"
 
