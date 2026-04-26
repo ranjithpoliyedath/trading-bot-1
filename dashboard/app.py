@@ -8,7 +8,7 @@ Then open:  http://localhost:8050
 import dash
 from dash import dcc, html, Input, Output, State, callback_context
 import dash_bootstrap_components as dbc
-from dashboard.pages import overview, backtest as bt_page
+from dashboard.pages import overview, market_overview, backtest as bt_page
 from dashboard.components.global_controls import render_topbar
 
 app = dash.Dash(
@@ -41,7 +41,7 @@ app.layout = html.Div([
 def render_page(view, account, model, symbol):
     if view == "backtest":
         return bt_page.layout(account, model, symbol)
-    return overview.layout(account, model, symbol)
+    return market_overview.layout(account, model, symbol)
 
 
 @app.callback(

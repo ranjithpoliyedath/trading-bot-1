@@ -89,3 +89,8 @@ def _load_symbols():
 
 
 SYMBOLS = _load_symbols()
+
+# ── Index & Sector ETFs (always included in pipeline regardless of universe) ──
+INDEX_ETFS  = ["SPY", "QQQ", "DIA", "IWM", "VTI"]
+SECTOR_ETFS = ["XLK", "XLV", "XLF", "XLE", "XLY", "XLP", "XLI", "XLU", "XLB", "XLRE", "XLC"]
+
