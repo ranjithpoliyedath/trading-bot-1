@@ -65,9 +65,21 @@ class NewsFetcher:
                     limit=limit,
                     include_content=False,
                 )
-                news  = self.client.get_news(request)
+                response = self.client.get_news(request)
+                # Alpaca SDK returns a NewsSet whose `.data` dict is
+                # {"news": [News, ...]}.  Iterating the NewsSet yields
+                # ("news", [list]) tuples — not individual articles —
+                # which is what produced empty headlines previously.
+                items = []
+                if hasattr(response, "data") and isinstance(response.data, dict):
+                    items = response.data.get("news", []) or []
+                elif isinstance(response, dict):
+                    items = response.get("news", []) or []
+                else:
+                    items = list(response)
+
                 count = 0
-                for _, item in news:
+                for item in items:
                     if isinstance(item, dict):
                         headline     = item.get("headline") or item.get("title", "")
                         summary      = item.get("summary", "")

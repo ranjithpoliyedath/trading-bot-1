@@ -5,6 +5,7 @@ Runs a full backtest of an ML strategy on historical data.
 Returns a results dict with all metrics, equity curve, and trade log.
 Saves/loads results as JSON in dashboard/backtests/.
 """
+from __future__ import annotations
 
 import json
 import logging
@@ -121,14 +122,123 @@ def list_saved_backtests() -> list[dict]:
 
 
 def _load_features(symbol: str, period_days: int) -> pd.DataFrame:
-    path = DATA_DIR / f"{symbol.upper()}_features.parquet"
-    if not path.exists():
-        logger.warning("Features file not found: %s", path)
-        return pd.DataFrame()
-    df = pd.read_parquet(path)
-    df.sort_index(inplace=True)
-    cutoff = df.index.max() - pd.Timedelta(days=period_days)
-    return df[df.index >= cutoff].copy()
+    """Load features (sentiment-enriched if present) + breakout columns."""
+    from bot.patterns import add_breakout_features
+
+    for tag in ("features_with_sentiment", "features"):
+        path = DATA_DIR / f"{symbol.upper()}_{tag}.parquet"
+        if path.exists():
+            df = pd.read_parquet(path)
+            df.sort_index(inplace=True)
+            cutoff = df.index.max() - pd.Timedelta(days=period_days)
+            df = df[df.index >= cutoff].copy()
+            return add_breakout_features(df)
+    logger.warning("No features file for %s.", symbol)
+    return pd.DataFrame()
+
+
+# ── Multi-symbol / screener-aware backtest ───────────────────────────────────
+
+def run_filtered_backtest(
+    model_id:     str,
+    filters:      list[dict],          # [{"field": "rsi_14", "op": "<", "value": 30}, ...]
+    symbols:      list[str] | None = None,
+    period_days:  int = 365,
+    conf_threshold: float = 0.65,
+    max_symbols:  int = 50,
+) -> dict:
+    """
+    Run a backtest across many symbols, only entering on bars that
+    satisfy ``filters``.  This is what the NL query and screener
+    "Send to backtest" feed into.
+
+    Returns the same shape as ``run_backtest`` but aggregated.
+    """
+    from bot.screener import _candidate_symbols, OPS
+    from bot.models.registry import get_model
+
+    if symbols is None:
+        symbols = _candidate_symbols()
+    symbols = symbols[:max_symbols]
+
+    try:
+        model = get_model(model_id)
+    except Exception as exc:
+        logger.error("Cannot load model %r: %s", model_id, exc)
+        return _empty_results()
+
+    all_trades: list[dict] = []
+    metric_per_symbol: list[dict] = []
+    initial_cash = 10_000.0
+
+    for symbol in symbols:
+        df = _load_features(symbol, period_days)
+        if df.empty:
+            continue
+
+        scored = model.predict_batch(df.copy())
+        scored["signal"]     = scored.get("signal", "hold").fillna("hold")
+        scored["confidence"] = scored.get("confidence", 0.5).fillna(0.5)
+        scored.loc[scored["confidence"] < conf_threshold, "signal"] = "hold"
+
+        # Apply screener filters per-bar — only allow buys when all match
+        if filters:
+            mask = pd.Series(True, index=scored.index)
+            for f in filters:
+                fld = f["field"]; op = f["op"]; val = float(f["value"])
+                if fld not in scored.columns:
+                    mask &= False
+                    continue
+                col = pd.to_numeric(scored[fld], errors="coerce")
+                opfn = OPS.get(op)
+                if opfn is None:
+                    continue
+                mask &= opfn(col, val).fillna(False)
+            scored.loc[~mask & (scored["signal"] == "buy"), "signal"] = "hold"
+
+        scored = _simulate_trades(scored, initial_cash=initial_cash)
+        sym_trades = []
+        for idx, row in scored.iterrows():
+            if row["trade_pl"] != 0:
+                sym_trades.append({
+                    "date":   str(idx.date()) if hasattr(idx, "date") else str(idx),
+                    "symbol": symbol,
+                    "pl":     round(float(row["trade_pl"]), 2),
+                    "win":    bool(row["trade_pl"] > 0),
+                })
+        all_trades.extend(sym_trades)
+
+        if sym_trades:
+            metric_per_symbol.append({
+                "symbol":  symbol,
+                "trades":  len(sym_trades),
+                "pl":      round(sum(t["pl"] for t in sym_trades), 2),
+                "win_rate": round(
+                    sum(1 for t in sym_trades if t["win"]) / len(sym_trades) * 100, 1),
+            })
+
+    all_trades.sort(key=lambda t: t["date"])
+    equity_curve = _calc_equity_curve(all_trades)
+    monthly      = _calc_monthly_returns(equity_curve)
+    metrics      = _calc_metrics(all_trades, equity_curve)
+    metrics["symbols_traded"] = len(metric_per_symbol)
+
+    run_id = f"BT-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-multi-{period_days}d"
+
+    return {
+        "run_id":          run_id,
+        "model":           model_id,
+        "symbol":          f"{len(metric_per_symbol)} symbols",
+        "period_days":     period_days,
+        "conf_threshold":  conf_threshold,
+        "filters":         filters,
+        "metrics":         metrics,
+        "equity_curve":    equity_curve,
+        "monthly_returns": monthly,
+        "trades":          all_trades,
+        "per_symbol":      metric_per_symbol,
+        "run_at":          datetime.now().isoformat(),
+    }
 
 
 def _filter_indicators(df: pd.DataFrame, active: list) -> pd.DataFrame:
@@ -142,21 +252,15 @@ def _filter_indicators(df: pd.DataFrame, active: list) -> pd.DataFrame:
 
 
 def _generate_signals(df: pd.DataFrame, model_name: str, conf_threshold: float) -> pd.DataFrame:
-    """Load trained model and generate signals, or fall back to rule-based sim."""
-    import pickle
-    model_path = Path(__file__).parent.parent / "models" / "saved" / f"{model_name}.pkl"
-
-    if model_path.exists():
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
-        feature_cols = [c for c in df.columns if c not in ["open", "high", "low", "close", "volume", "vwap"]]
-        X = df[feature_cols].dropna()
-        proba = model.predict_proba(X)
-        classes = list(model.classes_)
-        df.loc[X.index, "signal"]     = model.predict(X)
-        df.loc[X.index, "confidence"] = proba.max(axis=1)
-    else:
-        logger.info("Model file not found — using rule-based simulation for backtest.")
+    """Use the model registry to produce signals; fall back to rule-based sim."""
+    try:
+        from bot.models.registry import get_model
+        model  = get_model(model_name)
+        scored = model.predict_batch(df.copy())
+        df["signal"]     = scored["signal"].fillna("hold")
+        df["confidence"] = scored["confidence"].fillna(0.5)
+    except Exception as exc:
+        logger.warning("Model %s failed (%s) — using rule fallback.", model_name, exc)
         df = _rule_based_signals(df)
 
     df["signal"]     = df.get("signal", "hold").fillna("hold")

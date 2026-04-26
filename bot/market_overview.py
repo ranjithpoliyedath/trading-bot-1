@@ -140,40 +140,29 @@ def _get_sentiment_heatmap(limit: int = 25) -> list[dict]:
     return rows
 
 
-def _get_recent_news(limit: int = 10) -> list[dict]:
-    """Return the most recent news headlines fetched by the sentiment pipeline."""
+def _get_recent_news(limit: int = 12) -> list[dict]:
+    """Return ranked, conflict-aware news (4★+ or vs-sector/vs-market flagged)."""
     try:
-        from bot.sentiment.news_fetcher import NewsFetcher
-        fetcher = NewsFetcher()
-        universe = load_universe(eligible_only=True)
-        symbols  = universe["symbol"].head(20).tolist() if not universe.empty else ["SPY"]
-        articles = fetcher.fetch(symbols=symbols, lookback_days=2, limit=5)
-        articles.sort(key=lambda a: a.get("published_at") or datetime.min, reverse=True)
-        return [
-            {
-                "symbol":       a["symbol"],
-                "headline":     a["headline"][:120],
-                "source":       a.get("source", ""),
-                "published_at": str(a.get("published_at", "")),
-                "url":          a.get("url", ""),
-            }
-            for a in articles[:limit]
-        ]
+        from bot.sentiment.news_ranker import get_top_news
+        return get_top_news(limit=limit, lookback_days=3,
+                            min_stars=4, include_conflicts=True)
     except Exception as exc:
-        logger.warning("News panel fetch failed: %s", exc)
+        logger.warning("News panel ranking failed: %s", exc)
         return []
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _load_features(symbol: str) -> pd.DataFrame:
-    path = DATA_DIR / f"{symbol}_features.parquet"
-    if not path.exists():
-        return pd.DataFrame()
-    try:
-        return pd.read_parquet(path)
-    except Exception:
-        return pd.DataFrame()
+    # Prefer the sentiment-enriched file when the pipeline has produced one.
+    for tag in ("features_with_sentiment", "features"):
+        path = DATA_DIR / f"{symbol}_{tag}.parquet"
+        if path.exists():
+            try:
+                return pd.read_parquet(path)
+            except Exception:
+                continue
+    return pd.DataFrame()
 
 
 def _latest_change(symbol: str) -> dict | None:

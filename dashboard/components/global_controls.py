@@ -8,11 +8,25 @@ All controls write to dcc.Store; pages read from store.
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-MODELS = [
-    {"label": "model_v1 — Random Forest", "value": "model_v1"},
-    {"label": "model_v2 — XGBoost",       "value": "model_v2"},
-    {"label": "model_v3 — LSTM",           "value": "model_v3"},
-]
+def _load_models():
+    """Pull options from the registry — built-in + saved custom models."""
+    try:
+        from bot.models.registry import list_models
+        opts = []
+        for m in list_models():
+            tag = "custom" if m.id.startswith("custom:") else "builtin"
+            opts.append({
+                "label": f"{m.name}  [{tag}]",
+                "value": m.id,
+            })
+        if opts:
+            return opts
+    except Exception:
+        pass
+    return [{"label": "rsi_macd_v1", "value": "rsi_macd_v1"}]
+
+
+MODELS = _load_models()
 
 SYMBOLS = [
     {"label": "AAPL", "value": "AAPL"},
@@ -58,7 +72,8 @@ def render_topbar():
 
             html.Div([
                 html.Span("Model", style={"fontSize": "11px", "color": "#888", "marginRight": "6px"}),
-                dcc.Dropdown(id="dd-model", options=MODELS, value="model_v1",
+                dcc.Dropdown(id="dd-model", options=MODELS,
+                             value=(MODELS[0]["value"] if MODELS else None),
                              clearable=False, style=DD_STYLE),
             ], style={"display": "flex", "alignItems": "center", "marginRight": "16px"}),
 
@@ -80,6 +95,8 @@ def render_topbar():
 
         html.Div([
             html.Button("Overview",  id="btn-overview",  style=NAV_ACTIVE),
+            html.Button("Screener",  id="btn-screener",  style=NAV_STYLE),
+            html.Button("Builder",   id="btn-builder",   style=NAV_STYLE),
             html.Button("Trades",    id="btn-trades",    style=NAV_STYLE),
             html.Button("Model",     id="btn-model-tab", style=NAV_STYLE),
             html.Button("Market",    id="btn-market",    style=NAV_STYLE),

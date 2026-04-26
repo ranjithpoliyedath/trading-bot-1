@@ -125,6 +125,10 @@ def run_sentiment_pipeline(
         df_sent.index = pd.to_datetime(df_sent.index).normalize()
 
         available = [c for c in SENTIMENT_FEATURE_COLUMNS if c in df_sent.columns]
+        # feature_engineer pre-seeds zero-valued sentiment columns on every
+        # row; drop them before joining so the real values from df_sent win.
+        overlap = [c for c in available if c in df_tech.columns]
+        df_tech = df_tech.drop(columns=overlap)
         df_merged = df_tech.join(df_sent[available], how="left")
         df_merged[available] = df_merged[available].fillna(0)
 

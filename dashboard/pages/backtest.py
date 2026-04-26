@@ -1,9 +1,11 @@
 """
 dashboard/pages/backtest.py
 ----------------------------
-Full backtest view: controls, run button, equity curve, monthly returns,
-metrics row, trade distribution, risk metrics, saved runs dropdown.
+Full backtest view: NL-query box, manual filter rows, controls, run
+button, equity curve, monthly returns, metrics row, trade distribution,
+risk metrics, saved runs dropdown.
 """
+from __future__ import annotations
 
 import plotly.graph_objects as go
 from dash import html, dcc, Input, Output, State, callback_context, callback
@@ -12,17 +14,31 @@ import dash_bootstrap_components as dbc
 from dashboard.backtest_engine import (
     run_backtest, save_backtest, load_backtest, list_saved_backtests
 )
+from bot.screener import SCREENER_FIELDS
 
 CARD  = {"background": "white", "borderRadius": "12px", "border": "1px solid #eee", "padding": "14px"}
 METRIC = {"background": "#F8F8F7", "borderRadius": "8px", "padding": "10px 12px"}
 
 INDICATORS = ["RSI", "MACD", "EMA cross", "Bollinger", "ATR", "Volume ratio", "VWAP"]
-MODELS     = [
-    {"label": "model_v1 — Random Forest", "value": "model_v1"},
-    {"label": "model_v2 — XGBoost",       "value": "model_v2"},
-    {"label": "model_v3 — LSTM",           "value": "model_v3"},
+
+
+def _model_options():
+    """Pull live options from the registry (built-in + custom)."""
+    try:
+        from bot.models.registry import list_models
+        return [{"label": f"{m.name} [{m.type}]", "value": m.id}
+                for m in list_models()]
+    except Exception:
+        return [{"label": "rsi_macd_v1", "value": "rsi_macd_v1"}]
+
+
+MODELS  = _model_options()
+SYMBOLS = [{"label": s, "value": s} for s in ["All", "AAPL", "TSLA", "MSFT", "NVDA", "SPY"]]
+FIELD_OPTIONS = [
+    {"label": f"{meta['group']} — {meta['label']}", "value": key}
+    for key, meta in SCREENER_FIELDS.items()
 ]
-SYMBOLS    = [{"label": s, "value": s} for s in ["AAPL", "TSLA", "MSFT", "NVDA", "SPY", "All"]]
+FILTER_OPS = [{"label": op, "value": op} for op in [">", ">=", "<", "<=", "==", "!="]]
 TIMEFRAMES = [{"label": l, "value": v} for l, v in [("1 day","1d"),("4 hour","4h"),("1 hour","1h"),("15 min","15m")]]
 PERIODS    = [{"label": l, "value": v} for l, v in [("365 days",365),("180 days",180),("90 days",90),("30 days",30)]]
 CONFS      = [{"label": f"{c}%", "value": c/100} for c in [60, 65, 70, 75, 80]]
@@ -32,11 +48,85 @@ DD = {"fontSize": "13px"}
 
 def layout(account: str, model: str, symbol: str):
     saved = list_saved_backtests()
+    # Make sure the model picker has a valid default — if the topbar-stored
+    # model id isn't in the live registry, fall back to the first option.
+    valid_ids = {m["value"] for m in MODELS}
+    initial_model = model if model in valid_ids else (MODELS[0]["value"] if MODELS else None)
     return html.Div([
+        _section_label("Backtest — natural-language query"),
+        _nl_query_panel(),
+        _section_label("Backtest — manual filters"),
+        _filter_panel(),
         _section_label("Backtest — configure & run"),
-        _controls_panel(model, symbol, saved),
+        _controls_panel(initial_model, symbol, saved),
         html.Div(id="bt-results-area"),
     ])
+
+
+def _nl_query_panel():
+    return html.Div([
+        html.P(
+            "Describe the backtest in plain English — Claude will translate "
+            "it into a model, filters and period.",
+            style={"fontSize": "12px", "color": "#666", "margin": "0 0 8px"},
+        ),
+        dcc.Textarea(
+            id="bt-nl-query",
+            placeholder=("e.g. \"backtest the qullamaggie breakout on stocks with "
+                         "volume > 2x avg and combined sentiment > 0.2 over the "
+                         "last year\""),
+            style={"width": "100%", "minHeight": "70px",
+                   "fontSize": "13px", "padding": "8px 10px",
+                   "border": "1px solid #ddd", "borderRadius": "6px"},
+        ),
+        html.Div([
+            html.Button("Parse with Claude", id="bt-nl-parse", n_clicks=0, style={
+                "fontSize": "13px", "padding": "6px 14px",
+                "border": "none", "borderRadius": "8px",
+                "background": "#3C3489", "color": "white",
+                "fontWeight": "500", "cursor": "pointer", "marginRight": "10px",
+            }),
+            html.Span(id="bt-nl-status", style={"fontSize": "12px", "color": "#666"}),
+        ], style={"marginTop": "8px", "display": "flex", "alignItems": "center"}),
+    ], style={**CARD, "marginBottom": "16px"})
+
+
+def _filter_row(idx: int, default_field="rsi_14", default_op="<", default_value=30):
+    return html.Div([
+        dcc.Dropdown(
+            id={"type": "bt-filter-field", "index": idx},
+            options=FIELD_OPTIONS, value=default_field, clearable=False,
+            style={"flex": "2", "fontSize": "13px"},
+        ),
+        dcc.Dropdown(
+            id={"type": "bt-filter-op", "index": idx},
+            options=FILTER_OPS, value=default_op, clearable=False,
+            style={"flex": "0 0 80px", "fontSize": "13px", "marginLeft": "8px"},
+        ),
+        dcc.Input(
+            id={"type": "bt-filter-value", "index": idx},
+            type="number", value=default_value,
+            style={"flex": "0 0 120px", "marginLeft": "8px",
+                    "fontSize": "13px", "padding": "6px 10px",
+                    "border": "1px solid #ddd", "borderRadius": "6px"},
+        ),
+    ], style={"display": "flex", "alignItems": "center", "marginBottom": "8px"})
+
+
+def _filter_panel():
+    return html.Div([
+        html.Div([
+            html.Span("Per-bar filters (all must match for a buy)",
+                      style={"fontSize": "12px", "color": "#666",
+                              "marginRight": "auto"}),
+            html.Button("+ Add filter", id="bt-add-filter", n_clicks=0, style={
+                "fontSize": "12px", "padding": "5px 12px",
+                "border": "1px solid #ddd", "borderRadius": "6px",
+                "background": "white", "cursor": "pointer",
+            }),
+        ], style={"display": "flex", "alignItems": "center", "marginBottom": "10px"}),
+        html.Div(id="bt-filter-rows", children=[]),
+    ], style={**CARD, "marginBottom": "16px"})
 
 
 def _section_label(text):

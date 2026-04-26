@@ -58,8 +58,9 @@ def get_model(model_id: str) -> BaseModel:
     if model_id.startswith("custom:"):
         return _load_custom_model(model_id[len("custom:"):])
 
+    _ensure_builtin_imports()
     if model_id not in _registry:
-        raise KeyError(f"Unknown model id: {model_id!r}. Available: {list_models()}")
+        raise KeyError(f"Unknown model id: {model_id!r}. Available: {list(_registry)}")
 
     return _registry[model_id]()
 
@@ -76,7 +77,10 @@ def list_models() -> list[ModelMetadata]:
 def _ensure_builtin_imports():
     """Import built-in modules so their @register_model decorators run."""
     try:
-        from bot.models.builtin import rsi_macd_v1, bollinger_v1, sentiment_v1   # noqa: F401
+        from bot.models.builtin import (   # noqa: F401
+            rsi_macd_v1, bollinger_v1, sentiment_v1,
+            qullamaggie_v1, vcp_v1,
+        )
     except ImportError as exc:
         logger.warning("Could not import built-in models: %s", exc)
 

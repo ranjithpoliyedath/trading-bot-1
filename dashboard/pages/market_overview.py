@@ -240,27 +240,81 @@ def _sentiment_color(s: float) -> str:
 
 def _news_panel(news: list[dict]):
     if not news:
-        body = html.P("No news available.", style={"color": "#aaa", "fontSize": "12px"})
+        body = html.P("No high-confidence news right now.",
+                      style={"color": "#aaa", "fontSize": "12px"})
     else:
         rows = []
         for n in news:
-            ts = str(n.get("published_at", ""))[:16].replace("T", " ")
+            ts        = str(n.get("published_at", ""))[:16].replace("T", " ")
+            stars     = int(n.get("stars", 1))
+            direction = n.get("direction", "neutral")
+            flags     = n.get("flags", []) or []
+            insight   = n.get("insight", "")
+
+            arrow_color = {"bullish": "#16A34A", "bearish": "#A32D2D"}.get(direction, "#888")
+            arrow       = {"bullish": "▲", "bearish": "▼"}.get(direction, "•")
+
+            star_str = "★" * stars + "☆" * (5 - stars)
+
+            badge_text = []
+            badge_color = "#F1EFE8"
+            badge_fg    = "#444"
+            if "strong-divergence" in flags:
+                badge_text.append("DIVERGES")
+                badge_color = "#FFE7E0"; badge_fg = "#A32D2D"
+            elif "vs-sector" in flags:
+                badge_text.append("vs sector")
+                badge_color = "#FFF3E6"; badge_fg = "#92400E"
+            elif "vs-market" in flags:
+                badge_text.append("vs market")
+                badge_color = "#FFF3E6"; badge_fg = "#92400E"
+
+            kw_flags = [f.replace("kw:", "") for f in flags if f.startswith("kw:")][:2]
+
             rows.append(html.Div([
-                html.Span(n["symbol"], style={"fontSize": "11px", "fontWeight": "500",
-                                               "background": "#F1EFE8", "padding": "1px 8px",
-                                               "borderRadius": "10px", "marginRight": "8px",
-                                               "minWidth": "55px", "textAlign": "center"}),
-                html.A(n["headline"],
-                       href=n.get("url", "#"),
-                       target="_blank",
-                       style={"fontSize": "13px", "color": "#222", "textDecoration": "none", "flex": "1"}),
-                html.Span(n.get("source", ""), style={"fontSize": "11px", "color": "#888", "marginLeft": "8px"}),
-                html.Span(ts, style={"fontSize": "11px", "color": "#aaa", "marginLeft": "10px"}),
-            ], style={"display": "flex", "alignItems": "center",
-                      "padding": "8px 0", "borderBottom": "1px solid #f5f5f5"}))
+                html.Div([
+                    html.Span(n["symbol"], style={
+                        "fontSize": "11px", "fontWeight": "500",
+                        "background": "#F1EFE8", "padding": "1px 8px",
+                        "borderRadius": "10px", "minWidth": "55px",
+                        "textAlign": "center", "marginRight": "8px",
+                    }),
+                    html.Span(arrow, style={"color": arrow_color, "marginRight": "4px",
+                                              "fontSize": "13px"}),
+                    html.Span(star_str, style={"color": "#D97706", "fontSize": "12px",
+                                                 "letterSpacing": "1px",
+                                                 "marginRight": "8px"}),
+                    html.A(n["headline"], href=n.get("url", "#"), target="_blank",
+                           style={"fontSize": "13px", "color": "#222",
+                                   "textDecoration": "none", "flex": "1"}),
+                    *([html.Span(t, style={
+                        "fontSize": "10px", "fontWeight": "500",
+                        "color": badge_fg, "background": badge_color,
+                        "padding": "1px 7px", "borderRadius": "10px",
+                        "marginLeft": "6px",
+                    }) for t in badge_text]),
+                    html.Span(n.get("source", ""), style={
+                        "fontSize": "11px", "color": "#888", "marginLeft": "8px",
+                    }),
+                    html.Span(ts, style={"fontSize": "11px", "color": "#aaa",
+                                           "marginLeft": "10px"}),
+                ], style={"display": "flex", "alignItems": "center"}),
+                html.Div([
+                    html.Span(insight, style={"fontSize": "11px", "color": "#666"}),
+                    *([html.Span(f"  ·  {', '.join(kw_flags)}",
+                                  style={"fontSize": "11px", "color": "#888"})]
+                      if kw_flags else []),
+                ], style={"marginLeft": "75px", "marginTop": "2px"}),
+            ], style={"padding": "10px 0", "borderBottom": "1px solid #f5f5f5"}))
         body = html.Div(rows)
 
     return html.Div([
-        html.P("Recent news", style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
+        html.Div([
+            html.P("Recent news",
+                   style={"fontSize": "12px", "fontWeight": "500",
+                           "margin": "0", "flex": "1"}),
+            html.Span("4★+ or contrarian only",
+                     style={"fontSize": "10px", "color": "#aaa"}),
+        ], style={"display": "flex", "alignItems": "center", "marginBottom": "10px"}),
         body,
     ], style=CARD)
