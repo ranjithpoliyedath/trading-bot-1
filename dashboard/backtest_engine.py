@@ -12,6 +12,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -25,12 +26,16 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
 
 
 def run_backtest(
-    model_name: str = "model_v1",
-    symbol: str = "AAPL",
-    timeframe: str = "1d",
-    period_days: int = 365,
-    conf_threshold: float = 0.65,
+    model_name:       str   = "model_v1",
+    symbol:           str   = "AAPL",
+    timeframe:        str   = "1d",
+    period_days:      int   = 365,
+    conf_threshold:   float = 0.65,
     active_indicators: list = None,
+    use_signal_exit:  bool             = True,
+    take_profit_pct:  Optional[float]  = 0.15,
+    stop_loss_pct:    Optional[float]  = 0.07,
+    time_stop_days:   Optional[int]    = 30,
 ) -> dict:
     """
     Simulate the ML strategy on historical data and return full metrics.
@@ -56,7 +61,13 @@ def run_backtest(
 
     df = _filter_indicators(df, active_indicators)
     df = _generate_signals(df, model_name, conf_threshold)
-    df = _simulate_trades(df)
+    df = _simulate_trades(
+        df,
+        use_signal_exit = use_signal_exit,
+        take_profit_pct = take_profit_pct,
+        stop_loss_pct   = stop_loss_pct,
+        time_stop_days  = time_stop_days,
+    )
 
     trades       = _extract_trades(df)
     equity_curve = _calc_equity_curve(trades)
@@ -140,12 +151,16 @@ def _load_features(symbol: str, period_days: int) -> pd.DataFrame:
 # ── Multi-symbol / screener-aware backtest ───────────────────────────────────
 
 def run_filtered_backtest(
-    model_id:     str,
-    filters:      list[dict],          # [{"field": "rsi_14", "op": "<", "value": 30}, ...]
-    symbols:      list[str] | None = None,
-    period_days:  int = 365,
-    conf_threshold: float = 0.65,
-    max_symbols:  int = 50,
+    model_id:        str,
+    filters:         list[dict],
+    symbols:         list[str] | None = None,
+    period_days:     int              = 365,
+    conf_threshold:  float            = 0.65,
+    max_symbols:     int              = 50,
+    use_signal_exit: bool             = True,
+    take_profit_pct: Optional[float]  = 0.15,
+    stop_loss_pct:   Optional[float]  = 0.07,
+    time_stop_days:  Optional[int]    = 30,
 ) -> dict:
     """
     Run a backtest across many symbols, only entering on bars that
@@ -196,7 +211,14 @@ def run_filtered_backtest(
                 mask &= opfn(col, val).fillna(False)
             scored.loc[~mask & (scored["signal"] == "buy"), "signal"] = "hold"
 
-        scored = _simulate_trades(scored, initial_cash=initial_cash)
+        scored = _simulate_trades(
+            scored,
+            initial_cash    = initial_cash,
+            use_signal_exit = use_signal_exit,
+            take_profit_pct = take_profit_pct,
+            stop_loss_pct   = stop_loss_pct,
+            time_stop_days  = time_stop_days,
+        )
         sym_trades = []
         for idx, row in scored.iterrows():
             if row["trade_pl"] != 0:
@@ -284,26 +306,30 @@ def _rule_based_signals(df: pd.DataFrame) -> pd.DataFrame:
 
 def _simulate_trades(
     df:              pd.DataFrame,
-    initial_cash:    float = 10_000.0,
-    take_profit_pct: float = 0.15,
-    stop_loss_pct:   float = 0.07,
-    time_stop_days:  int   = 30,
+    initial_cash:    float            = 10_000.0,
+    use_signal_exit: bool             = True,
+    take_profit_pct: Optional[float]  = 0.15,
+    stop_loss_pct:   Optional[float]  = 0.07,
+    time_stop_days:  Optional[int]    = 30,
 ) -> pd.DataFrame:
     """
-    Walk through signals and simulate buy / sell trades with proper exits.
+    Walk through signals and simulate buy / sell trades with configurable
+    exit rules.  Pass ``None`` (or False) for any rule to disable it.
 
     Exit rules (whichever fires first wins):
-      1. Model sell signal
+      1. Model sell signal      (gated by ``use_signal_exit``)
       2. Take-profit:  price >= entry * (1 + take_profit_pct)
       3. Stop-loss:    price <= entry * (1 - stop_loss_pct)
       4. Time-stop:    bars_held >= time_stop_days
 
-    Each exit also tags the resulting trade with an `exit_reason` so the
-    trade log can show why we left the position.  Without these the
-    breakout models had no profit target and would ride a winner forever
-    while losers cut at the model's own stop — guaranteed negative
-    expectancy on small samples.
+    Each exit tags the trade with ``exit_reason`` so the log can show
+    why we left.  At least one exit rule must be enabled — otherwise
+    a winning position would never close.
     """
+    if not use_signal_exit and take_profit_pct is None \
+            and stop_loss_pct is None and time_stop_days is None:
+        # Defensive: nothing would ever close.  Force a default.
+        time_stop_days = 30
     df = df.copy()
     df["position"]    = 0.0
     df["cash"]        = initial_cash
@@ -337,10 +363,10 @@ def _simulate_trades(
             held_days    = i - (entry_idx or i)
 
             exit_reason = ""
-            if   sig == "sell":                          exit_reason = "signal"
-            elif ret_pct >=  take_profit_pct:            exit_reason = "take_profit"
-            elif ret_pct <= -stop_loss_pct:              exit_reason = "stop_loss"
-            elif held_days >= time_stop_days:            exit_reason = "time_stop"
+            if   use_signal_exit and sig == "sell":                                     exit_reason = "signal"
+            elif take_profit_pct is not None and ret_pct >=  take_profit_pct:           exit_reason = "take_profit"
+            elif stop_loss_pct  is not None and ret_pct <= -stop_loss_pct:              exit_reason = "stop_loss"
+            elif time_stop_days is not None and held_days >= time_stop_days:            exit_reason = "time_stop"
 
             if exit_reason:
                 pl        = pl_per_share * position
@@ -396,42 +422,76 @@ def _calc_metrics(trades: list, equity_curve: list) -> dict:
     if not trades:
         return _empty_metrics()
 
-    pls      = [t["pl"] for t in trades]
-    wins     = [p for p in pls if p > 0]
-    losses   = [p for p in pls if p < 0]
+    pls    = [t["pl"] for t in trades]
+    wins   = [p for p in pls if p > 0]
+    losses = [p for p in pls if p < 0]
 
     total_trades = len(pls)
-    win_rate     = len(wins) / total_trades if total_trades else 0
-    avg_win      = np.mean(wins)  if wins   else 0
-    avg_loss     = np.mean(losses) if losses else 0
-    expectancy   = (win_rate * avg_win) + ((1 - win_rate) * avg_loss)
-    edge_ratio   = abs(avg_win / avg_loss) if avg_loss else 0
-    profit_factor = abs(sum(wins) / sum(losses)) if losses else 0
+    n_wins       = len(wins)
+    n_losses     = len(losses)
+    win_rate     = n_wins / total_trades if total_trades else 0.0
+    avg_win      = float(np.mean(wins))   if wins   else 0.0
+    avg_loss     = float(np.mean(losses)) if losses else 0.0   # negative
 
+    # Per-trade % returns (relative to a notional $10k position).  Used
+    # for the avg_win_pct / avg_loss_pct fields requested in the UI.
+    notional       = 10_000.0
+    pct_per_trade  = [p / notional * 100 for p in pls]
+    win_pcts       = [p for p in pct_per_trade if p > 0]
+    loss_pcts      = [p for p in pct_per_trade if p < 0]
+    avg_win_pct    = float(np.mean(win_pcts))  if win_pcts  else 0.0
+    avg_loss_pct   = float(np.mean(loss_pcts)) if loss_pcts else 0.0
+
+    expectancy    = (win_rate * avg_win) + ((1 - win_rate) * avg_loss)
+    edge_ratio    = abs(avg_win / avg_loss) if avg_loss else 0.0
+    profit_factor = abs(sum(wins) / sum(losses)) if losses else 0.0
+
+    # ── Equity-curve metrics ──────────────────────────────────────────
+    # Sharpe / Sortino were previously computed off per-trade P&L which
+    # is wrong (and explodes to 0 when there's only one trade).  Use
+    # the equity curve resampled to a daily series instead.
     values = [e["value"] for e in equity_curve]
-    total_return = (values[-1] - values[0]) / values[0] * 100 if values else 0
+    total_return = (values[-1] - values[0]) / values[0] * 100 if values else 0.0
 
-    returns = pd.Series(pls)
-    sharpe  = (returns.mean() / returns.std() * np.sqrt(252)).round(2) if returns.std() > 0 else 0
-    sortino_neg = returns[returns < 0].std()
-    sortino = (returns.mean() / sortino_neg * np.sqrt(252)).round(2) if sortino_neg > 0 else 0
+    sharpe = sortino = 0.0
+    try:
+        ec_dates = [e["date"] for e in equity_curve]
+        ec_df = pd.DataFrame(
+            {"value": values},
+            index=pd.to_datetime(ec_dates, errors="coerce", format="ISO8601"),
+        )
+        ec_df = ec_df.dropna()
+        if len(ec_df) >= 2:
+            daily = ec_df["value"].resample("D").last().ffill().pct_change().dropna()
+            if daily.std() > 0:
+                sharpe = float(daily.mean() / daily.std() * np.sqrt(252))
+            downside = daily[daily < 0].std()
+            if downside and downside > 0:
+                sortino = float(daily.mean() / downside * np.sqrt(252))
+    except Exception:
+        pass
 
     peak     = pd.Series(values).cummax()
     drawdown = ((pd.Series(values) - peak) / peak * 100)
-    max_dd   = drawdown.min()
+    max_dd   = float(drawdown.min())
 
     return {
         "total_return_pct":  round(total_return, 2),
-        "sharpe":            round(float(sharpe), 2),
-        "sortino":           round(float(sortino), 2),
+        "sharpe":            round(sharpe, 2),
+        "sortino":           round(sortino, 2),
         "expectancy":        round(expectancy, 2),
         "edge_ratio":        round(edge_ratio, 2),
         "profit_factor":     round(profit_factor, 2),
-        "max_drawdown_pct":  round(float(max_dd), 2),
+        "max_drawdown_pct":  round(max_dd, 2),
         "win_rate_pct":      round(win_rate * 100, 1),
+        "loss_rate_pct":     round((1 - win_rate) * 100, 1),
         "total_trades":      total_trades,
+        "wins":              n_wins,
+        "losses":            n_losses,
         "avg_win":           round(avg_win, 2),
         "avg_loss":          round(avg_loss, 2),
+        "avg_win_pct":       round(avg_win_pct, 2),
+        "avg_loss_pct":      round(avg_loss_pct, 2),
         "largest_win":       round(max(pls), 2),
         "largest_loss":      round(min(pls), 2),
     }
@@ -439,8 +499,10 @@ def _calc_metrics(trades: list, equity_curve: list) -> dict:
 
 def _empty_metrics() -> dict:
     keys = ["total_return_pct", "sharpe", "sortino", "expectancy", "edge_ratio",
-            "profit_factor", "max_drawdown_pct", "win_rate_pct", "total_trades",
-            "avg_win", "avg_loss", "largest_win", "largest_loss"]
+            "profit_factor", "max_drawdown_pct", "win_rate_pct", "loss_rate_pct",
+            "total_trades", "wins", "losses",
+            "avg_win", "avg_loss", "avg_win_pct", "avg_loss_pct",
+            "largest_win", "largest_loss"]
     return {k: 0 for k in keys}
 
 

@@ -22,13 +22,13 @@ logger = logging.getLogger(__name__)
 # ── NL query → populate model + filters + period ─────────────────────────────
 
 @callback(
-    Output("bt-dd-model",     "value", allow_duplicate=True),
-    Output("bt-dd-period",    "value", allow_duplicate=True),
-    Output("bt-dd-conf",      "value", allow_duplicate=True),
-    Output("bt-filter-rows",  "children", allow_duplicate=True),
-    Output("bt-nl-status",    "children"),
-    Input("bt-nl-parse",      "n_clicks"),
-    State("bt-nl-query",      "value"),
+    Output("bt-dd-model",       "value",   allow_duplicate=True),
+    Output("bt-input-period",   "value",   allow_duplicate=True),
+    Output("bt-input-conf",     "value",   allow_duplicate=True),
+    Output("bt-filter-rows",    "children", allow_duplicate=True),
+    Output("bt-nl-status",      "children"),
+    Input("bt-nl-parse",        "n_clicks"),
+    State("bt-nl-query",        "value"),
     prevent_initial_call=True,
 )
 def parse_nl_query(n_clicks, text):
@@ -78,52 +78,68 @@ def add_filter(n, current):
 
 @callback(
     Output("bt-store-results", "data"),
-    Input("bt-btn-run",    "n_clicks"),
-    Input("bt-dd-saved",   "value"),
-    State("bt-dd-model",   "value"),
-    State("bt-dd-symbol",  "value"),
-    State("bt-dd-tf",      "value"),
-    State("bt-dd-period",  "value"),
-    State("bt-dd-conf",    "value"),
-    State("bt-indicators", "value"),
+    Input("bt-btn-run",      "n_clicks"),
+    Input("bt-dd-saved",     "value"),
+    State("bt-dd-model",     "value"),
+    State("bt-dd-scope",     "value"),
+    State("bt-input-max",    "value"),
+    State("bt-dd-tf",        "value"),
+    State("bt-input-period", "value"),
+    State("bt-input-conf",   "value"),
+    State("bt-indicators",   "value"),
     State({"type": "bt-filter-field", "index": ALL}, "value"),
     State({"type": "bt-filter-op",    "index": ALL}, "value"),
     State({"type": "bt-filter-value", "index": ALL}, "value"),
+    State("bt-exit-signal-on", "value"),
+    State("bt-exit-tp-on",     "value"),
+    State("bt-exit-tp-val",    "value"),
+    State("bt-exit-sl-on",     "value"),
+    State("bt-exit-sl-val",    "value"),
+    State("bt-exit-ts-on",     "value"),
+    State("bt-exit-ts-val",    "value"),
     prevent_initial_call=True,
 )
-def run_or_load(n_run, saved_id, model, symbol, tf, period, conf,
-                indicators, ff, fo, fv):
+def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
+                indicators, ff, fo, fv,
+                signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         return load_backtest(saved_id)
-    if "bt-btn-run" in ctx and n_run:
-        filters = []
-        for fld, op, val in zip(ff or [], fo or [], fv or []):
-            if fld is None or op is None or val in (None, ""):
-                continue
-            try:
-                filters.append({"field": fld, "op": op, "value": float(val)})
-            except (TypeError, ValueError):
-                continue
+    if "bt-btn-run" not in ctx or not n_run:
+        return {}
 
-        if filters or (symbol or "").lower() == "all":
-            return run_filtered_backtest(
-                model_id       = model or "rsi_macd_v1",
-                filters        = filters,
-                symbols        = None if (symbol or "All") == "All" else [symbol],
-                period_days    = int(period or 365),
-                conf_threshold = float(conf or 0.65),
-            )
+    # Parse filters
+    filters = []
+    for fld, op, val in zip(ff or [], fo or [], fv or []):
+        if fld is None or op is None or val in (None, ""):
+            continue
+        try:
+            filters.append({"field": fld, "op": op, "value": float(val)})
+        except (TypeError, ValueError):
+            continue
 
-        return run_backtest(
-            model_name      = model or "rsi_macd_v1",
-            symbol          = symbol or "AAPL",
-            timeframe       = tf or "1d",
-            period_days     = int(period or 365),
-            conf_threshold  = float(conf or 0.65),
-            active_indicators = indicators or [],
-        )
-    return {}
+    # Resolve exit conditions — checklist returns ['on'] when checked
+    use_signal_exit = bool(signal_on)
+    take_profit_pct = float(tp_val) if (tp_on and tp_val not in (None, ""))      else None
+    stop_loss_pct   = float(sl_val) if (sl_on and sl_val not in (None, ""))      else None
+    time_stop_days  = int(ts_val)   if (ts_on and ts_val not in (None, "", 0))   else None
+
+    # Resolve symbols from universe scope
+    from bot.universe import select_universe
+    syms = select_universe(scope or "top_100", limit=int(max_syms or 50))
+
+    return run_filtered_backtest(
+        model_id        = model or "rsi_macd_v1",
+        filters         = filters,
+        symbols         = syms,
+        period_days     = int(period or 365),
+        conf_threshold  = float(conf or 0.65),
+        max_symbols     = int(max_syms or 50),
+        use_signal_exit = use_signal_exit,
+        take_profit_pct = take_profit_pct,
+        stop_loss_pct   = stop_loss_pct,
+        time_stop_days  = time_stop_days,
+    )
 
 
 # ── Render results ──────────────────────────────────────────────────────────

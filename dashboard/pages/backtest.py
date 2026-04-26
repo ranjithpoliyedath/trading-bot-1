@@ -14,7 +14,8 @@ import dash_bootstrap_components as dbc
 from dashboard.backtest_engine import (
     run_backtest, save_backtest, load_backtest, list_saved_backtests
 )
-from bot.screener import SCREENER_FIELDS
+from bot.screener  import SCREENER_FIELDS
+from bot.universe  import UNIVERSE_SCOPES
 
 CARD  = {"background": "white", "borderRadius": "12px", "border": "1px solid #eee", "padding": "14px"}
 METRIC = {"background": "#F8F8F7", "borderRadius": "8px", "padding": "10px 12px"}
@@ -33,17 +34,23 @@ def _model_options():
 
 
 MODELS  = _model_options()
-SYMBOLS = [{"label": s, "value": s} for s in ["All", "AAPL", "TSLA", "MSFT", "NVDA", "SPY"]]
+SCOPE_OPTIONS = [{"label": label, "value": key}
+                 for key, label in UNIVERSE_SCOPES.items()]
 FIELD_OPTIONS = [
     {"label": f"{meta['group']} — {meta['label']}", "value": key}
     for key, meta in SCREENER_FIELDS.items()
 ]
 FILTER_OPS = [{"label": op, "value": op} for op in [">", ">=", "<", "<=", "==", "!="]]
 TIMEFRAMES = [{"label": l, "value": v} for l, v in [("1 day","1d"),("4 hour","4h"),("1 hour","1h"),("15 min","15m")]]
-PERIODS    = [{"label": l, "value": v} for l, v in [("365 days",365),("180 days",180),("90 days",90),("30 days",30)]]
-CONFS      = [{"label": f"{c}%", "value": c/100} for c in [60, 65, 70, 75, 80]]
 
-DD = {"fontSize": "13px"}
+DD     = {"fontSize": "13px"}
+NUMBOX = {
+    "fontSize":     "13px",
+    "padding":      "6px 10px",
+    "border":       "1px solid #ddd",
+    "borderRadius": "6px",
+    "width":        "100%",
+}
 
 
 def layout(account: str, model: str, symbol: str):
@@ -147,11 +154,22 @@ def _controls_panel(model: str, symbol: str, saved: list):
             ], md=4),
             dbc.Col([
                 html.P("Model", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
-                dcc.Dropdown(id="bt-dd-model", options=MODELS, value=model, clearable=False, style=DD),
-            ], md=3),
+                dcc.Dropdown(id="bt-dd-model", options=MODELS, value=model,
+                             clearable=False, style=DD),
+            ], md=4),
             dbc.Col([
-                html.P("Symbol", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
-                dcc.Dropdown(id="bt-dd-symbol", options=SYMBOLS, value=symbol, clearable=False, style=DD),
+                html.P("Universe scope",
+                       title="Pick which slice of the universe to scan.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                dcc.Dropdown(id="bt-dd-scope", options=SCOPE_OPTIONS,
+                             value="top_100", clearable=False, style=DD),
+            ], md=4),
+            dbc.Col([
+                html.P("Symbol limit",
+                       title="Cap how many symbols from the scope are scanned.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                dcc.Input(id="bt-input-max", type="number", value=50,
+                          min=1, max=2000, step=1, style=NUMBOX),
             ], md=2),
             dbc.Col([
                 html.Div([
@@ -166,24 +184,35 @@ def _controls_panel(model: str, symbol: str, saved: list):
                         "cursor": "pointer",
                     }),
                 ], style={"display": "flex", "alignItems": "flex-end", "height": "100%", "paddingTop": "18px"}),
-            ], md=3),
+            ], md=2),
         ], className="g-3 mb-3"),
 
         dbc.Row([
             dbc.Col([
-                html.P("Timeframe", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
-                dcc.Dropdown(id="bt-dd-tf", options=TIMEFRAMES, value="1d", clearable=False, style=DD),
+                html.P("Timeframe",
+                       title="Bar size used for the backtest.  Daily only for now.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                dcc.Dropdown(id="bt-dd-tf", options=TIMEFRAMES, value="1d",
+                             clearable=False, style=DD),
             ], md=2),
             dbc.Col([
-                html.P("Period", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
-                dcc.Dropdown(id="bt-dd-period", options=PERIODS, value=365, clearable=False, style=DD),
+                html.P("Period (days)",
+                       title="Number of days of history to backtest over.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                dcc.Input(id="bt-input-period", type="number", value=365,
+                          min=30, max=2000, step=1, style=NUMBOX),
             ], md=2),
             dbc.Col([
-                html.P("Confidence threshold", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
-                dcc.Dropdown(id="bt-dd-conf", options=CONFS, value=0.65, clearable=False, style=DD),
+                html.P("Confidence threshold",
+                       title="Minimum model confidence (0-1) to act on a signal.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                dcc.Input(id="bt-input-conf", type="number", value=0.65,
+                          min=0, max=1, step=0.01, style=NUMBOX),
             ], md=2),
             dbc.Col([
-                html.P("Indicators", style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
+                html.P("Indicators",
+                       title="Subset of feature columns to keep.  Affects only ML models.",
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 4px"}),
                 dcc.Checklist(
                     id="bt-indicators",
                     options=[{"label": html.Span(i, style={"fontSize": "12px", "marginRight": "6px"}), "value": i}
@@ -193,11 +222,59 @@ def _controls_panel(model: str, symbol: str, saved: list):
                     style={"display": "flex", "flexWrap": "wrap", "gap": "6px"},
                 ),
             ], md=6),
-        ], className="g-3"),
+        ], className="g-3 mb-3"),
+
+        # Hidden — kept for backwards compatibility with existing callbacks.
+        # Symbol selection is now driven by the Universe scope dropdown.
+        dcc.Store(id="bt-dd-symbol", data="All"),
+
+        # ── Exit conditions ─────────────────────────────────────────
+        _exit_conditions_panel(),
 
         dcc.Store(id="bt-store-results"),
         html.Div(id="bt-save-msg", style={"fontSize": "12px", "color": "#27500A", "marginTop": "8px"}),
     ], style={**CARD, "marginBottom": "16px"})
+
+
+def _exit_conditions_panel():
+    """The four exit-rule toggles + numeric values."""
+    row = lambda label, tip, toggle_id, val_id, default_val, suffix, **inp_props: html.Div([
+        dcc.Checklist(
+            id=toggle_id,
+            options=[{"label": html.Span(label, style={
+                "fontSize": "12px", "fontWeight": "500", "marginLeft": "4px",
+            }), "value": "on"}],
+            value=["on"],
+            style={"flex": "0 0 220px"},
+        ),
+        dcc.Input(
+            id=val_id, type="number", value=default_val,
+            style={**NUMBOX, "flex": "0 0 110px", "marginLeft": "8px"},
+            **inp_props,
+        ),
+        html.Span(suffix, style={"fontSize": "12px", "color": "#888",
+                                  "marginLeft": "8px"}),
+        html.Span(tip, style={"fontSize": "11px", "color": "#aaa",
+                                "marginLeft": "16px", "flex": "1"}),
+    ], style={"display": "flex", "alignItems": "center", "marginBottom": "8px"})
+
+    return html.Div([
+        html.P("Exit conditions",
+               title="Whichever rule fires first closes the trade.  Disable any rule to ignore it.",
+               style={"fontSize": "12px", "fontWeight": "500", "margin": "10px 0 8px"}),
+        row("Model sell signal", "Close when the model emits its own sell.",
+            "bt-exit-signal-on", "bt-exit-signal-val", 0,
+            "(no value)", min=0, max=0, step=1, disabled=True),
+        row("Take-profit", "Close when price rises this much above entry.",
+            "bt-exit-tp-on", "bt-exit-tp-val", 0.15, "× entry (e.g. 0.15 = +15%)",
+            min=0.005, max=2, step=0.01),
+        row("Stop-loss", "Close when price drops this much below entry.",
+            "bt-exit-sl-on", "bt-exit-sl-val", 0.07, "× entry (e.g. 0.07 = -7%)",
+            min=0.005, max=1, step=0.01),
+        row("Time stop", "Close after holding this many trading days.",
+            "bt-exit-ts-on", "bt-exit-ts-val", 30, "days",
+            min=1, max=500, step=1),
+    ], style={**CARD, "marginTop": "12px"})
 
 
 def render_results(results: dict):
@@ -223,6 +300,29 @@ def render_results(results: dict):
     ])
 
 
+# Hover tooltips — same exact text the html `title` attribute renders.
+METRIC_TIPS = {
+    "Total return":   "Sum of all closed-trade P&L expressed as % of starting capital.",
+    "Sharpe ratio":   "Annualised excess return per unit of total volatility (daily equity returns × √252). >1 is decent, >2 is exceptional, <0.5 is noise.",
+    "Sortino":        "Like Sharpe but only penalises downside volatility — better for asymmetric strategies.",
+    "Expectancy":     "Average dollar P&L per trade: win_rate × avg_win + loss_rate × avg_loss. Positive = profitable on average.",
+    "Edge ratio":     "Average win / average loss (in absolute $). >1 means winners are bigger than losers; combined with win rate gives expectancy.",
+    "Profit factor":  "Sum of winning P&L / sum of losing P&L (absolute). >1 is profitable, >1.5 is healthy.",
+    "Max drawdown":   "Largest peak-to-trough drop in equity, in %. Smaller (closer to 0%) is better.",
+    "Win rate":       "% of trades with positive P&L. Strategies with low win rate can still be profitable if profit factor > 1.",
+    "Loss rate":      "% of trades with negative P&L. Equal to 100% − win rate.",
+    "Total trades":   "Total number of completed buy-and-sell pairs in this backtest.",
+    "Wins":           "Count of trades with positive P&L.",
+    "Losses":         "Count of trades with negative P&L.",
+    "Avg win %":      "Average winning trade return as % of starting position size ($10k notional).",
+    "Avg loss %":     "Average losing trade return as % of starting position size (negative).",
+    "Avg win":        "Average dollar P&L of a winning trade.",
+    "Avg loss":       "Average dollar P&L of a losing trade (negative).",
+    "Largest win":    "Single largest winning trade in dollars.",
+    "Largest loss":   "Single largest losing trade in dollars.",
+}
+
+
 def _metrics_row(m: dict):
     items = [
         ("Total return",  f"{'+' if m['total_return_pct'] >= 0 else ''}{m['total_return_pct']:.1f}%",  m['total_return_pct'] >= 0),
@@ -233,11 +333,15 @@ def _metrics_row(m: dict):
         ("Win rate",      f"{m['win_rate_pct']:.1f}%", m['win_rate_pct'] >= 50),
     ]
     return dbc.Row([
-        dbc.Col(html.Div([
-            html.P(label, style={"fontSize": "11px", "color": "#888", "margin": "0 0 3px"}),
-            html.P(value, style={"fontSize": "18px", "fontWeight": "500", "margin": "0",
-                                  "color": ("#27500A" if positive else "#A32D2D") if label != "Sharpe ratio" and label != "Edge ratio" else "#111"}),
-        ], style=METRIC), md=2)
+        dbc.Col(html.Div(
+            [
+                html.P(label, title=METRIC_TIPS.get(label, ""),
+                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 3px",
+                                "cursor": "help"}),
+                html.P(value, style={"fontSize": "18px", "fontWeight": "500", "margin": "0",
+                                      "color": ("#27500A" if positive else "#A32D2D")
+                                                if label not in ("Sharpe ratio", "Edge ratio") else "#111"}),
+            ], style=METRIC, title=METRIC_TIPS.get(label, "")), md=2)
         for label, value, positive in items
     ], className="g-3 mb-3")
 
@@ -291,17 +395,24 @@ def _monthly_chart(monthly: list):
 
 def _stat_row(label, value, color="#111"):
     return html.Div([
-        html.Span(label, style={"fontSize": "12px", "color": "#888", "flex": "1"}),
+        html.Span(label, title=METRIC_TIPS.get(label, ""),
+                  style={"fontSize": "12px", "color": "#888", "flex": "1",
+                          "cursor": "help"}),
         html.Span(value, style={"fontSize": "12px", "fontWeight": "500", "color": color}),
     ], style={"display": "flex", "padding": "5px 0", "borderBottom": "1px solid #f5f5f5"})
 
 
 def _trade_dist(m: dict):
+    wins   = m.get("wins",   int(m["total_trades"] * m["win_rate_pct"]      / 100))
+    losses = m.get("losses", int(m["total_trades"] * (1 - m["win_rate_pct"] / 100)))
     return html.Div([
         html.P("Trade distribution", style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
         _stat_row("Total trades",  str(m["total_trades"])),
-        _stat_row("Wins",          str(int(m["total_trades"] * m["win_rate_pct"] / 100)), "#27500A"),
-        _stat_row("Losses",        str(int(m["total_trades"] * (1 - m["win_rate_pct"] / 100))), "#A32D2D"),
+        _stat_row("Wins",          str(wins),   "#27500A"),
+        _stat_row("Losses",        str(losses), "#A32D2D"),
+        _stat_row("Win rate",      f"{m['win_rate_pct']:.1f}%",
+                                    "#27500A" if m["win_rate_pct"] >= 50 else "#A32D2D"),
+        _stat_row("Loss rate",     f"{m.get('loss_rate_pct', 100 - m['win_rate_pct']):.1f}%"),
         _stat_row("Profit factor", f"{m['profit_factor']:.2f}"),
     ], style=CARD)
 
@@ -309,11 +420,14 @@ def _trade_dist(m: dict):
 def _risk_card(m: dict):
     return html.Div([
         html.P("Risk metrics", style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
-        _stat_row("Avg win",      f"${m['avg_win']:,.2f}",   "#27500A"),
-        _stat_row("Avg loss",     f"${m['avg_loss']:,.2f}",  "#A32D2D"),
-        _stat_row("Largest win",  f"${m['largest_win']:,.2f}","#27500A"),
-        _stat_row("Largest loss", f"${m['largest_loss']:,.2f}","#A32D2D"),
+        _stat_row("Avg win",      f"${m['avg_win']:,.2f}",                 "#27500A"),
+        _stat_row("Avg loss",     f"${m['avg_loss']:,.2f}",                "#A32D2D"),
+        _stat_row("Avg win %",    f"{m.get('avg_win_pct', 0):+.2f}%",      "#27500A"),
+        _stat_row("Avg loss %",   f"{m.get('avg_loss_pct', 0):+.2f}%",     "#A32D2D"),
+        _stat_row("Largest win",  f"${m['largest_win']:,.2f}",             "#27500A"),
+        _stat_row("Largest loss", f"${m['largest_loss']:,.2f}",            "#A32D2D"),
         _stat_row("Sortino",      f"{m['sortino']:.2f}"),
+        _stat_row("Max drawdown", f"{m['max_drawdown_pct']:.2f}%",         "#A32D2D"),
     ], style=CARD)
 
 

@@ -131,6 +131,58 @@ def get_top_n_by_volume(n: int = 100, eligible_only: bool = True) -> list:
     return df["symbol"].head(n).tolist()
 
 
+# Universe scope choices used by the dashboard.  Keep keys short and
+# stable — the dashboard dropdown writes them straight into the
+# backtest payload.
+UNIVERSE_SCOPES: dict[str, str] = {
+    "all":       "All eligible (full universe)",
+    "top_100":   "Top 100 by liquidity",
+    "top_500":   "Top 500 by liquidity",
+    "sp500":     "S&P 500 (large-cap)",
+    "sp400":     "S&P MidCap 400",
+    "sp600":     "S&P SmallCap 600",
+    "large_cap": "Large caps (S&P 500)",
+    "mid_cap":   "Mid caps (S&P 400)",
+    "small_cap": "Small caps (S&P 600)",
+}
+
+
+def select_universe(
+    scope:      str  = "all",
+    limit:      int  = None,
+    eligible_only: bool = True,
+) -> list[str]:
+    """
+    Resolve a UI scope label into a concrete symbol list.
+
+    Args:
+        scope: One of UNIVERSE_SCOPES keys.
+        limit: Optional cap on the returned list (after scoping).
+        eligible_only: Apply the universe eligibility filter.
+
+    Returns:
+        List of ticker symbols in scan order (most liquid first).
+    """
+    df = load_universe(eligible_only=eligible_only)
+    if df.empty:
+        return []
+    if "avg_volume_14d" in df.columns:
+        df = df.sort_values("avg_volume_14d", ascending=False, na_position="last")
+
+    s = (scope or "all").lower()
+    if   s == "top_100":                                       df = df.head(100)
+    elif s == "top_500":                                       df = df.head(500)
+    elif s in ("sp500", "large_cap") and "index" in df.columns: df = df[df["index"] == "sp500"]
+    elif s in ("sp400", "mid_cap")   and "index" in df.columns: df = df[df["index"] == "sp400"]
+    elif s in ("sp600", "small_cap") and "index" in df.columns: df = df[df["index"] == "sp600"]
+    # else: "all" — keep full universe
+
+    syms = df["symbol"].tolist()
+    if limit:
+        syms = syms[:int(limit)]
+    return syms
+
+
 def _fetch_market_data(symbols: list[str]) -> pd.DataFrame:
     """
     Pull recent bars from Alpaca to compute avg volume and current price.
