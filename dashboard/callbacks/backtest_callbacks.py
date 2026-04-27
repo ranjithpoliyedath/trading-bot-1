@@ -11,7 +11,7 @@ import logging
 from dash import Input, Output, State, ALL, callback_context, html, no_update, callback
 
 from dashboard.backtest_engine import (
-    run_backtest, run_filtered_backtest,
+    run_backtest, run_filtered_backtest, run_walk_forward,
     save_backtest, load_backtest, list_saved_backtests,
 )
 from dashboard.pages.backtest import render_results, _filter_row
@@ -102,12 +102,17 @@ def add_filter(n, current):
     State("bt-acct-arg-a",     "value"),
     State("bt-acct-arg-b",     "value"),
     State("bt-acct-atr-stop",  "value"),
+    State("bt-real-em",        "value"),
+    State("bt-real-delay",     "value"),
+    State("bt-real-slip",      "value"),
+    State("bt-real-val",       "value"),
     prevent_initial_call=True,
 )
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 indicators, ff, fo, fv,
                 signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val,
-                acct_cash, sizing_method, sizing_a, sizing_b, atr_stop):
+                acct_cash, sizing_method, sizing_a, sizing_b, atr_stop,
+                exec_model, exec_delay, slip_bps, val_mode):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         return load_backtest(saved_id)
@@ -146,21 +151,44 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
 
     atr_stop_mult = float(atr_stop) if (atr_stop and float(atr_stop) > 0) else None
 
+    # Common engine kwargs shared between full + walk-forward paths
+    engine_kwargs = dict(
+        conf_threshold       = float(conf or 0.65),
+        max_symbols          = int(max_syms or 50),
+        use_signal_exit      = use_signal_exit,
+        take_profit_pct      = take_profit_pct,
+        stop_loss_pct        = stop_loss_pct,
+        time_stop_days       = time_stop_days,
+        atr_stop_mult        = atr_stop_mult,
+        starting_cash        = float(acct_cash or 10_000),
+        sizing_method        = method,
+        sizing_kwargs        = sizing_kwargs,
+        execution_model      = exec_model or "next_open",
+        execution_delay_bars = int(exec_delay or 0),
+        slippage_bps         = float(slip_bps or 0),
+    )
+
+    # Walk-forward branch
+    if val_mode and val_mode.startswith("wf"):
+        try:
+            n_folds = int((val_mode or "wf4")[2:])
+        except ValueError:
+            n_folds = 4
+        return run_walk_forward(
+            model_id    = model or "rsi_macd_v1",
+            n_folds     = n_folds,
+            symbols     = syms,
+            period_days = int(period or 365),
+            **engine_kwargs,
+        )
+
+    # Single-sample branch (default "full")
     return run_filtered_backtest(
-        model_id        = model or "rsi_macd_v1",
-        filters         = filters,
-        symbols         = syms,
-        period_days     = int(period or 365),
-        conf_threshold  = float(conf or 0.65),
-        max_symbols     = int(max_syms or 50),
-        use_signal_exit = use_signal_exit,
-        take_profit_pct = take_profit_pct,
-        stop_loss_pct   = stop_loss_pct,
-        time_stop_days  = time_stop_days,
-        atr_stop_mult   = atr_stop_mult,
-        starting_cash   = float(acct_cash or 10_000),
-        sizing_method   = method,
-        sizing_kwargs   = sizing_kwargs,
+        model_id    = model or "rsi_macd_v1",
+        filters     = filters,
+        symbols     = syms,
+        period_days = int(period or 365),
+        **engine_kwargs,
     )
 
 

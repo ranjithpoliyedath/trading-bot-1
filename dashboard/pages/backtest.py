@@ -231,12 +231,95 @@ def _controls_panel(model: str, symbol: str, saved: list):
         # ── Sample trading account ──────────────────────────────────
         _account_panel(),
 
+        # ── Realism: execution model, slippage, walk-forward ────────
+        _realism_panel(),
+
         # ── Exit conditions ─────────────────────────────────────────
         _exit_conditions_panel(),
 
         dcc.Store(id="bt-store-results"),
         html.Div(id="bt-save-msg", style={"fontSize": "12px", "color": "#27500A", "marginTop": "8px"}),
     ], style={**CARD, "marginBottom": "16px"})
+
+
+def _realism_panel():
+    """Execution-model / slippage / walk-forward controls."""
+    return html.Div([
+        html.P("Realism settings",
+               style={"fontSize": "12px", "fontWeight": "500", "margin": "10px 0 8px"}),
+
+        dbc.Row([
+            dbc.Col([
+                html.Span("Execution model", id="bt-real-em-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Dropdown(
+                    id="bt-real-em",
+                    options=[
+                        {"label": "Next bar's open (realistic)", "value": "next_open"},
+                        {"label": "Same bar close (legacy)",     "value": "same_close"},
+                    ],
+                    value="next_open", clearable=False,
+                    style={"fontSize": "13px", "marginTop": "4px"},
+                ),
+                dbc.Tooltip(
+                    "When the model emits a signal at bar t, when does the "
+                    "trade actually fill?  next_open = open of bar t+1 "
+                    "(industry-standard, prevents look-ahead bias).  "
+                    "same_close = close of bar t (legacy, faster-but-fake).",
+                    target="bt-real-em-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=4),
+            dbc.Col([
+                html.Span("Execution delay (bars)", id="bt-real-delay-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-delay", type="number", value=0,
+                          min=0, max=10, step=1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Extra bars between signal and fill.  0 = act on the "
+                    "next bar (per execution model).  >0 simulates slow "
+                    "decision pipelines.  Reserved for intraday strategies.",
+                    target="bt-real-delay-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=2),
+            dbc.Col([
+                html.Span("Slippage (bps)", id="bt-real-slip-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-slip", type="number", value=5,
+                          min=0, max=200, step=1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Per-trade adverse fill, in basis points.  5 bps = 0.05% "
+                    "worse than the printed price.  Buy fills are bumped up, "
+                    "sell fills bumped down — round-trip cost is 2× this.  "
+                    "Liquid large-caps: 1-5 bps. Small-caps: 10-30 bps.",
+                    target="bt-real-slip-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=2),
+            dbc.Col([
+                html.Span("Validation mode", id="bt-real-val-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Dropdown(
+                    id="bt-real-val",
+                    options=[
+                        {"label": "Full history (single run)",         "value": "full"},
+                        {"label": "Walk-forward (4 folds)",             "value": "wf4"},
+                        {"label": "Walk-forward (3 folds)",             "value": "wf3"},
+                        {"label": "Walk-forward (2 folds)",             "value": "wf2"},
+                    ],
+                    value="full", clearable=False,
+                    style={"fontSize": "13px", "marginTop": "4px"},
+                ),
+                dbc.Tooltip(
+                    "Walk-forward splits history into N OOS chunks and "
+                    "tests the strategy on each.  Use it to spot strategies "
+                    "that only worked in one regime.  4 folds = ~4 OOS "
+                    "Sharpe scores you can compare for consistency.",
+                    target="bt-real-val-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=4),
+        ], className="g-3"),
+    ], style={**CARD, "marginTop": "12px"})
 
 
 def _account_panel():
@@ -366,7 +449,96 @@ def _exit_conditions_panel():
     ], style={**CARD, "marginTop": "12px"})
 
 
+def render_walk_forward(results: dict):
+    """Per-fold table + aggregate Sharpe summary for a walk-forward run."""
+    folds   = results.get("fold_results", [])
+    agg     = results.get("aggregate", {})
+    if not folds:
+        return html.P("Walk-forward returned no folds — date range too short?",
+                      style={"color": "#aaa", "fontSize": "13px"})
+
+    # Aggregate tiles up top
+    agg_items = [
+        ("Mean OOS Sharpe",   f"{agg.get('mean_oos_sharpe', 0):.2f}",
+         agg.get("mean_oos_sharpe", 0) >= 1),
+        ("Median OOS Sharpe", f"{agg.get('median_oos_sharpe', 0):.2f}",
+         agg.get("median_oos_sharpe", 0) >= 1),
+        ("Sharpe stdev",      f"{agg.get('stdev_oos_sharpe', 0):.2f}",
+         agg.get("stdev_oos_sharpe", 1) <= 1),
+        ("% positive folds",  f"{agg.get('pct_positive_folds', 0):.0f}%",
+         agg.get("pct_positive_folds", 0) >= 50),
+        ("Mean OOS return",
+         f"{'+' if agg.get('mean_oos_return_pct', 0) >= 0 else ''}{agg.get('mean_oos_return_pct', 0):.2f}%",
+         agg.get("mean_oos_return_pct", 0) >= 0),
+    ]
+    agg_row = dbc.Row([
+        dbc.Col(_metric_tile(label, value, positive), md=int(12 / len(agg_items)))
+        for label, value, positive in agg_items
+    ], className="g-3 mb-3")
+
+    # Per-fold table
+    header = html.Tr([
+        html.Th("Fold",      style=_th()),
+        html.Th("OOS window", style=_th()),
+        html.Th("Trades",    style=_th()),
+        html.Th("Return",    style=_th()),
+        html.Th("Sharpe",    style=_th()),
+        html.Th("Win rate",  style=_th()),
+        html.Th("Max DD",    style=_th()),
+    ])
+    rows = []
+    for fr in folds:
+        m = fr.get("metrics", {})
+        sharpe = m.get("sharpe", 0)
+        ret    = m.get("total_return_pct", 0)
+        rows.append(html.Tr([
+            html.Td(f"#{fr['fold']}",                     style=_td(weight="500")),
+            html.Td(f"{fr['oos_window'][0]} → {fr['oos_window'][1]}",
+                                                          style=_td()),
+            html.Td(str(m.get("total_trades", 0)),        style=_td()),
+            html.Td(f"{'+' if ret >= 0 else ''}{ret:.2f}%",
+                    style={**_td(), "color": "#27500A" if ret >= 0 else "#A32D2D"}),
+            html.Td(f"{sharpe:.2f}",                       style=_td()),
+            html.Td(f"{m.get('win_rate_pct', 0):.1f}%",    style=_td()),
+            html.Td(f"{m.get('max_drawdown_pct', 0):.2f}%", style=_td()),
+        ]))
+
+    return html.Div([
+        _section_label(f"Walk-forward results — {results.get('run_id', '')}"),
+        agg_row,
+        html.Div([
+            html.P("Per-fold breakdown",
+                   style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
+            html.Table([html.Thead(header), html.Tbody(rows)],
+                       style={"width": "100%", "borderCollapse": "collapse"}),
+        ], style=CARD),
+    ])
+
+
+def _th():
+    return {
+        "textAlign": "left", "fontSize": "11px", "color": "#888",
+        "padding": "8px 6px", "borderBottom": "1px solid #eee",
+        "fontWeight": "500", "letterSpacing": "0.04em",
+        "textTransform": "uppercase",
+    }
+
+
+def _td(weight: str = "400"):
+    return {
+        "fontSize":     "13px",
+        "padding":      "8px 6px",
+        "borderBottom": "1px solid #f5f5f5",
+        "color":        "#222",
+        "fontWeight":   weight,
+    }
+
+
 def render_results(results: dict):
+    # Walk-forward results have a different shape
+    if results and "fold_results" in results:
+        return render_walk_forward(results)
+
     if not results or not results.get("metrics"):
         return html.P("Run a backtest to see results.", style={"color": "#aaa", "fontSize": "13px"})
 
