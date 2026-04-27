@@ -22,10 +22,34 @@ import logging
 import numpy as np
 import pandas as pd
 
+try:
+    from bot.config import SENTIMENT_CUTOFF_HOUR_UTC
+except Exception:
+    SENTIMENT_CUTOFF_HOUR_UTC = None
+
 logger = logging.getLogger(__name__)
 
 NEWS_WEIGHT = 0.60
 ST_WEIGHT   = 0.40
+
+
+def _bucket_to_trading_day(ts_series: pd.Series) -> pd.Series:
+    """
+    Bucket each timestamp to a trading-day date string.  Articles
+    published after ``SENTIMENT_CUTOFF_HOUR_UTC`` roll forward to the
+    next calendar day so they don't leak into the prior day's close.
+    Returns a series of dates (00:00:00) ready to groupby.
+    """
+    ts = pd.to_datetime(ts_series, utc=True, errors="coerce")
+    if SENTIMENT_CUTOFF_HOUR_UTC is None:
+        return ts.dt.tz_convert(None).dt.normalize()
+
+    # Add 1 day where hour >= cutoff
+    rolled = ts.where(
+        ts.dt.hour < SENTIMENT_CUTOFF_HOUR_UTC,
+        ts + pd.Timedelta(days=1),
+    )
+    return rolled.dt.tz_convert(None).dt.normalize()
 
 
 def aggregate_sentiment(
@@ -48,7 +72,7 @@ def _news_to_daily(records, symbol):
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
-    df["date"] = pd.to_datetime(df["published_at"]).dt.normalize()
+    df["date"] = _bucket_to_trading_day(df["published_at"])
     daily = df.groupby("date")["sentiment_score"].agg(["mean", "std", "count"])
     daily.columns = ["news_sentiment_mean", "news_sentiment_std", "news_count"]
     return daily.fillna(0)
@@ -59,7 +83,7 @@ def _stocktwits_to_daily(records, symbol):
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)
-    df["date"] = pd.to_datetime(df["published_at"]).dt.normalize()
+    df["date"] = _bucket_to_trading_day(df["published_at"])
 
     if "sentiment_score" in df.columns:
         df["score"] = df["raw_score"].fillna(df["sentiment_score"]).fillna(0.0)

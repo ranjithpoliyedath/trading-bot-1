@@ -60,6 +60,8 @@ def test_every_model_predicts(sample_symbols):
     df = add_breakout_features(df).tail(100)
 
     for meta in list_models():
+        if meta.type == "cross_sectional":
+            continue   # has its own runner, no per-symbol predict
         model = get_model(meta.id)
         out = model.predict_batch(df.copy())
         assert "signal" in out.columns

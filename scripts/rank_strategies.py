@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from bot.models.registry              import list_models   # noqa: E402
 from bot.universe                      import select_universe  # noqa: E402
 from dashboard.backtest_engine         import (                # noqa: E402
-    run_filtered_backtest, run_walk_forward,
+    run_filtered_backtest, run_walk_forward, run_cross_sectional_backtest,
 )
 
 
@@ -101,11 +101,22 @@ def main():
 
     rows = []
     for meta in list_models():
-        # Skip the model_v1 placeholder if it's still around (no real model)
+        # Skip user-saved custom models (those get scored individually).
         if meta.id.startswith("custom:"):
             continue
         try:
-            if args.folds > 0:
+            if meta.type == "cross_sectional":
+                # Cross-sectional models have a different runner.  No
+                # walk-forward yet — the panel-rank approach makes IS/OOS
+                # split more involved; left as a future extension.
+                out = run_cross_sectional_backtest(
+                    model_id     = meta.id,
+                    symbols      = syms,
+                    period_days  = args.period_days,
+                )
+                row = _format_metrics(out, meta.id, "full_period")
+                row["validation"] = "cross_sectional"
+            elif args.folds > 0:
                 out = run_walk_forward(
                     model_id        = meta.id,
                     n_folds         = args.folds,

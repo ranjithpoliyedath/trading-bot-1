@@ -672,6 +672,175 @@ def _empty_results() -> dict:
     }
 
 
+# ── Cross-sectional backtest ──────────────────────────────────────────────
+
+def run_cross_sectional_backtest(
+    model_id:       str,
+    symbols:        Optional[list]  = None,
+    period_days:    int             = 365 * 6,
+    top_decile:     float           = 0.10,
+    rebalance_days: int             = 21,
+    starting_cash:  float           = 10_000.0,
+    slippage_bps:   float           = 5.0,
+) -> dict:
+    """
+    Run a cross-sectional strategy.  The model's ``rank_universe``
+    produces a wide panel of ranks; on each rebalance day we equal-
+    weight the top ``top_decile`` of symbols by rank, hold them for
+    ``rebalance_days``, then re-form.
+
+    Long-only — short positions deliberately deferred (proper
+    short-side modelling needs borrow / margin assumptions).
+    """
+    from bot.models.registry import get_model
+    from bot.universe        import select_universe
+
+    # Distinguish None ("use default") from [] ("explicitly nothing")
+    if symbols is None:
+        syms = select_universe("top_100", limit=50)
+    else:
+        syms = list(symbols)
+    if not syms:
+        return _empty_results()
+
+    try:
+        model = get_model(model_id)
+    except Exception as exc:
+        logger.error("Cannot load cross-sectional model %r: %s", model_id, exc)
+        return _empty_results()
+
+    # Build the wide-format close panel from disk
+    closes = {}
+    for s in syms:
+        df = _load_features(s, period_days)
+        if df.empty or "close" not in df.columns:
+            continue
+        closes[s] = df["close"]
+    if not closes:
+        logger.warning("No symbols had features data for cross-sectional run.")
+        return _empty_results()
+
+    panel = pd.concat(closes, axis=1).sort_index()
+
+    # Get cross-sectional ranks per bar
+    try:
+        ranks = model.rank_universe(panel.copy())
+    except Exception as exc:
+        logger.error("rank_universe failed: %s", exc, exc_info=True)
+        return _empty_results()
+
+    # Walk the rebalance schedule
+    bps    = float(slippage_bps or 0) / 10_000.0
+    cash   = float(starting_cash)
+    equity = cash
+    holdings = {}                    # symbol -> shares
+    trades = []
+    equity_curve = [{"date": "start", "value": equity}]
+
+    rebal_dates = panel.index[::rebalance_days]
+
+    for i, dt in enumerate(rebal_dates):
+        if dt not in ranks.index:
+            continue
+        row_ranks = ranks.loc[dt].dropna()
+        if row_ranks.empty:
+            continue
+
+        # Top-decile picks
+        threshold = row_ranks.quantile(1 - top_decile)
+        picks     = row_ranks[row_ranks >= threshold].index.tolist()
+        if not picks:
+            continue
+
+        # ── Liquidate everything we currently hold (sell at current close × (1-bps)) ──
+        for sym, shares in list(holdings.items()):
+            price = panel.at[dt, sym] if sym in panel.columns else None
+            if price is None or pd.isna(price):
+                continue
+            fill = float(price) * (1 - bps)
+            cash += shares * fill
+            trades.append({
+                "date":        str(dt.date()) if hasattr(dt, "date") else str(dt),
+                "symbol":      sym,
+                "pl":          round(shares * fill - shares * holdings[sym + "_entry_price"], 2)
+                                if (sym + "_entry_price") in holdings else 0.0,
+                "win":         False,
+                "exit_reason": "rebalance",
+            })
+        holdings = {}
+
+        # ── Allocate equally among picks (buy at close × (1+bps)) ──
+        per_position = cash / len(picks)
+        for sym in picks:
+            price = panel.at[dt, sym]
+            if pd.isna(price):
+                continue
+            fill = float(price) * (1 + bps)
+            shares = int(per_position / fill)
+            if shares <= 0:
+                continue
+            cost = shares * fill
+            if cost > cash:
+                continue
+            cash -= cost
+            holdings[sym] = shares
+            holdings[sym + "_entry_price"] = fill   # piggyback storage
+
+        # mark-to-market equity
+        m2m = sum(
+            holdings[s] * float(panel.at[dt, s])
+            for s in holdings if not s.endswith("_entry_price")
+            and s in panel.columns and not pd.isna(panel.at[dt, s])
+        )
+        equity = cash + m2m
+        equity_curve.append({
+            "date":  str(dt.date()) if hasattr(dt, "date") else str(dt),
+            "value": round(float(equity), 2),
+        })
+
+    # Final liquidation at panel's last close so the equity curve is closed
+    last_dt = panel.index[-1]
+    for sym, shares in list(holdings.items()):
+        if sym.endswith("_entry_price") or sym not in panel.columns:
+            continue
+        price = panel.at[last_dt, sym]
+        if pd.isna(price):
+            continue
+        fill = float(price) * (1 - bps)
+        cash += shares * fill
+    equity = cash
+    equity_curve.append({"date": str(last_dt.date()), "value": round(equity, 2)})
+
+    # Reduce trade dicts to just real trades (the messy storage trick above
+    # leaves entry-price-piggyback strings around — strip them)
+    trades = [t for t in trades if not t["symbol"].endswith("_entry_price")]
+    monthly = _calc_monthly_returns(equity_curve)
+
+    # For metrics, treat each rebalance-period change in equity as a "trade P&L"
+    pls = [equity_curve[k]["value"] - equity_curve[k - 1]["value"]
+           for k in range(1, len(equity_curve))]
+    pseudo_trades = [{"date": equity_curve[k]["date"], "symbol": "—",
+                       "pl": round(p, 2), "win": p > 0, "exit_reason": "rebalance"}
+                      for k, p in enumerate(pls, start=1) if p != 0]
+    metrics = _calc_metrics(pseudo_trades, equity_curve)
+    metrics["symbols_traded"] = len(set(s for s in holdings
+                                         if not s.endswith("_entry_price")))
+
+    run_id = f"XS-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-{len(syms)}syms"
+    return {
+        "run_id":         run_id,
+        "model":          model_id,
+        "symbol":         f"{len(syms)} symbols (cross-sectional)",
+        "period_days":    period_days,
+        "conf_threshold": 0,
+        "metrics":        metrics,
+        "equity_curve":   equity_curve,
+        "monthly_returns": monthly,
+        "trades":         pseudo_trades,
+        "run_at":         datetime.now().isoformat(),
+    }
+
+
 # ── Walk-forward validation ─────────────────────────────────────────────────
 
 def walk_forward_folds(

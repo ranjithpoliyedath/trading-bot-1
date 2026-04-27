@@ -48,7 +48,8 @@ NUMBOX = {
 
 
 def _strategy_options():
-    """Only registered strategies that have a declared param_space."""
+    """Only registered strategies with a declared param_space — and
+    only per-symbol ones (cross-sectional needs its own search loop)."""
     from bot.strategy_finder import PARAM_SPACES
     try:
         from bot.models.registry import list_models
@@ -57,6 +58,8 @@ def _strategy_options():
         models = []
     out = []
     for m in models:
+        if m.type == "cross_sectional":
+            continue
         if m.id in PARAM_SPACES:
             out.append({"label": f"{m.name} [{m.type}]", "value": m.id})
     return out or [{"label": "rsi_macd_v1 [rule]", "value": "rsi_macd_v1"}]

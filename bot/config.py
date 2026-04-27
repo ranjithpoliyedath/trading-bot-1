@@ -25,6 +25,13 @@ DATA_LOOKBACK_DAYS  = DATA_LOOKBACK_YEARS * 365
 # Days of news history to fetch from Alpaca News API
 NEWS_LOOKBACK_DAYS = 60
 
+# Trading-day close in UTC.  Articles / posts published *after* this
+# hour get bucketed into the *next* trading day's sentiment window —
+# an article released at 6pm ET on Monday wasn't visible to a
+# Monday-close trade.  20:00 UTC ≈ 4pm ET (US equity close).
+# Set to None to revert to the legacy "any time of day = today" bucketing.
+SENTIMENT_CUTOFF_HOUR_UTC = 20
+
 
 # ── Feature engineering ───────────────────────────────────────────────────────
 

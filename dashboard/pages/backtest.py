@@ -24,11 +24,13 @@ INDICATORS = ["RSI", "MACD", "EMA cross", "Bollinger", "ATR", "Volume ratio", "V
 
 
 def _model_options():
-    """Pull live options from the registry (built-in + custom)."""
+    """Pull live options from the registry — exclude cross-sectional
+    strategies (they need ``run_cross_sectional_backtest``, not the
+    per-symbol runner this page wires up)."""
     try:
         from bot.models.registry import list_models
         return [{"label": f"{m.name} [{m.type}]", "value": m.id}
-                for m in list_models()]
+                for m in list_models() if m.type != "cross_sectional"]
     except Exception:
         return [{"label": "rsi_macd_v1", "value": "rsi_macd_v1"}]
 

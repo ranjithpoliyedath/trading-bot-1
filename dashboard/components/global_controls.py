@@ -9,11 +9,15 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 def _load_models():
-    """Pull options from the registry — built-in + saved custom models."""
+    """Pull options from the registry — built-in + saved custom models.
+    Cross-sectional models are excluded — they need their own runner
+    (``dashboard.backtest_engine.run_cross_sectional_backtest``)."""
     try:
         from bot.models.registry import list_models
         opts = []
         for m in list_models():
+            if m.type == "cross_sectional":
+                continue
             tag = "custom" if m.id.startswith("custom:") else "builtin"
             opts.append({
                 "label": f"{m.name}  [{tag}]",

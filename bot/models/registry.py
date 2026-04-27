@@ -83,6 +83,7 @@ def _ensure_builtin_imports():
             golden_cross_v1, donchian_v1, connors_rsi2_v1, ibs_v1,
             adx_trend_v1, keltner_breakout_v1, obv_momentum_v1,
             zscore_reversion_v1,
+            jt_momentum_v1,
         )
     except ImportError as exc:
         logger.warning("Could not import built-in models: %s", exc)

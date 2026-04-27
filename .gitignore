@@ -11,3 +11,5 @@ dashboard/custom_models/
 dashboard/backtests/BT-*.json
 dashboard/backtests/WF-*.json
 dashboard/backtests/SF-*.json
+dashboard/backtests/XS-*.json
+dashboard/backtests/tuned_experimentals.json

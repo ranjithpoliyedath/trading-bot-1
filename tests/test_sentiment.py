@@ -207,3 +207,38 @@ class TestAggregator:
         news = [_news("AAPL", "2024-01-14", 0.5), _news("AAPL", "2024-01-15", -0.3)]
         df   = aggregate_sentiment(news, [], ["AAPL"])["AAPL"]
         assert len(df) == 2
+
+
+# ── Look-ahead guard (article published after the close rolls forward) ─────
+
+class TestLookaheadGuard:
+
+    def _at(self, dt_str: str, score: float):
+        return {
+            "symbol":          "AAPL",
+            "published_at":    datetime.fromisoformat(dt_str).replace(tzinfo=timezone.utc),
+            "sentiment_score": score,
+            "headline":        "test",
+        }
+
+    def test_pre_cutoff_stays_on_same_day(self):
+        # 19:00 UTC = 3pm ET — before close, lands on Jan 15.
+        news = [self._at("2024-01-15T19:00:00", 0.5)]
+        df = aggregate_sentiment(news, [], ["AAPL"])["AAPL"]
+        assert pd.Timestamp("2024-01-15") in df.index
+
+    def test_post_cutoff_rolls_to_next_day(self):
+        # 22:00 UTC = 6pm ET — after close, should roll to Jan 16.
+        news = [self._at("2024-01-15T22:00:00", 0.5)]
+        df = aggregate_sentiment(news, [], ["AAPL"])["AAPL"]
+        assert pd.Timestamp("2024-01-16") in df.index
+        assert pd.Timestamp("2024-01-15") not in df.index
+
+    def test_mixed_pre_post_cutoff_buckets_correctly(self):
+        news = [
+            self._at("2024-01-15T15:00:00",  0.8),    # pre-cutoff → Jan 15
+            self._at("2024-01-15T23:00:00", -0.6),    # post-cutoff → Jan 16
+        ]
+        df = aggregate_sentiment(news, [], ["AAPL"])["AAPL"]
+        assert df.loc["2024-01-15", "news_sentiment_mean"] >  0
+        assert df.loc["2024-01-16", "news_sentiment_mean"] <  0
