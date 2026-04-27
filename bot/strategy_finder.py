@@ -74,6 +74,38 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "consol_max_rng",   "type": "float", "low": 0.08, "high": 0.20, "step": 0.01},
         {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
+    "golden_cross_v1": [
+        {"name": "trend_buffer",   "type": "float", "low": 0.0,  "high": 0.05, "step": 0.005},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "donchian_v1": [
+        {"name": "breakout_period", "type": "int",   "low": 10, "high": 40},
+        {"name": "min_confidence",  "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "connors_rsi2_v1": [
+        {"name": "buy_rsi2",       "type": "int",   "low": 3,  "high": 20},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "ibs_v1": [
+        {"name": "buy_ibs_max",    "type": "float", "low": 0.05, "high": 0.30, "step": 0.01},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "adx_trend_v1": [
+        {"name": "buy_adx",        "type": "int",   "low": 18, "high": 35},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "keltner_breakout_v1": [
+        {"name": "atr_multiplier", "type": "float", "low": 1.0, "high": 3.0, "step": 0.1},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "obv_momentum_v1": [
+        {"name": "min_5d_return",  "type": "float", "low": 0.0,  "high": 0.05, "step": 0.005},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "zscore_reversion_v1": [
+        {"name": "buy_zscore",     "type": "float", "low": -3.0, "high": -1.0, "step": 0.1},
+        {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
 }
 
 
@@ -137,6 +169,33 @@ def params_to_filters(strategy_id: str, params: dict) -> list[dict]:
             {"field": "contraction_count",   "op": ">=", "value": params["min_contractions"]},
             {"field": "consolidation_range", "op": "<=", "value": params["consol_max_rng"]},
         ]
+    if strategy_id == "donchian_v1":
+        # Donchian period is a class-level tunable; here we approximate by
+        # filtering on the existing donchian_high_20 column.  Specific period
+        # tuning is left to a future param-injected version.
+        return []
+    if strategy_id == "connors_rsi2_v1":
+        return [
+            {"field": "rsi_2", "op": "<", "value": params.get("buy_rsi2", 10)},
+        ]
+    if strategy_id == "ibs_v1":
+        return [
+            {"field": "ibs", "op": "<", "value": params.get("buy_ibs_max", 0.20)},
+        ]
+    if strategy_id == "adx_trend_v1":
+        return [
+            {"field": "adx_14", "op": ">", "value": params.get("buy_adx", 25)},
+        ]
+    if strategy_id == "obv_momentum_v1":
+        return [
+            {"field": "price_change_5d", "op": ">", "value": params.get("min_5d_return", 0.0)},
+        ]
+    if strategy_id == "zscore_reversion_v1":
+        return [
+            {"field": "zscore_close_20", "op": "<", "value": params.get("buy_zscore", -1.5)},
+        ]
+    # golden_cross_v1, keltner_breakout_v1: tuning happens via min_confidence
+    # only — the strategies' published rules are kept intact.
     return []
 
 
