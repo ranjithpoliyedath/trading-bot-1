@@ -44,7 +44,8 @@ def find_shallow_symbols(min_rows: int) -> list[tuple[str, int, str]]:
         symbol = path.name.split("_")[0]
         try:
             df = pd.read_parquet(path)
-        except Exception:
+        except Exception as exc:
+            logger.warning("Could not read %s: %s — skipping.", path.name, exc)
             continue
         if len(df) < min_rows:
             start = str(df.index.min().date()) if len(df) else "—"

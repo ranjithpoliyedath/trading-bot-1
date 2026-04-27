@@ -763,12 +763,13 @@ def run_cross_sectional_backtest(
         return _empty_results()
 
     # Walk the rebalance schedule
-    bps    = float(slippage_bps or 0) / 10_000.0
-    cash   = float(starting_cash)
-    equity = cash
-    holdings = {}                    # symbol -> shares
-    trades = []
-    equity_curve = [{"date": "start", "value": equity}]
+    bps           = float(slippage_bps or 0) / 10_000.0
+    cash          = float(starting_cash)
+    equity        = cash
+    holdings:      dict[str, int]   = {}     # symbol -> shares
+    entry_prices:  dict[str, float] = {}     # symbol -> entry fill price
+    trades        = []
+    equity_curve  = [{"date": "start", "value": equity}]
 
     rebal_dates = panel.index[::rebalance_days]
 
@@ -792,15 +793,17 @@ def run_cross_sectional_backtest(
                 continue
             fill = float(price) * (1 - bps)
             cash += shares * fill
+            entry_fill = entry_prices.get(sym, fill)
+            pl = round((fill - entry_fill) * shares, 2)
             trades.append({
                 "date":        str(dt.date()) if hasattr(dt, "date") else str(dt),
                 "symbol":      sym,
-                "pl":          round(shares * fill - shares * holdings[sym + "_entry_price"], 2)
-                                if (sym + "_entry_price") in holdings else 0.0,
-                "win":         False,
+                "pl":          pl,
+                "win":         pl > 0,
                 "exit_reason": "rebalance",
             })
-        holdings = {}
+        holdings.clear()
+        entry_prices.clear()
 
         # ── Allocate equally among picks (buy at close × (1+bps)) ──
         per_position = cash / len(picks)
@@ -816,14 +819,14 @@ def run_cross_sectional_backtest(
             if cost > cash:
                 continue
             cash -= cost
-            holdings[sym] = shares
-            holdings[sym + "_entry_price"] = fill   # piggyback storage
+            holdings[sym]     = shares
+            entry_prices[sym] = fill
 
         # mark-to-market equity
         m2m = sum(
-            holdings[s] * float(panel.at[dt, s])
-            for s in holdings if not s.endswith("_entry_price")
-            and s in panel.columns and not pd.isna(panel.at[dt, s])
+            shares * float(panel.at[dt, sym])
+            for sym, shares in holdings.items()
+            if sym in panel.columns and not pd.isna(panel.at[dt, sym])
         )
         equity = cash + m2m
         equity_curve.append({
@@ -834,43 +837,58 @@ def run_cross_sectional_backtest(
     # Final liquidation at panel's last close so the equity curve is closed
     last_dt = panel.index[-1]
     for sym, shares in list(holdings.items()):
-        if sym.endswith("_entry_price") or sym not in panel.columns:
+        if sym not in panel.columns:
             continue
         price = panel.at[last_dt, sym]
         if pd.isna(price):
             continue
         fill = float(price) * (1 - bps)
         cash += shares * fill
+        entry_fill = entry_prices.get(sym, fill)
+        pl = round((fill - entry_fill) * shares, 2)
+        trades.append({
+            "date":        str(last_dt.date()) if hasattr(last_dt, "date") else str(last_dt),
+            "symbol":      sym,
+            "pl":          pl,
+            "win":         pl > 0,
+            "exit_reason": "final_liquidation",
+        })
+    holdings.clear()
+    entry_prices.clear()
     equity = cash
     equity_curve.append({"date": str(last_dt.date()), "value": round(equity, 2)})
 
-    # Reduce trade dicts to just real trades (the messy storage trick above
-    # leaves entry-price-piggyback strings around — strip them)
-    trades = [t for t in trades if not t["symbol"].endswith("_entry_price")]
     monthly = _calc_monthly_returns(equity_curve)
 
-    # For metrics, treat each rebalance-period change in equity as a "trade P&L"
-    pls = [equity_curve[k]["value"] - equity_curve[k - 1]["value"]
-           for k in range(1, len(equity_curve))]
-    pseudo_trades = [{"date": equity_curve[k]["date"], "symbol": "—",
-                       "pl": round(p, 2), "win": p > 0, "exit_reason": "rebalance"}
-                      for k, p in enumerate(pls, start=1) if p != 0]
-    metrics = _calc_metrics(pseudo_trades, equity_curve)
-    metrics["symbols_traded"] = len(set(s for s in holdings
-                                         if not s.endswith("_entry_price")))
+    # Metrics use rebalance-period equity changes as the "trade" unit —
+    # for a cross-sectional strategy that's the natural P&L granularity
+    # (each rebalance is one cohort decision).  The per-symbol trade log
+    # is preserved separately on the envelope as `trades` so the UI can
+    # show the actual buy/sell history if needed.
+    rebalance_pls = [equity_curve[k]["value"] - equity_curve[k - 1]["value"]
+                      for k in range(1, len(equity_curve))]
+    rebalance_trades = [
+        {"date": equity_curve[k]["date"], "symbol": "—",
+         "pl":   round(p, 2), "win": p > 0,
+         "exit_reason": "rebalance"}
+        for k, p in enumerate(rebalance_pls, start=1) if p != 0
+    ]
+    metrics = _calc_metrics(rebalance_trades, equity_curve)
+    metrics["symbols_traded"] = len({t["symbol"] for t in trades})
 
     run_id = f"XS-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-{len(syms)}syms"
     return {
-        "run_id":         run_id,
-        "model":          model_id,
-        "symbol":         f"{len(syms)} symbols (cross-sectional)",
-        "period_days":    period_days,
-        "conf_threshold": 0,
-        "metrics":        metrics,
-        "equity_curve":   equity_curve,
-        "monthly_returns": monthly,
-        "trades":         pseudo_trades,
-        "run_at":         datetime.now().isoformat(),
+        "run_id":            run_id,
+        "model":             model_id,
+        "symbol":            f"{len(syms)} symbols (cross-sectional)",
+        "period_days":       period_days,
+        "conf_threshold":    0,
+        "metrics":           metrics,
+        "equity_curve":      equity_curve,
+        "monthly_returns":   monthly,
+        "trades":            trades,             # per-symbol buy/sell history
+        "rebalance_trades":  rebalance_trades,   # one entry per rebalance period
+        "run_at":            datetime.now().isoformat(),
     }
 
 

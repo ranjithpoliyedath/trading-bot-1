@@ -105,6 +105,49 @@ class TestRunner:
         # Empty results envelope rather than crash
         assert out.get("metrics", {}).get("total_trades", 0) == 0
 
+    def test_runner_pl_per_trade_matches_equity_change(self, have_data):
+        """
+        Regression test for the piggyback-storage bug: trade P&L summed
+        across the run should track the equity curve's net change.  An
+        old version of the runner stuffed entry-prices into the holdings
+        dict alongside share counts, so liquidations multiplied entry-
+        price floats as if they were shares — corrupting both cash and
+        the trade log silently.
+        """
+        from dashboard.backtest_engine import run_cross_sectional_backtest
+        out = run_cross_sectional_backtest(
+            model_id="jt_momentum_v1", symbols=have_data,
+            period_days=365 * 6, top_decile=0.30, rebalance_days=21,
+        )
+        trades = out.get("trades", [])
+        if not trades:
+            return                                  # nothing to assert on
+        total_pl = sum(float(t.get("pl", 0) or 0) for t in trades)
+        # At least one trade should have non-zero P&L if there were trades
+        assert any(float(t.get("pl", 0) or 0) != 0 for t in trades), \
+            "every trade has pl=0 — likely the piggyback-storage bug returned"
+        # And the summed P&L should be in the same ballpark as the equity
+        # curve's net change (not necessarily exactly equal — buy/sell
+        # slippage on each leg, partial-share rounding).
+        ec = out.get("equity_curve", [])
+        if len(ec) >= 2:
+            net = float(ec[-1]["value"]) - float(ec[0]["value"])
+            assert abs(total_pl - net) <= max(50.0, abs(net) * 0.05), \
+                f"trade P&L sum ({total_pl:.2f}) far from equity change ({net:.2f})"
+
+    def test_runner_trade_win_flag_matches_pl_sign(self, have_data):
+        from dashboard.backtest_engine import run_cross_sectional_backtest
+        out = run_cross_sectional_backtest(
+            model_id="jt_momentum_v1", symbols=have_data,
+            period_days=365 * 6, top_decile=0.30, rebalance_days=21,
+        )
+        for t in out.get("trades", []):
+            pl = float(t.get("pl", 0) or 0)
+            assert bool(t.get("win")) == (pl > 0), (
+                f"trade win flag {t.get('win')} doesn't match pl sign "
+                f"({pl}) for {t}"
+            )
+
 
 # ── UI guards: cross-sectional models hidden from per-symbol dropdowns ──────
 

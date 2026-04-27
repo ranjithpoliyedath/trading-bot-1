@@ -12,10 +12,15 @@ are also surfaced through this registry.
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Type
 
 from bot.models.base import BaseModel, ModelMetadata
+
+# Same allowlist the save endpoints enforce — defends _load_custom_model
+# against path traversal if a model_id arrives from an unvalidated source.
+_CUSTOM_ID_RE = re.compile(r"^[a-zA-Z0-9_\-]{1,50}$")
 
 logger = logging.getLogger(__name__)
 
@@ -111,10 +116,24 @@ def _list_custom_models() -> list[ModelMetadata]:
 
 
 def _load_custom_model(custom_id: str) -> BaseModel:
-    """Load a custom model from its JSON file and wrap it as a BaseModel."""
+    """Load a custom model from its JSON file and wrap it as a BaseModel.
+
+    Defensive: validate ``custom_id`` against the same allowlist the
+    save endpoints use, and verify the resolved path stays inside
+    ``CUSTOM_MODELS_DIR`` so a crafted ``custom:../..`` model_id can't
+    read JSON from outside the intended directory.
+    """
     from bot.models.custom import CustomRuleModel    # local import to avoid cycle
 
-    path = CUSTOM_MODELS_DIR / f"{custom_id}.json"
+    if not _CUSTOM_ID_RE.match(custom_id or ""):
+        raise KeyError(f"Invalid custom model id: {custom_id!r}")
+
+    path = (CUSTOM_MODELS_DIR / f"{custom_id}.json").resolve()
+    try:
+        path.relative_to(CUSTOM_MODELS_DIR.resolve())
+    except ValueError:
+        raise KeyError(f"Refusing to load custom model outside the dir: {custom_id!r}")
+
     if not path.exists():
         raise KeyError(f"Custom model not found: {custom_id}")
 

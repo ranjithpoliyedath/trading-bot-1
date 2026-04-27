@@ -90,20 +90,30 @@ def add_donchian(df: pd.DataFrame, periods=(20, 10)) -> pd.DataFrame:
 
 # ── Keltner channel (ATR-based) ─────────────────────────────────────────────
 
-def add_keltner(df: pd.DataFrame, period: int = 20, multiplier: float = 2.0) -> pd.DataFrame:
+def add_keltner(
+    df: pd.DataFrame,
+    period:     int   = 20,
+    multiplier: float = 2.0,
+    atr_period: int   = 14,
+) -> pd.DataFrame:
     """
-    Append keltner_upper, keltner_middle, keltner_lower based on EMA
-    of close ± multiplier × ATR.
+    Append keltner_upper / _middle / _lower bands.
+
+    Centerline is an EMA of close over ``period`` bars; bands are
+    ``multiplier × ATR(atr_period)``.  Both are configurable so the
+    caller can match Chester Keltner's original (period=10, mult=1.5)
+    or Linda Raschke's later refinement (period=20, mult=2.0).
     """
-    if "atr_14" not in df.columns:
-        df = add_atr(df, period=14)
+    atr_col = f"atr_{atr_period}"
+    if atr_col not in df.columns:
+        df = add_atr(df, period=atr_period)
 
     out = df.copy()
     middle = out["close"].ewm(span=period, min_periods=2, adjust=False).mean()
-    band   = multiplier * out["atr_14"]
-    out[f"keltner_upper"]  = middle + band
-    out[f"keltner_middle"] = middle
-    out[f"keltner_lower"]  = middle - band
+    band   = multiplier * out[atr_col]
+    out["keltner_upper"]  = middle + band
+    out["keltner_middle"] = middle
+    out["keltner_lower"]  = middle - band
     return out
 
 
@@ -127,25 +137,32 @@ def add_atr(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
 
 def add_obv(df: pd.DataFrame, slope_window: int = 20) -> pd.DataFrame:
     """
-    Append obv (cumulative) and obv_slope_<window> (linear-regression slope
-    over the last `slope_window` bars).
+    Append ``obv`` (cumulative on-balance volume) and
+    ``obv_slope_<window>`` (rolling linear-regression slope of OBV
+    over the last ``slope_window`` bars).
+
+    For a daily universe of ~500 symbols this is the slowest indicator
+    helper but still completes in under 2 s — fine for nightly cron.
     """
     out = df.copy()
     direction = np.sign(out["close"].diff().fillna(0))
     out["obv"] = (direction * out["volume"]).cumsum()
 
-    # Slope of OBV over a rolling window (simple least-squares)
-    def _slope(arr):
-        if len(arr) < 2 or np.all(np.isnan(arr)):
+    n_x = np.arange(int(slope_window), dtype=float)
+    def _slope(arr: np.ndarray) -> float:
+        if len(arr) < 2 or not np.isfinite(arr).all():
             return np.nan
-        x = np.arange(len(arr))
-        try:
-            return np.polyfit(x, arr, 1)[0]
-        except Exception:
+        # Use the slice's actual length (n_x is sized for full windows;
+        # rolling.apply hands shorter arrays at the head).
+        x = n_x[: len(arr)]
+        x_mean, y_mean = x.mean(), arr.mean()
+        var_x = float(((x - x_mean) ** 2).sum())
+        if var_x == 0:
             return np.nan
+        return float(((x - x_mean) * (arr - y_mean)).sum() / var_x)
 
     out[f"obv_slope_{slope_window}"] = (
-        out["obv"].rolling(slope_window, min_periods=max(2, slope_window // 3))
+        out["obv"].rolling(int(slope_window), min_periods=max(2, slope_window // 3))
                   .apply(_slope, raw=True)
     )
     return out

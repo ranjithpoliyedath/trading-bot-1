@@ -29,7 +29,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -352,13 +352,20 @@ def run_optuna(
 
     best = leaderboard_rows[0] if leaderboard_rows else {}
 
+    # study.best_value raises ValueError if no trial completed successfully —
+    # use try/except instead of trying to predict it from study.trials state.
+    try:
+        best_value = round(study.best_value, 3)
+    except Exception:
+        best_value = 0
+
     return {
         "strategy":    strategy_id,
         "n_trials":    len(results),
         "best":        best,
         "leaderboard": leaderboard_rows,
         "study_state": {
-            "best_value":   round(study.best_value, 3) if study.trials else 0,
+            "best_value":   best_value,
             "n_complete":   len([t for t in study.trials
                                  if t.state == optuna.trial.TrialState.COMPLETE]),
             "n_pruned":     len([t for t in study.trials

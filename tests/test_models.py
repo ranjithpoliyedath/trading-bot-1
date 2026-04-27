@@ -185,3 +185,22 @@ class TestCustomModel:
         model = CustomRuleModel(spec)
         signal, _ = model.predict(pd.Series({"rsi_14": float("nan")}))
         assert signal == "hold"
+
+
+# ── Path-traversal hardening on _load_custom_model ─────────────────────────
+
+class TestCustomModelPathSafety:
+
+    @pytest.mark.parametrize("malicious_id", [
+        "../etc/passwd",
+        "../../secret",
+        "subdir/leak",
+        "name with spaces",
+        "name.with.dots",
+        "name;rm -rf",
+        "",
+        "x" * 100,                # too long
+    ])
+    def test_invalid_custom_ids_rejected(self, malicious_id):
+        with pytest.raises(KeyError):
+            get_model(f"custom:{malicious_id}")
