@@ -131,19 +131,52 @@ def load_backtest(run_id: str) -> dict:
 
 
 def list_saved_backtests() -> list[dict]:
-    """Return list of saved backtest summaries for the dropdown."""
-    results = []
-    for path in sorted(BACKTEST_DIR.glob("*.json"), reverse=True):
+    """
+    Return saved-run summaries for the dashboard dropdown.
+
+    Sort order:
+      1. Seed runs (SEED-*) at the top — these are the curated examples
+         shipped with the project.
+      2. User runs sorted newest-first.
+    """
+    seeds: list[tuple[str, dict]] = []
+    user:  list[tuple[str, dict]] = []
+
+    # JSON artefacts in this dir that aren't user-loadable backtest runs
+    NON_RUN_FILES = {"seed_leaderboard.json", "tuned_experimentals.json"}
+
+    for path in sorted(BACKTEST_DIR.glob("*.json")):
+        if path.name in NON_RUN_FILES:
+            continue
         try:
             with open(path) as f:
                 data = json.load(f)
-            results.append({
-                "label": f"{data.get('run_id', path.stem)} | {data.get('metrics', {}).get('total_return_pct', 0):.1f}%",
-                "value": data.get("run_id", path.stem),
-            })
         except Exception:
             continue
-    return results
+
+        run_id   = data.get("run_id", path.stem)
+        metrics  = data.get("metrics", {}) or {}
+        agg      = data.get("aggregate", {}) or {}
+
+        # Walk-forward results don't have top-level metrics — pull from aggregate
+        ret    = metrics.get("total_return_pct", agg.get("mean_oos_return_pct", 0))
+        sharpe = metrics.get("sharpe",            agg.get("mean_oos_sharpe", 0))
+        trades = int(metrics.get("total_trades", 0) or 0)
+        if trades == 0 and data.get("fold_results"):
+            trades = sum(int((fr.get("metrics") or {}).get("total_trades", 0) or 0)
+                          for fr in data["fold_results"])
+
+        if data.get("seed_meta", {}).get("label"):
+            label = (f"⭐ {data['seed_meta']['label']}  "
+                     f"·  {ret:+.1f}%  ·  Sharpe {sharpe:+.2f}  ·  {trades} trades")
+            seeds.append((run_id, {"label": label, "value": run_id}))
+        else:
+            label = f"{run_id} · {ret:+.1f}% · Sharpe {sharpe:+.2f} · {trades} trades"
+            user.append((path.stat().st_mtime, {"label": label, "value": run_id}))
+
+    seeds.sort(key=lambda t: t[0])                        # alphabetical SEED-tag order
+    user.sort(key=lambda t: t[0], reverse=True)           # newest user runs first
+    return [s[1] for s in seeds] + [u[1] for u in user]
 
 
 def _load_features(symbol: str, period_days: int) -> pd.DataFrame:

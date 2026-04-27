@@ -1,0 +1,600 @@
+{
+  "run_id": "SEED-P2-rsi-macd-tuned",
+  "model": "rsi_macd_v1",
+  "symbol": "15 symbols",
+  "period_days": 2190,
+  "conf_threshold": 0.55,
+  "filters": [
+    {
+      "field": "rsi_14",
+      "op": "<",
+      "value": 30
+    }
+  ],
+  "metrics": {
+    "total_return_pct": 62.93,
+    "sharpe": 0.41,
+    "sortino": 0.12,
+    "expectancy": 170.09,
+    "edge_ratio": 1.27,
+    "profit_factor": 1.34,
+    "max_drawdown_pct": -36.09,
+    "win_rate_pct": 51.4,
+    "loss_rate_pct": 48.6,
+    "total_trades": 37,
+    "wins": 19,
+    "losses": 18,
+    "avg_win": 1301.43,
+    "avg_loss": -1024.1,
+    "avg_win_pct": 13.01,
+    "avg_loss_pct": -10.24,
+    "largest_win": 2522.83,
+    "largest_loss": -3557.63,
+    "symbols_traded": 15
+  },
+  "equity_curve": [
+    {
+      "date": "start",
+      "value": 10000.0
+    },
+    {
+      "date": "2021-09-01",
+      "value": 10518.3
+    },
+    {
+      "date": "2021-10-20",
+      "value": 11218.48
+    },
+    {
+      "date": "2022-06-03",
+      "value": 12430.93
+    },
+    {
+      "date": "2022-06-22",
+      "value": 13824.87
+    },
+    {
+      "date": "2022-07-08",
+      "value": 16347.7
+    },
+    {
+      "date": "2022-10-31",
+      "value": 17933.43
+    },
+    {
+      "date": "2022-12-19",
+      "value": 15743.13
+    },
+    {
+      "date": "2022-12-28",
+      "value": 14269.48
+    },
+    {
+      "date": "2023-01-05",
+      "value": 16684.91
+    },
+    {
+      "date": "2023-04-12",
+      "value": 16728.06
+    },
+    {
+      "date": "2023-09-07",
+      "value": 15969.87
+    },
+    {
+      "date": "2023-10-19",
+      "value": 15137.83
+    },
+    {
+      "date": "2023-10-26",
+      "value": 14422.34
+    },
+    {
+      "date": "2023-11-03",
+      "value": 14750.01
+    },
+    {
+      "date": "2024-06-26",
+      "value": 14862.06
+    },
+    {
+      "date": "2024-07-08",
+      "value": 16377.51
+    },
+    {
+      "date": "2024-07-26",
+      "value": 15938.46
+    },
+    {
+      "date": "2024-08-06",
+      "value": 15307.25
+    },
+    {
+      "date": "2024-08-15",
+      "value": 16704.52
+    },
+    {
+      "date": "2024-10-31",
+      "value": 13146.89
+    },
+    {
+      "date": "2024-11-07",
+      "value": 12544.51
+    },
+    {
+      "date": "2024-11-14",
+      "value": 11461.34
+    },
+    {
+      "date": "2024-11-20",
+      "value": 13089.51
+    },
+    {
+      "date": "2025-04-09",
+      "value": 12200.77
+    },
+    {
+      "date": "2025-04-24",
+      "value": 13829.78
+    },
+    {
+      "date": "2025-08-05",
+      "value": 15272.26
+    },
+    {
+      "date": "2025-11-10",
+      "value": 16900.41
+    },
+    {
+      "date": "2025-12-11",
+      "value": 16256.8
+    },
+    {
+      "date": "2026-01-06",
+      "value": 18157.88
+    },
+    {
+      "date": "2026-01-15",
+      "value": 17418.18
+    },
+    {
+      "date": "2026-01-15",
+      "value": 16684.04
+    },
+    {
+      "date": "2026-01-30",
+      "value": 16043.92
+    },
+    {
+      "date": "2026-02-03",
+      "value": 15323.14
+    },
+    {
+      "date": "2026-02-06",
+      "value": 14402.72
+    },
+    {
+      "date": "2026-03-02",
+      "value": 15871.0
+    },
+    {
+      "date": "2026-03-02",
+      "value": 15007.76
+    },
+    {
+      "date": "2026-03-09",
+      "value": 16293.28
+    }
+  ],
+  "monthly_returns": [
+    {
+      "month": "2021-10",
+      "return": 6.66
+    },
+    {
+      "month": "2022-07",
+      "return": 18.25
+    },
+    {
+      "month": "2023-01",
+      "return": 16.93
+    },
+    {
+      "month": "2023-10",
+      "return": -9.69
+    },
+    {
+      "month": "2023-11",
+      "return": 2.27
+    },
+    {
+      "month": "2024-07",
+      "return": 7.24
+    },
+    {
+      "month": "2024-08",
+      "return": 4.81
+    },
+    {
+      "month": "2024-11",
+      "return": -0.44
+    },
+    {
+      "month": "2025-12",
+      "return": -3.81
+    },
+    {
+      "month": "2026-01",
+      "return": -1.31
+    },
+    {
+      "month": "2026-02",
+      "return": -10.23
+    },
+    {
+      "month": "2026-03",
+      "return": 13.13
+    }
+  ],
+  "trades": [
+    {
+      "date": "2021-09-01",
+      "symbol": "CSX",
+      "pl": 518.3,
+      "win": true,
+      "exit_reason": "time_stop"
+    },
+    {
+      "date": "2021-10-20",
+      "symbol": "CSX",
+      "pl": 700.18,
+      "win": true,
+      "exit_reason": "time_stop"
+    },
+    {
+      "date": "2022-06-03",
+      "symbol": "NFLX",
+      "pl": 1212.45,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2022-06-22",
+      "symbol": "MARA",
+      "pl": 1393.94,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2022-07-08",
+      "symbol": "MARA",
+      "pl": 2522.83,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2022-10-31",
+      "symbol": "INTC",
+      "pl": 1585.73,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2022-12-19",
+      "symbol": "MARA",
+      "pl": -2190.3,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2022-12-28",
+      "symbol": "MARA",
+      "pl": -1473.65,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2023-01-05",
+      "symbol": "MARA",
+      "pl": 2415.43,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2023-04-12",
+      "symbol": "PFE",
+      "pl": 43.15,
+      "win": true,
+      "exit_reason": "time_stop"
+    },
+    {
+      "date": "2023-09-07",
+      "symbol": "JBLU",
+      "pl": -758.19,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2023-10-19",
+      "symbol": "AAL",
+      "pl": -832.04,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2023-10-26",
+      "symbol": "JBLU",
+      "pl": -715.49,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2023-11-03",
+      "symbol": "HIMS",
+      "pl": 327.67,
+      "win": true,
+      "exit_reason": "time_stop"
+    },
+    {
+      "date": "2024-06-26",
+      "symbol": "INTC",
+      "pl": 112.05,
+      "win": true,
+      "exit_reason": "time_stop"
+    },
+    {
+      "date": "2024-07-08",
+      "symbol": "PATH",
+      "pl": 1515.45,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "NVDA",
+      "pl": -439.05,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2024-08-06",
+      "symbol": "NVDA",
+      "pl": -631.21,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2024-08-15",
+      "symbol": "NVDA",
+      "pl": 1397.27,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2024-10-31",
+      "symbol": "SMCI",
+      "pl": -3557.63,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2024-11-07",
+      "symbol": "SMCI",
+      "pl": -602.38,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2024-11-14",
+      "symbol": "SMCI",
+      "pl": -1083.17,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2024-11-20",
+      "symbol": "SMCI",
+      "pl": 1628.17,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2025-04-09",
+      "symbol": "AAL",
+      "pl": -888.74,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2025-04-24",
+      "symbol": "HPE",
+      "pl": 1629.01,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2025-08-05",
+      "symbol": "PCG",
+      "pl": 1442.48,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2025-11-10",
+      "symbol": "KVUE",
+      "pl": 1628.15,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2025-12-11",
+      "symbol": "NFLX",
+      "pl": -643.61,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-01-06",
+      "symbol": "MARA",
+      "pl": 1901.08,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2026-01-15",
+      "symbol": "NFLX",
+      "pl": -739.7,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-01-15",
+      "symbol": "NOW",
+      "pl": -734.14,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-01-30",
+      "symbol": "NOW",
+      "pl": -640.12,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-02-03",
+      "symbol": "NFLX",
+      "pl": -720.78,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-02-06",
+      "symbol": "NOW",
+      "pl": -920.42,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-03-02",
+      "symbol": "NFLX",
+      "pl": 1468.28,
+      "win": true,
+      "exit_reason": "take_profit"
+    },
+    {
+      "date": "2026-03-02",
+      "symbol": "HIMS",
+      "pl": -863.24,
+      "win": false,
+      "exit_reason": "stop_loss"
+    },
+    {
+      "date": "2026-03-09",
+      "symbol": "NOW",
+      "pl": 1285.52,
+      "win": true,
+      "exit_reason": "take_profit"
+    }
+  ],
+  "per_symbol": [
+    {
+      "symbol": "NVDA",
+      "trades": 3,
+      "pl": 327.01,
+      "win_rate": 33.3
+    },
+    {
+      "symbol": "INTC",
+      "trades": 2,
+      "pl": 1697.78,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "AAL",
+      "trades": 2,
+      "pl": -1720.78,
+      "win_rate": 0.0
+    },
+    {
+      "symbol": "NFLX",
+      "trades": 5,
+      "pl": 576.64,
+      "win_rate": 40.0
+    },
+    {
+      "symbol": "PFE",
+      "trades": 1,
+      "pl": 43.15,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "PCG",
+      "trades": 1,
+      "pl": 1442.48,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "JBLU",
+      "trades": 2,
+      "pl": -1473.68,
+      "win_rate": 0.0
+    },
+    {
+      "symbol": "SMCI",
+      "trades": 4,
+      "pl": -3615.01,
+      "win_rate": 25.0
+    },
+    {
+      "symbol": "NOW",
+      "trades": 4,
+      "pl": -1009.16,
+      "win_rate": 25.0
+    },
+    {
+      "symbol": "MARA",
+      "trades": 6,
+      "pl": 4569.33,
+      "win_rate": 66.7
+    },
+    {
+      "symbol": "HPE",
+      "trades": 1,
+      "pl": 1629.01,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "KVUE",
+      "trades": 1,
+      "pl": 1628.15,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "HIMS",
+      "trades": 2,
+      "pl": -535.57,
+      "win_rate": 50.0
+    },
+    {
+      "symbol": "CSX",
+      "trades": 2,
+      "pl": 1218.48,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "PATH",
+      "trades": 1,
+      "pl": 1515.45,
+      "win_rate": 100.0
+    }
+  ],
+  "run_at": "2026-04-27T09:35:46.915456",
+  "label": "Phase 2: RSI+MACD tuned via Strategy Finder",
+  "seed_meta": {
+    "tag": "P2-rsi-macd-tuned",
+    "label": "Phase 2: RSI+MACD tuned via Strategy Finder",
+    "kind": "single_period",
+    "model_id": "rsi_macd_v1"
+  }
+}

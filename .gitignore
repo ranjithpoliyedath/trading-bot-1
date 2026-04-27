@@ -7,7 +7,11 @@ data/processed/
 logs/
 dashboard/custom_models/
 
-# User-generated backtest snapshots (keep seed leaderboard, ignore the rest)
+# User-generated backtest snapshots — gitignored.
+# Seed runs (SEED-*.json) and seed_leaderboard.json are NOT ignored;
+# they're shipped with the repo so the dashboard's "Saved runs"
+# dropdown has data on first open.  Regenerate with
+# `python scripts/save_seed_runs.py`.
 dashboard/backtests/BT-*.json
 dashboard/backtests/WF-*.json
 dashboard/backtests/SF-*.json

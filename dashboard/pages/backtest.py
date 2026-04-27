@@ -68,7 +68,17 @@ def layout(account: str, model: str, symbol: str):
         _filter_panel(),
         _section_label("Backtest — configure & run"),
         _controls_panel(initial_model, symbol, saved),
-        html.Div(id="bt-results-area"),
+        # Sentinel anchor + initial placeholder so the user always sees
+        # *something* below the fold and can scroll to it after Run.
+        html.Div(id="bt-results-anchor"),
+        html.Div(id="bt-results-area",
+                 children=html.P(
+                    "▼ Results will appear here after you click Run backtest.",
+                    style={"color": "#aaa", "fontSize": "12px",
+                            "padding": "12px", "fontStyle": "italic",
+                            "background": "#FAFAFA", "borderRadius": "8px",
+                            "border": "1px dashed #DDD",
+                            "textAlign": "center"})),
     ])
 
 
@@ -456,8 +466,32 @@ def render_walk_forward(results: dict):
     folds   = results.get("fold_results", [])
     agg     = results.get("aggregate", {})
     if not folds:
-        return html.P("Walk-forward returned no folds — date range too short?",
-                      style={"color": "#aaa", "fontSize": "13px"})
+        return html.Div([
+            _section_label("Walk-forward results — no folds"),
+            html.P("Walk-forward returned no folds — date range too short?",
+                   style={"color": "#aaa", "fontSize": "13px"}),
+        ])
+
+    total_trades = sum(int((fr.get("metrics") or {}).get("total_trades", 0) or 0)
+                        for fr in folds)
+    if total_trades == 0:
+        return html.Div([
+            _section_label(f"Walk-forward results — {results.get('run_id', '')}"),
+            html.Div([
+                html.P("⚠ No trades fired in any fold.",
+                       style={"fontSize": "14px", "fontWeight": "500",
+                              "color": "#A32D2D", "margin": "0 0 10px"}),
+                html.P("The strategy / filter combination didn't trigger a single buy across the chosen universe and period.  Common causes:",
+                       style={"fontSize": "13px", "color": "#444", "margin": "0 0 8px"}),
+                html.Ul([
+                    html.Li("Confidence threshold too tight — try lowering it (e.g. 0.55)."),
+                    html.Li("Filters too restrictive — for custom rule models, AND-only conditions multiply quickly."),
+                    html.Li("Period too short for warm-up — strategies that need SMA(200) or 90-day lookback need ≥ 1y per fold."),
+                    html.Li("Sentiment data sparse — strategies gating on sentiment > 0 fire only when news data is present (currently ~10% of bars)."),
+                    html.Li("Universe too small — try a broader scope or higher symbol limit."),
+                ], style={"fontSize": "13px", "color": "#444", "marginBottom": "0"}),
+            ], style=CARD),
+        ])
 
     # Aggregate tiles up top
     agg_items = [
@@ -547,6 +581,25 @@ def render_results(results: dict):
     m  = results["metrics"]
     ec = results.get("equity_curve", [])
     mr = results.get("monthly_returns", [])
+
+    # Empty-trade case — show clear diagnostic instead of zero-everything tiles
+    if int(m.get("total_trades", 0) or 0) == 0:
+        return html.Div([
+            _section_label(f"Results — {results.get('run_id', '')}"),
+            html.Div([
+                html.P("⚠ No trades fired with these parameters.",
+                       style={"fontSize": "14px", "fontWeight": "500",
+                              "color": "#A32D2D", "margin": "0 0 10px"}),
+                html.P("Common causes:", style={"fontSize": "13px",
+                                                  "color": "#444", "margin": "0 0 8px"}),
+                html.Ul([
+                    html.Li("Confidence threshold too tight — try 0.55 to start."),
+                    html.Li("Filter combination too restrictive — AND-only filters multiply quickly."),
+                    html.Li("Strategy needs sentiment / sma_200 / etc. that may be sparse on the chosen universe."),
+                    html.Li("Universe too small or period too short."),
+                ], style={"fontSize": "13px", "color": "#444", "marginBottom": "0"}),
+            ], style=CARD),
+        ])
 
     return html.Div([
         _section_label(f"Results — {results.get('run_id', '')}"),

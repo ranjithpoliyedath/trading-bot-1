@@ -1,0 +1,889 @@
+{
+  "run_id": "SEED-TOP1-jt-momentum",
+  "model": "jt_momentum_v1",
+  "symbol": "30 symbols (cross-sectional)",
+  "period_days": 2190,
+  "conf_threshold": 0,
+  "metrics": {
+    "total_return_pct": 432.56,
+    "sharpe": 0.96,
+    "sortino": 0.35,
+    "expectancy": 758.87,
+    "edge_ratio": 1.35,
+    "profit_factor": 2.0,
+    "max_drawdown_pct": -26.42,
+    "win_rate_pct": 59.6,
+    "loss_rate_pct": 40.4,
+    "total_trades": 57,
+    "wins": 34,
+    "losses": 23,
+    "avg_win": 2541.01,
+    "avg_loss": -1875.59,
+    "avg_win_pct": 25.41,
+    "avg_loss_pct": -18.76,
+    "largest_win": 9626.28,
+    "largest_loss": -14457.21,
+    "symbols_traded": 6
+  },
+  "equity_curve": [
+    {
+      "date": "start",
+      "value": 10000.0
+    },
+    {
+      "date": "2021-08-23",
+      "value": 9995.09
+    },
+    {
+      "date": "2021-09-22",
+      "value": 9993.87
+    },
+    {
+      "date": "2021-10-21",
+      "value": 12459.34
+    },
+    {
+      "date": "2021-11-19",
+      "value": 12464.48
+    },
+    {
+      "date": "2021-12-21",
+      "value": 11528.8
+    },
+    {
+      "date": "2022-01-21",
+      "value": 11309.83
+    },
+    {
+      "date": "2022-02-22",
+      "value": 10906.22
+    },
+    {
+      "date": "2022-03-23",
+      "value": 11520.2
+    },
+    {
+      "date": "2022-04-22",
+      "value": 10761.8
+    },
+    {
+      "date": "2022-05-23",
+      "value": 11127.91
+    },
+    {
+      "date": "2022-06-23",
+      "value": 9512.91
+    },
+    {
+      "date": "2022-07-25",
+      "value": 10202.57
+    },
+    {
+      "date": "2022-08-23",
+      "value": 11179.35
+    },
+    {
+      "date": "2022-09-22",
+      "value": 10431.23
+    },
+    {
+      "date": "2022-10-21",
+      "value": 12162.54
+    },
+    {
+      "date": "2022-11-21",
+      "value": 13372.98
+    },
+    {
+      "date": "2022-12-21",
+      "value": 13953.52
+    },
+    {
+      "date": "2023-01-24",
+      "value": 13931.58
+    },
+    {
+      "date": "2023-02-23",
+      "value": 14745.97
+    },
+    {
+      "date": "2023-03-24",
+      "value": 14256.17
+    },
+    {
+      "date": "2023-04-25",
+      "value": 15048.59
+    },
+    {
+      "date": "2023-05-24",
+      "value": 17056.82
+    },
+    {
+      "date": "2023-06-26",
+      "value": 18228.46
+    },
+    {
+      "date": "2023-07-26",
+      "value": 21112.74
+    },
+    {
+      "date": "2023-08-24",
+      "value": 19120.61
+    },
+    {
+      "date": "2023-09-25",
+      "value": 18676.49
+    },
+    {
+      "date": "2023-10-24",
+      "value": 18859.5
+    },
+    {
+      "date": "2023-11-22",
+      "value": 21940.19
+    },
+    {
+      "date": "2023-12-22",
+      "value": 28446.73
+    },
+    {
+      "date": "2024-01-25",
+      "value": 29239.3
+    },
+    {
+      "date": "2024-02-26",
+      "value": 38268.78
+    },
+    {
+      "date": "2024-03-26",
+      "value": 37980.85
+    },
+    {
+      "date": "2024-04-25",
+      "value": 33462.32
+    },
+    {
+      "date": "2024-05-24",
+      "value": 35431.96
+    },
+    {
+      "date": "2024-06-26",
+      "value": 37080.34
+    },
+    {
+      "date": "2024-07-26",
+      "value": 37773.27
+    },
+    {
+      "date": "2024-08-26",
+      "value": 36626.96
+    },
+    {
+      "date": "2024-09-25",
+      "value": 37151.46
+    },
+    {
+      "date": "2024-10-24",
+      "value": 35808.87
+    },
+    {
+      "date": "2024-11-22",
+      "value": 41887.2
+    },
+    {
+      "date": "2024-12-24",
+      "value": 45325.82
+    },
+    {
+      "date": "2025-01-28",
+      "value": 47978.12
+    },
+    {
+      "date": "2025-02-27",
+      "value": 50117.36
+    },
+    {
+      "date": "2025-03-28",
+      "value": 44965.3
+    },
+    {
+      "date": "2025-04-29",
+      "value": 50166.37
+    },
+    {
+      "date": "2025-05-29",
+      "value": 57262.83
+    },
+    {
+      "date": "2025-06-30",
+      "value": 59993.53
+    },
+    {
+      "date": "2025-07-30",
+      "value": 64623.46
+    },
+    {
+      "date": "2025-08-28",
+      "value": 62754.27
+    },
+    {
+      "date": "2025-09-29",
+      "value": 72380.55
+    },
+    {
+      "date": "2025-10-28",
+      "value": 71541.99
+    },
+    {
+      "date": "2025-11-26",
+      "value": 57084.78
+    },
+    {
+      "date": "2025-12-29",
+      "value": 58564.08
+    },
+    {
+      "date": "2026-01-29",
+      "value": 59147.91
+    },
+    {
+      "date": "2026-03-02",
+      "value": 56789.17
+    },
+    {
+      "date": "2026-03-31",
+      "value": 53413.98
+    },
+    {
+      "date": "2026-04-24",
+      "value": 53255.61
+    }
+  ],
+  "monthly_returns": [
+    {
+      "month": "2021-09",
+      "return": -0.01
+    },
+    {
+      "month": "2021-10",
+      "return": 24.67
+    },
+    {
+      "month": "2021-11",
+      "return": 0.04
+    },
+    {
+      "month": "2021-12",
+      "return": -7.51
+    },
+    {
+      "month": "2022-01",
+      "return": -1.9
+    },
+    {
+      "month": "2022-02",
+      "return": -3.57
+    },
+    {
+      "month": "2022-03",
+      "return": 5.63
+    },
+    {
+      "month": "2022-04",
+      "return": -6.58
+    },
+    {
+      "month": "2022-05",
+      "return": 3.4
+    },
+    {
+      "month": "2022-06",
+      "return": -14.51
+    },
+    {
+      "month": "2022-07",
+      "return": 7.25
+    },
+    {
+      "month": "2022-08",
+      "return": 9.57
+    },
+    {
+      "month": "2022-09",
+      "return": -6.69
+    },
+    {
+      "month": "2022-10",
+      "return": 16.6
+    },
+    {
+      "month": "2022-11",
+      "return": 9.95
+    },
+    {
+      "month": "2022-12",
+      "return": 4.34
+    },
+    {
+      "month": "2023-01",
+      "return": -0.16
+    },
+    {
+      "month": "2023-02",
+      "return": 5.85
+    },
+    {
+      "month": "2023-03",
+      "return": -3.32
+    },
+    {
+      "month": "2023-04",
+      "return": 5.56
+    },
+    {
+      "month": "2023-05",
+      "return": 13.34
+    },
+    {
+      "month": "2023-06",
+      "return": 6.87
+    },
+    {
+      "month": "2023-07",
+      "return": 15.82
+    },
+    {
+      "month": "2023-08",
+      "return": -9.44
+    },
+    {
+      "month": "2023-09",
+      "return": -2.32
+    },
+    {
+      "month": "2023-10",
+      "return": 0.98
+    },
+    {
+      "month": "2023-11",
+      "return": 16.33
+    },
+    {
+      "month": "2023-12",
+      "return": 29.66
+    },
+    {
+      "month": "2024-01",
+      "return": 2.79
+    },
+    {
+      "month": "2024-02",
+      "return": 30.88
+    },
+    {
+      "month": "2024-03",
+      "return": -0.75
+    },
+    {
+      "month": "2024-04",
+      "return": -11.9
+    },
+    {
+      "month": "2024-05",
+      "return": 5.89
+    },
+    {
+      "month": "2024-06",
+      "return": 4.65
+    },
+    {
+      "month": "2024-07",
+      "return": 1.87
+    },
+    {
+      "month": "2024-08",
+      "return": -3.03
+    },
+    {
+      "month": "2024-09",
+      "return": 1.43
+    },
+    {
+      "month": "2024-10",
+      "return": -3.61
+    },
+    {
+      "month": "2024-11",
+      "return": 16.97
+    },
+    {
+      "month": "2024-12",
+      "return": 8.21
+    },
+    {
+      "month": "2025-01",
+      "return": 5.85
+    },
+    {
+      "month": "2025-02",
+      "return": 4.46
+    },
+    {
+      "month": "2025-03",
+      "return": -10.28
+    },
+    {
+      "month": "2025-04",
+      "return": 11.57
+    },
+    {
+      "month": "2025-05",
+      "return": 14.15
+    },
+    {
+      "month": "2025-06",
+      "return": 4.77
+    },
+    {
+      "month": "2025-07",
+      "return": 7.72
+    },
+    {
+      "month": "2025-08",
+      "return": -2.89
+    },
+    {
+      "month": "2025-09",
+      "return": 15.34
+    },
+    {
+      "month": "2025-10",
+      "return": -1.16
+    },
+    {
+      "month": "2025-11",
+      "return": -20.21
+    },
+    {
+      "month": "2025-12",
+      "return": 2.59
+    },
+    {
+      "month": "2026-01",
+      "return": 1.0
+    },
+    {
+      "month": "2026-04",
+      "return": -0.3
+    }
+  ],
+  "trades": [
+    {
+      "date": "2021-08-23",
+      "symbol": "\u2014",
+      "pl": -4.91,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-09-22",
+      "symbol": "\u2014",
+      "pl": -1.22,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-10-21",
+      "symbol": "\u2014",
+      "pl": 2465.47,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-11-19",
+      "symbol": "\u2014",
+      "pl": 5.14,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-12-21",
+      "symbol": "\u2014",
+      "pl": -935.68,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-01-21",
+      "symbol": "\u2014",
+      "pl": -218.97,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-02-22",
+      "symbol": "\u2014",
+      "pl": -403.61,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-03-23",
+      "symbol": "\u2014",
+      "pl": 613.98,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-04-22",
+      "symbol": "\u2014",
+      "pl": -758.4,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-05-23",
+      "symbol": "\u2014",
+      "pl": 366.11,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-06-23",
+      "symbol": "\u2014",
+      "pl": -1615.0,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "\u2014",
+      "pl": 689.66,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "\u2014",
+      "pl": 976.78,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "\u2014",
+      "pl": -748.12,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "\u2014",
+      "pl": 1731.31,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "\u2014",
+      "pl": 1210.44,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "\u2014",
+      "pl": 580.54,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-01-24",
+      "symbol": "\u2014",
+      "pl": -21.94,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-02-23",
+      "symbol": "\u2014",
+      "pl": 814.39,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-03-24",
+      "symbol": "\u2014",
+      "pl": -489.8,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-04-25",
+      "symbol": "\u2014",
+      "pl": 792.42,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-05-24",
+      "symbol": "\u2014",
+      "pl": 2008.23,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-06-26",
+      "symbol": "\u2014",
+      "pl": 1171.64,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-07-26",
+      "symbol": "\u2014",
+      "pl": 2884.28,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-08-24",
+      "symbol": "\u2014",
+      "pl": -1992.13,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-09-25",
+      "symbol": "\u2014",
+      "pl": -444.12,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-10-24",
+      "symbol": "\u2014",
+      "pl": 183.01,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-11-22",
+      "symbol": "\u2014",
+      "pl": 3080.69,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-12-22",
+      "symbol": "\u2014",
+      "pl": 6506.54,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-01-25",
+      "symbol": "\u2014",
+      "pl": 792.57,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-02-26",
+      "symbol": "\u2014",
+      "pl": 9029.48,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-03-26",
+      "symbol": "\u2014",
+      "pl": -287.93,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-04-25",
+      "symbol": "\u2014",
+      "pl": -4518.53,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-05-24",
+      "symbol": "\u2014",
+      "pl": 1969.64,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-06-26",
+      "symbol": "\u2014",
+      "pl": 1648.38,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "\u2014",
+      "pl": 692.93,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "\u2014",
+      "pl": -1146.31,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "\u2014",
+      "pl": 524.5,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "\u2014",
+      "pl": -1342.59,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "\u2014",
+      "pl": 6078.33,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "\u2014",
+      "pl": 3438.62,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "\u2014",
+      "pl": 2652.3,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "\u2014",
+      "pl": 2139.24,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "\u2014",
+      "pl": -5152.06,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "\u2014",
+      "pl": 5201.07,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "\u2014",
+      "pl": 7096.46,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "\u2014",
+      "pl": 2730.7,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "\u2014",
+      "pl": 4629.93,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "\u2014",
+      "pl": -1869.19,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-09-29",
+      "symbol": "\u2014",
+      "pl": 9626.28,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-10-28",
+      "symbol": "\u2014",
+      "pl": -838.56,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-11-26",
+      "symbol": "\u2014",
+      "pl": -14457.21,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-12-29",
+      "symbol": "\u2014",
+      "pl": 1479.3,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2026-01-29",
+      "symbol": "\u2014",
+      "pl": 583.83,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2026-03-02",
+      "symbol": "\u2014",
+      "pl": -2358.74,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2026-03-31",
+      "symbol": "\u2014",
+      "pl": -3375.19,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2026-04-24",
+      "symbol": "\u2014",
+      "pl": -158.37,
+      "win": false,
+      "exit_reason": "rebalance"
+    }
+  ],
+  "run_at": "2026-04-27T09:35:12.246531",
+  "label": "JT 12-1 momentum  \u00b7  Sharpe 0.90, +800% (cross-sectional)",
+  "seed_meta": {
+    "tag": "TOP1-jt-momentum",
+    "label": "JT 12-1 momentum  \u00b7  Sharpe 0.90, +800% (cross-sectional)",
+    "kind": "cross_sectional",
+    "model_id": "jt_momentum_v1"
+  }
+}

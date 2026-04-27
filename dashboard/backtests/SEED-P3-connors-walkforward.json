@@ -1,0 +1,138 @@
+{
+  "model": "connors_rsi2_v1",
+  "n_folds": 4,
+  "fold_results": [
+    {
+      "fold": 1,
+      "oos_window": [
+        "2025-05-22",
+        "2025-08-14"
+      ],
+      "metrics": {
+        "total_return_pct": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "expectancy": 0,
+        "edge_ratio": 0,
+        "profit_factor": 0,
+        "max_drawdown_pct": 0,
+        "win_rate_pct": 0,
+        "loss_rate_pct": 0,
+        "total_trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "avg_win": 0,
+        "avg_loss": 0,
+        "avg_win_pct": 0,
+        "avg_loss_pct": 0,
+        "largest_win": 0,
+        "largest_loss": 0,
+        "symbols_traded": 0
+      },
+      "trades": []
+    },
+    {
+      "fold": 2,
+      "oos_window": [
+        "2025-08-14",
+        "2025-11-06"
+      ],
+      "metrics": {
+        "total_return_pct": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "expectancy": 0,
+        "edge_ratio": 0,
+        "profit_factor": 0,
+        "max_drawdown_pct": 0,
+        "win_rate_pct": 0,
+        "loss_rate_pct": 0,
+        "total_trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "avg_win": 0,
+        "avg_loss": 0,
+        "avg_win_pct": 0,
+        "avg_loss_pct": 0,
+        "largest_win": 0,
+        "largest_loss": 0,
+        "symbols_traded": 0
+      },
+      "trades": []
+    },
+    {
+      "fold": 3,
+      "oos_window": [
+        "2025-11-06",
+        "2026-01-29"
+      ],
+      "metrics": {
+        "total_return_pct": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "expectancy": 0,
+        "edge_ratio": 0,
+        "profit_factor": 0,
+        "max_drawdown_pct": 0,
+        "win_rate_pct": 0,
+        "loss_rate_pct": 0,
+        "total_trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "avg_win": 0,
+        "avg_loss": 0,
+        "avg_win_pct": 0,
+        "avg_loss_pct": 0,
+        "largest_win": 0,
+        "largest_loss": 0,
+        "symbols_traded": 0
+      },
+      "trades": []
+    },
+    {
+      "fold": 4,
+      "oos_window": [
+        "2026-01-29",
+        "2026-04-23"
+      ],
+      "metrics": {
+        "total_return_pct": 0,
+        "sharpe": 0,
+        "sortino": 0,
+        "expectancy": 0,
+        "edge_ratio": 0,
+        "profit_factor": 0,
+        "max_drawdown_pct": 0,
+        "win_rate_pct": 0,
+        "loss_rate_pct": 0,
+        "total_trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "avg_win": 0,
+        "avg_loss": 0,
+        "avg_win_pct": 0,
+        "avg_loss_pct": 0,
+        "largest_win": 0,
+        "largest_loss": 0,
+        "symbols_traded": 0
+      },
+      "trades": []
+    }
+  ],
+  "aggregate": {
+    "mean_oos_sharpe": 0.0,
+    "median_oos_sharpe": 0.0,
+    "stdev_oos_sharpe": 0.0,
+    "pct_positive_folds": 0.0,
+    "mean_oos_return_pct": 0.0
+  },
+  "run_id": "SEED-P3-connors-walkforward",
+  "run_at": "2026-04-27T09:35:42.331886",
+  "label": "Phase 3: Connors RSI(2) walk-forward (4 folds)",
+  "seed_meta": {
+    "tag": "P3-connors-walkforward",
+    "label": "Phase 3: Connors RSI(2) walk-forward (4 folds)",
+    "kind": "walk_forward",
+    "model_id": "connors_rsi2_v1"
+  }
+}
