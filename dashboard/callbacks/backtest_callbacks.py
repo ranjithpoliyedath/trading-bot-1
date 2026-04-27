@@ -97,11 +97,17 @@ def add_filter(n, current):
     State("bt-exit-sl-val",    "value"),
     State("bt-exit-ts-on",     "value"),
     State("bt-exit-ts-val",    "value"),
+    State("bt-acct-cash",      "value"),
+    State("bt-acct-sizing",    "value"),
+    State("bt-acct-arg-a",     "value"),
+    State("bt-acct-arg-b",     "value"),
+    State("bt-acct-atr-stop",  "value"),
     prevent_initial_call=True,
 )
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 indicators, ff, fo, fv,
-                signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val):
+                signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val,
+                acct_cash, sizing_method, sizing_a, sizing_b, atr_stop):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         return load_backtest(saved_id)
@@ -128,6 +134,18 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
     from bot.universe import select_universe
     syms = select_universe(scope or "top_100", limit=int(max_syms or 50))
 
+    # Position sizing kwargs depend on the chosen method
+    method = (sizing_method or "fixed_pct").lower()
+    a = float(sizing_a) if sizing_a not in (None, "") else 0.95
+    b = float(sizing_b) if sizing_b not in (None, "") else 2.0
+    if   method == "fixed_pct":           sizing_kwargs = {"pct": a}
+    elif method in ("kelly", "half_kelly"):
+        sizing_kwargs = {"win_rate": a, "win_loss_ratio": b}
+    elif method == "atr_risk":            sizing_kwargs = {"risk_pct": a, "atr_mult": b}
+    else:                                  sizing_kwargs = {}
+
+    atr_stop_mult = float(atr_stop) if (atr_stop and float(atr_stop) > 0) else None
+
     return run_filtered_backtest(
         model_id        = model or "rsi_macd_v1",
         filters         = filters,
@@ -139,6 +157,10 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
         take_profit_pct = take_profit_pct,
         stop_loss_pct   = stop_loss_pct,
         time_stop_days  = time_stop_days,
+        atr_stop_mult   = atr_stop_mult,
+        starting_cash   = float(acct_cash or 10_000),
+        sizing_method   = method,
+        sizing_kwargs   = sizing_kwargs,
     )
 
 

@@ -26,16 +26,20 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
 
 
 def run_backtest(
-    model_name:       str   = "model_v1",
-    symbol:           str   = "AAPL",
-    timeframe:        str   = "1d",
-    period_days:      int   = 365,
-    conf_threshold:   float = 0.65,
-    active_indicators: list = None,
-    use_signal_exit:  bool             = True,
-    take_profit_pct:  Optional[float]  = 0.15,
-    stop_loss_pct:    Optional[float]  = 0.07,
-    time_stop_days:   Optional[int]    = 30,
+    model_name:        str   = "model_v1",
+    symbol:            str   = "AAPL",
+    timeframe:         str   = "1d",
+    period_days:       int   = 365,
+    conf_threshold:    float = 0.65,
+    active_indicators: list  = None,
+    use_signal_exit:   bool             = True,
+    take_profit_pct:   Optional[float]  = 0.15,
+    stop_loss_pct:     Optional[float]  = 0.07,
+    time_stop_days:    Optional[int]    = 30,
+    atr_stop_mult:     Optional[float]  = None,
+    starting_cash:     float            = 10_000.0,
+    sizing_method:     str              = "fixed_pct",
+    sizing_kwargs:     Optional[dict]   = None,
 ) -> dict:
     """
     Simulate the ML strategy on historical data and return full metrics.
@@ -63,10 +67,14 @@ def run_backtest(
     df = _generate_signals(df, model_name, conf_threshold)
     df = _simulate_trades(
         df,
+        initial_cash    = starting_cash,
         use_signal_exit = use_signal_exit,
         take_profit_pct = take_profit_pct,
         stop_loss_pct   = stop_loss_pct,
         time_stop_days  = time_stop_days,
+        atr_stop_mult   = atr_stop_mult,
+        sizing_method   = sizing_method,
+        sizing_kwargs   = sizing_kwargs,
     )
 
     trades       = _extract_trades(df)
@@ -161,6 +169,10 @@ def run_filtered_backtest(
     take_profit_pct: Optional[float]  = 0.15,
     stop_loss_pct:   Optional[float]  = 0.07,
     time_stop_days:  Optional[int]    = 30,
+    atr_stop_mult:   Optional[float]  = None,
+    starting_cash:   float            = 10_000.0,
+    sizing_method:   str              = "fixed_pct",
+    sizing_kwargs:   Optional[dict]   = None,
 ) -> dict:
     """
     Run a backtest across many symbols, only entering on bars that
@@ -184,7 +196,7 @@ def run_filtered_backtest(
 
     all_trades: list[dict] = []
     metric_per_symbol: list[dict] = []
-    initial_cash = 10_000.0
+    initial_cash = float(starting_cash)
 
     for symbol in symbols:
         df = _load_features(symbol, period_days)
@@ -218,6 +230,9 @@ def run_filtered_backtest(
             take_profit_pct = take_profit_pct,
             stop_loss_pct   = stop_loss_pct,
             time_stop_days  = time_stop_days,
+            atr_stop_mult   = atr_stop_mult,
+            sizing_method   = sizing_method,
+            sizing_kwargs   = sizing_kwargs,
         )
         sym_trades = []
         for idx, row in scored.iterrows():
@@ -304,6 +319,67 @@ def _rule_based_signals(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _position_size_shares(
+    method:        str,
+    cash:          float,
+    portfolio:     float,
+    price:         float,
+    atr:           float,
+    sizing_kwargs: dict,
+) -> int:
+    """
+    Compute number of shares to buy.
+
+    Methods:
+      * ``fixed_pct`` — use ``pct`` of the *portfolio* (cash + open positions)
+        as position notional, then floor to whole shares.  Default 95%.
+      * ``kelly`` / ``half_kelly`` — Kelly fraction = W − (1−W)/R, where W is
+        the assumed win rate and R the win/loss ratio.  Both supplied via
+        ``sizing_kwargs`` so the user can plug in numbers from the prior
+        backtest.  half-Kelly halves the result to reduce variance.
+      * ``atr_risk`` — size such that (entry − stop) × shares = capital ×
+        ``risk_pct``.  Stop is entry − ``atr_mult`` × ATR.  This is the
+        "fixed-fractional risk" sizing professional traders favour because
+        it normalises position size to the symbol's volatility.
+
+    Returns 0 if the inputs don't make sense (no ATR for atr_risk, etc.).
+    """
+    if price <= 0 or cash < price:
+        return 0
+
+    method = (method or "fixed_pct").lower()
+
+    if method == "fixed_pct":
+        pct = float(sizing_kwargs.get("pct", 0.95))
+        return max(int(portfolio * pct / price), 0)
+
+    if method in ("kelly", "half_kelly"):
+        win_rate    = float(sizing_kwargs.get("win_rate", 0.5))
+        wl_ratio    = float(sizing_kwargs.get("win_loss_ratio", 1.5))
+        f = win_rate - (1 - win_rate) / max(wl_ratio, 1e-6)
+        f = max(0.0, min(f, 1.0))
+        if method == "half_kelly":
+            f /= 2
+        return max(int(portfolio * f / price), 0)
+
+    if method == "atr_risk":
+        if atr is None or atr <= 0 or pd.isna(atr):
+            return 0
+        risk_pct  = float(sizing_kwargs.get("risk_pct", 0.01))
+        atr_mult  = float(sizing_kwargs.get("atr_mult", 2.0))
+        risk_per_share = atr_mult * atr
+        if risk_per_share <= 0:
+            return 0
+        risk_dollars = portfolio * risk_pct
+        shares = int(risk_dollars / risk_per_share)
+        # Guardrail: never spend more than 100% of available cash.
+        max_by_cash = int(cash / price)
+        return max(min(shares, max_by_cash), 0)
+
+    # Unknown method — fall back to fixed 95%.
+    return max(int(portfolio * 0.95 / price), 0)
+
+
 def _simulate_trades(
     df:              pd.DataFrame,
     initial_cash:    float            = 10_000.0,
@@ -311,23 +387,29 @@ def _simulate_trades(
     take_profit_pct: Optional[float]  = 0.15,
     stop_loss_pct:   Optional[float]  = 0.07,
     time_stop_days:  Optional[int]    = 30,
+    atr_stop_mult:   Optional[float]  = None,    # close when price <= entry - N*ATR
+    sizing_method:   str              = "fixed_pct",
+    sizing_kwargs:   Optional[dict]   = None,
 ) -> pd.DataFrame:
     """
     Walk through signals and simulate buy / sell trades with configurable
-    exit rules.  Pass ``None`` (or False) for any rule to disable it.
+    sizing and exits.  Pass ``None`` (or False) for any rule to disable it.
 
     Exit rules (whichever fires first wins):
       1. Model sell signal      (gated by ``use_signal_exit``)
       2. Take-profit:  price >= entry * (1 + take_profit_pct)
       3. Stop-loss:    price <= entry * (1 - stop_loss_pct)
-      4. Time-stop:    bars_held >= time_stop_days
+      4. ATR stop:     price <= entry - atr_stop_mult * entry-day ATR
+      5. Time-stop:    bars_held >= time_stop_days
 
     Each exit tags the trade with ``exit_reason`` so the log can show
     why we left.  At least one exit rule must be enabled — otherwise
     a winning position would never close.
     """
-    if not use_signal_exit and take_profit_pct is None \
-            and stop_loss_pct is None and time_stop_days is None:
+    sizing_kwargs = sizing_kwargs or {}
+    if (not use_signal_exit and take_profit_pct is None
+            and stop_loss_pct is None and time_stop_days is None
+            and atr_stop_mult is None):
         # Defensive: nothing would ever close.  Force a default.
         time_stop_days = 30
     df = df.copy()
@@ -338,10 +420,11 @@ def _simulate_trades(
     df["exit_reason"] = ""
     df["in_trade"]    = False
 
-    position    = 0.0
-    cash        = initial_cash
-    entry_price = 0.0
-    entry_idx   = None
+    position      = 0.0
+    cash          = initial_cash
+    entry_price   = 0.0
+    entry_idx     = None
+    entry_atr     = 0.0
 
     for i, (idx, row) in enumerate(df.iterrows()):
         price = row["close"]
@@ -349,12 +432,22 @@ def _simulate_trades(
 
         # Try to enter
         if sig == "buy" and position == 0 and cash > price:
-            shares      = int(cash * 0.95 / price)
-            position    = shares
-            cash       -= shares * price
-            entry_price = price
-            entry_idx   = i
-            df.at[idx, "in_trade"] = True
+            atr_now = float(row.get("atr_14", 0) or 0)
+            shares = _position_size_shares(
+                method        = sizing_method,
+                cash          = cash,
+                portfolio     = cash,                 # nothing else open
+                price         = price,
+                atr           = atr_now,
+                sizing_kwargs = sizing_kwargs,
+            )
+            if shares > 0:
+                position    = shares
+                cash       -= shares * price
+                entry_price = price
+                entry_idx   = i
+                entry_atr   = atr_now
+                df.at[idx, "in_trade"] = True
 
         # Try to exit
         elif position > 0:
@@ -363,9 +456,12 @@ def _simulate_trades(
             held_days    = i - (entry_idx or i)
 
             exit_reason = ""
+            atr_floor = (entry_price - atr_stop_mult * entry_atr) \
+                if (atr_stop_mult is not None and entry_atr > 0) else None
             if   use_signal_exit and sig == "sell":                                     exit_reason = "signal"
             elif take_profit_pct is not None and ret_pct >=  take_profit_pct:           exit_reason = "take_profit"
             elif stop_loss_pct  is not None and ret_pct <= -stop_loss_pct:              exit_reason = "stop_loss"
+            elif atr_floor is not None and price <= atr_floor:                          exit_reason = "atr_stop"
             elif time_stop_days is not None and held_days >= time_stop_days:            exit_reason = "time_stop"
 
             if exit_reason:
@@ -373,9 +469,10 @@ def _simulate_trades(
                 cash     += position * price
                 df.at[idx, "trade_pl"]    = pl
                 df.at[idx, "exit_reason"] = exit_reason
-                position  = 0
+                position    = 0
                 entry_price = 0.0
                 entry_idx   = None
+                entry_atr   = 0.0
 
         df.at[idx, "position"]  = position
         df.at[idx, "cash"]      = cash

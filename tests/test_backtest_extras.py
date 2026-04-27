@@ -131,3 +131,86 @@ class TestMetricShape:
         m = out["metrics"]
         if m["total_trades"] > 0:
             assert abs(m["win_rate_pct"] + m["loss_rate_pct"] - 100.0) < 0.05
+
+
+# ── Position sizing ─────────────────────────────────────────────────────────
+
+class TestPositionSizing:
+
+    def test_fixed_pct_uses_almost_all_cash(self):
+        from dashboard.backtest_engine import _position_size_shares
+        n = _position_size_shares(
+            "fixed_pct", cash=10_000, portfolio=10_000, price=100,
+            atr=0, sizing_kwargs={"pct": 0.95},
+        )
+        assert n == 95
+
+    def test_atr_risk_smaller_position_in_volatile_name(self):
+        from dashboard.backtest_engine import _position_size_shares
+        # Same capital + risk, higher ATR → fewer shares
+        small_atr = _position_size_shares(
+            "atr_risk", cash=10_000, portfolio=10_000, price=100, atr=1.0,
+            sizing_kwargs={"risk_pct": 0.01, "atr_mult": 2.0},
+        )
+        big_atr = _position_size_shares(
+            "atr_risk", cash=10_000, portfolio=10_000, price=100, atr=5.0,
+            sizing_kwargs={"risk_pct": 0.01, "atr_mult": 2.0},
+        )
+        assert small_atr > big_atr > 0
+
+    def test_atr_risk_zero_atr_returns_zero(self):
+        from dashboard.backtest_engine import _position_size_shares
+        n = _position_size_shares(
+            "atr_risk", cash=10_000, portfolio=10_000, price=100, atr=0,
+            sizing_kwargs={"risk_pct": 0.01, "atr_mult": 2.0},
+        )
+        assert n == 0
+
+    def test_half_kelly_is_half_full_kelly(self):
+        from dashboard.backtest_engine import _position_size_shares
+        kw = {"win_rate": 0.6, "win_loss_ratio": 2.0}
+        full = _position_size_shares(
+            "kelly", cash=10_000, portfolio=10_000, price=100, atr=0, sizing_kwargs=kw,
+        )
+        half = _position_size_shares(
+            "half_kelly", cash=10_000, portfolio=10_000, price=100, atr=0, sizing_kwargs=kw,
+        )
+        # half-Kelly is half the fraction of full Kelly (subject to int floor)
+        assert half == full // 2
+
+    def test_kelly_zero_edge_zero_size(self):
+        from dashboard.backtest_engine import _position_size_shares
+        n = _position_size_shares(
+            "kelly", cash=10_000, portfolio=10_000, price=100, atr=0,
+            sizing_kwargs={"win_rate": 0.4, "win_loss_ratio": 1.0},   # negative edge
+        )
+        assert n == 0
+
+    def test_starting_cash_threaded_through(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        out_low = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=730, conf_threshold=0.50,
+            starting_cash=1_000,
+        )
+        out_high = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=730, conf_threshold=0.50,
+            starting_cash=100_000,
+        )
+        # If trades fired, the dollar P&L should scale roughly with capital
+        if out_low["trades"] and out_high["trades"]:
+            avg_low  = abs(sum(t["pl"] for t in out_low["trades"]) / max(len(out_low["trades"]), 1))
+            avg_high = abs(sum(t["pl"] for t in out_high["trades"]) / max(len(out_high["trades"]), 1))
+            assert avg_high > avg_low
+
+    def test_atr_stop_fires(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        out = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=730, conf_threshold=0.50,
+            take_profit_pct=None, stop_loss_pct=None, time_stop_days=None,
+            atr_stop_mult=0.5,    # very tight, almost any down move triggers
+        )
+        if out["trades"]:
+            assert any(t.get("exit_reason") == "atr_stop" for t in out["trades"])

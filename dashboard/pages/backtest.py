@@ -228,12 +228,101 @@ def _controls_panel(model: str, symbol: str, saved: list):
         # Symbol selection is now driven by the Universe scope dropdown.
         dcc.Store(id="bt-dd-symbol", data="All"),
 
+        # ── Sample trading account ──────────────────────────────────
+        _account_panel(),
+
         # ── Exit conditions ─────────────────────────────────────────
         _exit_conditions_panel(),
 
         dcc.Store(id="bt-store-results"),
         html.Div(id="bt-save-msg", style={"fontSize": "12px", "color": "#27500A", "marginTop": "8px"}),
     ], style={**CARD, "marginBottom": "16px"})
+
+
+def _account_panel():
+    """Starting cash + position sizing method + sizing params."""
+    return html.Div([
+        html.P("Sample trading account",
+               style={"fontSize": "12px", "fontWeight": "500", "margin": "10px 0 8px"}),
+
+        dbc.Row([
+            dbc.Col([
+                html.Span("Starting cash ($)",
+                          id="bt-acct-cash-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-acct-cash", type="number", value=10000,
+                          min=100, step=100, style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Initial portfolio value used for position sizing. All P&L "
+                    "and equity-curve metrics are computed against this base.",
+                    target="bt-acct-cash-tip", placement="top",
+                    style={"maxWidth": "320px", "fontSize": "12px"}),
+            ], md=3),
+            dbc.Col([
+                html.Span("Position sizing",
+                          id="bt-acct-sizing-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Dropdown(
+                    id="bt-acct-sizing",
+                    options=[
+                        {"label": "Fixed % of portfolio", "value": "fixed_pct"},
+                        {"label": "Kelly criterion",      "value": "kelly"},
+                        {"label": "Half-Kelly (safer)",   "value": "half_kelly"},
+                        {"label": "ATR risk (volatility-normalised)",
+                                                          "value": "atr_risk"},
+                    ],
+                    value="fixed_pct", clearable=False,
+                    style={"fontSize": "13px", "marginTop": "4px"},
+                ),
+                dbc.Tooltip(
+                    "How much of your portfolio to deploy on each trade. "
+                    "ATR-risk sizes positions so a stop-out costs no more "
+                    "than `risk %` of your capital — pro standard for "
+                    "volatile names. Kelly sizes by edge; half-Kelly is the "
+                    "safer practical default.",
+                    target="bt-acct-sizing-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=3),
+            dbc.Col([
+                html.Span("Sizing arg A", id="bt-acct-arg-a-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-acct-arg-a", type="number", value=0.95,
+                          min=0, max=1, step=0.01,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "fixed_pct: fraction of portfolio per trade (0-1). "
+                    "kelly / half_kelly: assumed historical win rate (0-1). "
+                    "atr_risk: % of capital risked per trade (e.g. 0.01 = 1%).",
+                    target="bt-acct-arg-a-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=2),
+            dbc.Col([
+                html.Span("Sizing arg B", id="bt-acct-arg-b-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-acct-arg-b", type="number", value=2.0,
+                          step=0.1, style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "fixed_pct: ignored. "
+                    "kelly / half_kelly: win/loss ratio (avg win $ / avg loss $). "
+                    "atr_risk: ATR multiple for stop distance (e.g. 2.0 = 2×ATR).",
+                    target="bt-acct-arg-b-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=2),
+            dbc.Col([
+                html.Span("ATR exit (× ATR)", id="bt-acct-atr-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-acct-atr-stop", type="number", value=0,
+                          min=0, step=0.5,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Close the trade when price falls below entry minus N × "
+                    "ATR (using ATR on the entry day). 0 = disabled. "
+                    "Volatility-aware stop — adapts to each symbol.",
+                    target="bt-acct-atr-tip", placement="top",
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
+            ], md=2),
+        ], className="g-3"),
+    ], style={**CARD, "marginTop": "12px"})
 
 
 def _exit_conditions_panel():
@@ -323,6 +412,33 @@ METRIC_TIPS = {
 }
 
 
+def _slug(label: str) -> str:
+    """Stable DOM-id slug from a metric label, e.g. 'Sharpe ratio' → 'sharpe-ratio'."""
+    return "bt-tip-" + label.lower().replace(" ", "-").replace("%", "pct").replace("/", "-")
+
+
+def _metric_tile(label: str, value: str, positive: bool):
+    """Single metric tile with a real Bootstrap tooltip on hover."""
+    tip_id = _slug(label)
+    color  = ("#27500A" if positive else "#A32D2D") \
+                if label not in ("Sharpe ratio", "Edge ratio") else "#111"
+    return html.Div([
+        html.Div([
+            html.P(label, style={"fontSize": "11px", "color": "#888",
+                                  "margin": "0", "flex": "1"}),
+            html.Span("ⓘ", id=tip_id, style={
+                "fontSize": "11px", "color": "#bbb", "cursor": "help",
+                "marginLeft": "4px",
+            }),
+        ], style={"display": "flex", "alignItems": "center", "marginBottom": "3px"}),
+        html.P(value, style={"fontSize": "18px", "fontWeight": "500",
+                              "margin": "0", "color": color}),
+        dbc.Tooltip(METRIC_TIPS.get(label, ""), target=tip_id,
+                    placement="top",
+                    style={"maxWidth": "320px", "fontSize": "12px"}),
+    ], style=METRIC)
+
+
 def _metrics_row(m: dict):
     items = [
         ("Total return",  f"{'+' if m['total_return_pct'] >= 0 else ''}{m['total_return_pct']:.1f}%",  m['total_return_pct'] >= 0),
@@ -333,15 +449,7 @@ def _metrics_row(m: dict):
         ("Win rate",      f"{m['win_rate_pct']:.1f}%", m['win_rate_pct'] >= 50),
     ]
     return dbc.Row([
-        dbc.Col(html.Div(
-            [
-                html.P(label, title=METRIC_TIPS.get(label, ""),
-                       style={"fontSize": "11px", "color": "#888", "margin": "0 0 3px",
-                                "cursor": "help"}),
-                html.P(value, style={"fontSize": "18px", "fontWeight": "500", "margin": "0",
-                                      "color": ("#27500A" if positive else "#A32D2D")
-                                                if label not in ("Sharpe ratio", "Edge ratio") else "#111"}),
-            ], style=METRIC, title=METRIC_TIPS.get(label, "")), md=2)
+        dbc.Col(_metric_tile(label, value, positive), md=2)
         for label, value, positive in items
     ], className="g-3 mb-3")
 
@@ -393,13 +501,25 @@ def _monthly_chart(monthly: list):
     return html.Div([dcc.Graph(figure=fig, config={"displayModeBar": False})], style=CARD)
 
 
+_stat_row_counter = {"n": 0}
+
+
 def _stat_row(label, value, color="#111"):
+    """Stat row with a Bootstrap tooltip — needs a unique id per row."""
+    _stat_row_counter["n"] += 1
+    tip_id = f"{_slug(label)}-{_stat_row_counter['n']}"
+    tip = METRIC_TIPS.get(label, "")
     return html.Div([
-        html.Span(label, title=METRIC_TIPS.get(label, ""),
-                  style={"fontSize": "12px", "color": "#888", "flex": "1",
-                          "cursor": "help"}),
+        html.Span(label, style={"fontSize": "12px", "color": "#888", "flex": "1"}),
+        *([html.Span("ⓘ", id=tip_id, style={
+            "fontSize": "11px", "color": "#bbb", "cursor": "help",
+            "marginRight": "8px",
+        }), dbc.Tooltip(tip, target=tip_id, placement="left",
+                          style={"maxWidth": "320px", "fontSize": "12px"})]
+          if tip else []),
         html.Span(value, style={"fontSize": "12px", "fontWeight": "500", "color": color}),
-    ], style={"display": "flex", "padding": "5px 0", "borderBottom": "1px solid #f5f5f5"})
+    ], style={"display": "flex", "alignItems": "center",
+              "padding": "5px 0", "borderBottom": "1px solid #f5f5f5"})
 
 
 def _trade_dist(m: dict):
