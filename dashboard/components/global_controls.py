@@ -97,6 +97,7 @@ def render_topbar():
             html.Button("Overview",  id="btn-overview",  style=NAV_ACTIVE),
             html.Button("Screener",  id="btn-screener",  style=NAV_STYLE),
             html.Button("Builder",   id="btn-builder",   style=NAV_STYLE),
+            html.Button("Finder",    id="btn-finder",    style=NAV_STYLE),
             html.Button("Trades",    id="btn-trades",    style=NAV_STYLE),
             html.Button("Model",     id="btn-model-tab", style=NAV_STYLE),
             html.Button("Market",    id="btn-market",    style=NAV_STYLE),

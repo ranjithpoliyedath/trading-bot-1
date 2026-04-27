@@ -10,10 +10,13 @@ from dash import dcc, html, Input, Output, State, ALL, callback_context, no_upda
 import dash_bootstrap_components as dbc
 from dashboard.pages import (
     overview, market_overview, screener as screener_page,
-    model_builder as builder_page, backtest as bt_page,
+    model_builder as builder_page,
+    strategy_finder as finder_page,
+    backtest as bt_page,
 )
 from dashboard.components.global_controls import render_topbar
-from dashboard.callbacks import backtest_callbacks  # noqa: F401  (registers callbacks)
+from dashboard.callbacks import backtest_callbacks         # noqa: F401  (registers callbacks)
+from dashboard.callbacks import strategy_finder_callbacks  # noqa: F401  (registers callbacks)
 from bot.screener import Filter, run_screener
 
 app = dash.Dash(
@@ -50,6 +53,8 @@ def render_page(view, account, model, symbol):
         return screener_page.layout(account, model, symbol)
     if view == "builder":
         return builder_page.layout(account, model, symbol)
+    if view == "finder":
+        return finder_page.layout(account, model, symbol)
     return market_overview.layout(account, model, symbol)
 
 
@@ -91,6 +96,7 @@ def set_symbol(value):
     Input("btn-overview",  "n_clicks"),
     Input("btn-screener",  "n_clicks"),
     Input("btn-builder",   "n_clicks"),
+    Input("btn-finder",    "n_clicks"),
     Input("btn-trades",    "n_clicks"),
     Input("btn-model-tab", "n_clicks"),
     Input("btn-market",    "n_clicks"),
@@ -98,12 +104,13 @@ def set_symbol(value):
     State("store-view", "data"),
     prevent_initial_call=True,
 )
-def set_view(ov, sc, bld, tr, md, mk, bt, current):
+def set_view(ov, sc, bld, fnd, tr, md, mk, bt, current):
     ctx = callback_context.triggered[0]["prop_id"]
     mapping = {
         "btn-overview":  "overview",
         "btn-screener":  "screener",
         "btn-builder":   "builder",
+        "btn-finder":    "finder",
         "btn-trades":    "trades",
         "btn-model-tab": "model",
         "btn-market":    "market",

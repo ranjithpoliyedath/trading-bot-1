@@ -777,13 +777,16 @@ def run_walk_forward(
         logger.warning("Date range too short for %d walk-forward folds.", n_folds)
         return _empty_results()
 
+    # Filters apply to every fold equally — pop once, reuse.
+    fold_filters = engine_kwargs.pop("filters", [])
+
     fold_results = []
     sharpes = []
     returns = []
     for k, (_, oos_window) in enumerate(folds, start=1):
         oos_out = run_filtered_backtest(
             model_id     = model_id,
-            filters      = engine_kwargs.pop("filters", []) if k == 1 else [],
+            filters      = fold_filters,
             symbols      = syms,
             period_days  = period_days,
             date_window  = oos_window,
