@@ -6,3 +6,8 @@ models/saved/
 data/processed/
 logs/
 dashboard/custom_models/
+
+# User-generated backtest snapshots (keep seed leaderboard, ignore the rest)
+dashboard/backtests/BT-*.json
+dashboard/backtests/WF-*.json
+dashboard/backtests/SF-*.json

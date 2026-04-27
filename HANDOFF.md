@@ -183,7 +183,7 @@ ALPACA_BASE_URL=https://paper-api.alpaca.markets
 
 ## Roadmap — where we are in the build
 
-From `SPEC.md`:
+From `SPEC.md` + the strategies plan (`PLAN-strategies.md`):
 
 | Step | Status |
 |---|---|
@@ -191,32 +191,67 @@ From `SPEC.md`:
 | 2. Pipeline extension (6yr, incremental, resumable) | ✅ Done |
 | 3. Initial bulk fetch (top 100) | ✅ Done — 117 symbols processed |
 | 4. Cron jobs for daily refresh + nightly rollout | ✅ Built, not yet installed |
-| 5. Model registry + 3 rule-based models | ✅ Done |
-| 6. Market overview page | ⚠ Built but news + sentiment panels broken |
-| 7. Stock screener page | ⏳ Not started |
-| 8. Custom model builder UI | ⏳ Not started |
-| 9. End-to-end smoke test | ⏳ Pending |
+| 5. Model registry + 3 rule-based models | ✅ Done — **13 strategies registered** |
+| 6. Market overview page | ✅ Done — news ranker (1-5 stars + conflict flags) |
+| 7. Stock screener page | ✅ Done |
+| 8. Custom model builder UI | ✅ Done |
+| 9. End-to-end smoke test | ✅ Done — `tests/test_e2e_smoke.py` |
+| Strategies plan — Phase 1: realistic backtesting | ✅ Done |
+| Strategies plan — Phase 2: Strategy Finder (Optuna) | ✅ Done |
+| Strategies plan — Phase 3: top ≤10 strategy library | ✅ Done — 8 new strategies |
+| Strategies plan — Phase 4: validate + handoff | ✅ Done — this update |
 
-Backtesting is **deliberately out of scope** for this foundation phase — it
-will be specified separately once the platform is solid.
+---
+
+## What's currently in the registry
+
+13 strategies — see `bot/strategies/CATALOGUE.md` for full audit incl.
+sources and validation numbers.
+
+**Production library (passed Sharpe > 0.3 + positive return):**
+`connors_rsi2_v1` (Sharpe 1.23, +84%), `ibs_v1` (0.72, +35%),
+`zscore_reversion_v1` (0.64, +31%), `golden_cross_v1` (0.50, +13%),
+`bollinger_v1` (0.46), `vcp_v1` (0.26), and the original 3
+(`rsi_macd_v1`, `sentiment_v1`, `qullamaggie_v1`).
+
+**Experimental / needs Strategy Finder tuning:**
+`donchian_v1`, `adx_trend_v1`, `keltner_breakout_v1`, `obv_momentum_v1`.
+
+The seed leaderboard is at
+`dashboard/backtests/seed_leaderboard.json` — regenerate via
+`python scripts/rank_strategies.py`.
+
+---
+
+## Dashboard surface
+
+| Tab | Module | Notes |
+|---|---|---|
+| Overview | `dashboard/pages/market_overview.py` | 6 panels incl. ranked-news + sentiment heatmap |
+| Screener | `dashboard/pages/screener.py` | Filter rows + "Send to backtest" |
+| Builder | `dashboard/pages/model_builder.py` | Save buy/sell rules → `dashboard/custom_models/` |
+| Finder | `dashboard/pages/strategy_finder.py` | Optuna search + opt-in 🤖 Ask Claude |
+| Backtest | `dashboard/pages/backtest.py` | Realism settings + walk-forward + per-fold table |
+
+All saved custom models auto-appear in the topbar Model dropdown.
 
 ---
 
 ## Immediate next actions for Claude Code
 
-When you start your Claude Code session, paste this:
+The build is done; future sessions should focus on iteration, not
+foundation. Likely directions:
 
-> Read HANDOFF.md, CLAUDE.md, and SPEC.md first. Then fix the three open
-> bugs in this priority order:
->
-> 1. Apply the news_fetcher patch from outputs (use response.data["news"])
-> 2. Clear data/cache/news.json
-> 3. Run the sentiment pipeline and tail the log to find why no
->    *_features_with_sentiment.parquet files are being produced
-> 4. Once sentiment data is real, refresh the dashboard and verify the
->    sentiment heatmap and news headlines populate
->
-> After bugs are fixed, proceed with Step 7 (stock screener page) per SPEC.md.
+- Tune the four "experimental" strategies via the Strategy Finder
+  until they pass the gate, then promote them in `CATALOGUE.md`.
+- Refresh the OHLCV pipeline to fetch the full 6yr (currently only
+  ~2yr per symbol on disk). Walk-forward will work much better with
+  more data — folds become a year wide instead of 29 days.
+- News-timestamp look-ahead guard for any sentiment-driven strategy
+  that goes intraday in the future (parked Phase 5 in the plan).
+- Cron-install the daily refresh + nightly rollout from `scripts/`.
+
+Open `PLAN-strategies.md` for the full plan rationale and decisions.
 
 ---
 
@@ -235,8 +270,11 @@ When you start your Claude Code session, paste this:
 ## How to run things
 
 ```csh
-# Activate venv
+# Activate venv (csh)
 source venv/bin/activate.csh
+
+# Install / refresh deps (anthropic + optuna are required for Finder)
+pip install -r requirements.txt
 
 # Refresh universe
 python -m bot.universe
@@ -253,6 +291,10 @@ python scripts/rollout_next_batch.py
 # Sentiment pipeline
 python -m bot.sentiment.sentiment_pipeline
 
+# Rank every strategy + write seed leaderboard
+python scripts/rank_strategies.py
+python scripts/rank_strategies.py --scope sp500 --max-symbols 30 --folds 4
+
 # Run all tests
 python -m pytest tests/ -v
 
@@ -260,11 +302,17 @@ python -m pytest tests/ -v
 python -m dashboard.app
 # Then open http://localhost:8050
 
-# Diagnostic
-python scripts/diagnose_overview2.py
-
 # csh redirect to log
 python -m bot.pipeline |& tee logs/run.log
+```
+
+## Required env vars
+
+```
+ALPACA_API_KEY=...
+ALPACA_SECRET_KEY=...
+ALPACA_BASE_URL=https://paper-api.alpaca.markets
+ANTHROPIC_API_KEY=sk-ant-...   # only needed for the Finder's "🤖 Ask Claude" button
 ```
 
 ---
