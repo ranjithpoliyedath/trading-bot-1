@@ -214,3 +214,103 @@ class TestPositionSizing:
         )
         if out["trades"]:
             assert any(t.get("exit_reason") == "atr_stop" for t in out["trades"])
+
+
+# ── New public APIs introduced by the layout / preset enhancements ──────────
+
+class TestUniverseSymbolScopes:
+
+    def test_etf_prefix_returns_single_symbol(self):
+        from bot.universe import select_universe
+        assert select_universe("etf:SPY") == ["SPY"]
+        assert select_universe("etf:QQQ") == ["QQQ"]
+
+    def test_sym_prefix_returns_single_symbol(self):
+        from bot.universe import select_universe
+        assert select_universe("sym:AAPL") == ["AAPL"]
+        assert select_universe("sym:NVDA") == ["NVDA"]
+
+    def test_etf_and_sym_present_in_scopes_dict(self):
+        from bot.universe import UNIVERSE_SCOPES
+        keys = list(UNIVERSE_SCOPES)
+        assert any(k.startswith("etf:") for k in keys)
+        assert any(k.startswith("sym:") for k in keys)
+        # Categorical scopes must come before prefixed ones (UI sort order)
+        first_etf = next(i for i, k in enumerate(keys) if k.startswith("etf:"))
+        first_sym = next(i for i, k in enumerate(keys) if k.startswith("sym:"))
+        first_categ = next(i for i, k in enumerate(keys)
+                            if not k.startswith(("etf:", "sym:")))
+        assert first_categ < first_etf < first_sym
+
+
+class TestBenchmarkLoader:
+
+    def test_returns_empty_when_symbol_unknown(self):
+        from dashboard.backtest_engine import load_benchmark_curve
+        # An unlikely-to-exist ticker
+        out = load_benchmark_curve("ZZZZ_NOT_A_REAL_TICKER")
+        assert out == []
+
+    def test_normalize_anchors_first_value(self):
+        """When SPY is on disk, the curve's first value should equal
+        the requested ``normalize_to`` anchor."""
+        from dashboard.backtest_engine import load_benchmark_curve
+        curve = load_benchmark_curve("SPY", normalize_to=10000.0)
+        if curve:
+            assert abs(curve[0]["value"] - 10000.0) < 0.5
+
+    def test_date_window_slicing(self):
+        from dashboard.backtest_engine import load_benchmark_curve
+        full = load_benchmark_curve("SPY")
+        if not full:
+            return  # SPY data not on disk in this env
+        sliced = load_benchmark_curve("SPY",
+                                      start=full[5]["date"],
+                                      end=full[10]["date"])
+        if sliced:
+            assert sliced[0]["date"] >= full[5]["date"]
+            assert sliced[-1]["date"] <= full[10]["date"]
+
+
+class TestPresetPayload:
+
+    def test_filtered_backtest_attaches_preset(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        out = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=365, conf_threshold=0.55,
+            starting_cash=12_345, sizing_method="fixed_pct",
+            sizing_kwargs={"pct": 0.80},
+            execution_model="next_open", slippage_bps=7,
+            take_profit_pct=0.20, stop_loss_pct=0.10, time_stop_days=15,
+        )
+        p = out.get("preset")
+        assert p is not None
+        # Round-trip the values we set
+        assert p["model_id"]        == "rsi_macd_v1"
+        assert p["period_days"]     == 365
+        assert p["min_confidence"]  == 0.55
+        assert p["starting_cash"]   == 12_345
+        assert p["sizing_method"]   == "fixed_pct"
+        assert p["sizing_kwargs"]["pct"] == 0.80
+        assert p["execution_model"] == "next_open"
+        assert p["slippage_bps"]    == 7
+        assert p["take_profit_pct"] == 0.20
+        assert p["stop_loss_pct"]   == 0.10
+        assert p["time_stop_days"]  == 15
+
+
+class TestWalkForwardFoldShape:
+
+    def test_each_fold_carries_equity_curve_and_monthly(self, have_data):
+        from dashboard.backtest_engine import run_walk_forward
+        out = run_walk_forward(
+            model_id="ibs_v1", n_folds=2, symbols=have_data,
+            period_days=365 * 6, conf_threshold=0.55,
+        )
+        for fr in out.get("fold_results", []):
+            assert "metrics"         in fr
+            assert "equity_curve"    in fr     # NEW
+            assert "monthly_returns" in fr     # NEW
+            assert "trades"          in fr
+            assert "run_id"          in fr

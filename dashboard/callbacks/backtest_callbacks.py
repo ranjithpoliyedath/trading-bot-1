@@ -217,3 +217,123 @@ def save_run(n_clicks, results):
         return "Nothing to save — run a backtest first.", list_saved_backtests()
     run_id = save_backtest(results)
     return f"Saved: {run_id}", list_saved_backtests()
+
+
+# ── Apply preset: hydrate every form field from a saved-run's preset ────────
+#
+# The user picks a SEED or BT-* run from the saved dropdown and clicks
+# "⤴ Apply preset".  The saved JSON's `preset` payload holds the exact
+# configuration that produced that run; we splat it back into every
+# form input so the user can tweak and re-run.
+#
+# Old saved runs without a `preset` payload synthesize one from the
+# top-level `model`, `period_days`, `conf_threshold`, `filters` so the
+# feature degrades cleanly across snapshots.
+
+def _synthesize_preset_if_missing(data: dict) -> dict:
+    """Backfill a preset payload from top-level fields if absent."""
+    p = data.get("preset")
+    if p:
+        return p
+    return {
+        "model_id":        data.get("model", "rsi_macd_v1"),
+        "filters":         data.get("filters", []) or [],
+        "period_days":     int(data.get("period_days", 365) or 365),
+        "min_confidence":  float(data.get("conf_threshold", 0.65) or 0.65),
+    }
+
+
+@callback(
+    Output("bt-dd-model",       "value",    allow_duplicate=True),
+    Output("bt-input-period",   "value",    allow_duplicate=True),
+    Output("bt-input-conf",     "value",    allow_duplicate=True),
+    Output("bt-input-max",      "value",    allow_duplicate=True),
+    Output("bt-acct-cash",      "value",    allow_duplicate=True),
+    Output("bt-acct-sizing",    "value",    allow_duplicate=True),
+    Output("bt-acct-arg-a",     "value",    allow_duplicate=True),
+    Output("bt-acct-arg-b",     "value",    allow_duplicate=True),
+    Output("bt-acct-atr-stop",  "value",    allow_duplicate=True),
+    Output("bt-real-em",        "value",    allow_duplicate=True),
+    Output("bt-real-delay",     "value",    allow_duplicate=True),
+    Output("bt-real-slip",      "value",    allow_duplicate=True),
+    Output("bt-exit-tp-on",     "value",    allow_duplicate=True),
+    Output("bt-exit-tp-val",    "value",    allow_duplicate=True),
+    Output("bt-exit-sl-on",     "value",    allow_duplicate=True),
+    Output("bt-exit-sl-val",    "value",    allow_duplicate=True),
+    Output("bt-exit-ts-on",     "value",    allow_duplicate=True),
+    Output("bt-exit-ts-val",    "value",    allow_duplicate=True),
+    Output("bt-filter-rows",    "children", allow_duplicate=True),
+    Output("bt-preset-status",  "children"),
+    Input("bt-btn-apply-preset", "n_clicks"),
+    State("bt-dd-saved",         "value"),
+    prevent_initial_call=True,
+)
+def apply_preset(n_clicks, run_id):
+    """Hydrate every form field from a saved-run's preset payload."""
+    n_outputs = 20
+    if not n_clicks or not run_id:
+        return (*([no_update] * (n_outputs - 1)),
+                "Pick a saved run, then click Apply preset.")
+
+    data = load_backtest(run_id)
+    if not data:
+        return (*([no_update] * (n_outputs - 1)),
+                f"❌ Couldn't load {run_id}.")
+
+    p = _synthesize_preset_if_missing(data)
+    sk = p.get("sizing_kwargs", {}) or {}
+
+    # Sizing args A/B depend on the chosen method
+    method = (p.get("sizing_method") or "fixed_pct").lower()
+    if   method == "fixed_pct":            arg_a, arg_b = sk.get("pct", 0.95), 2.0
+    elif method in ("kelly", "half_kelly"):
+        arg_a = sk.get("win_rate", 0.5)
+        arg_b = sk.get("win_loss_ratio", 1.5)
+    elif method == "atr_risk":
+        arg_a = sk.get("risk_pct", 0.01)
+        arg_b = sk.get("atr_mult", 2.0)
+    else:
+        arg_a, arg_b = 0.95, 2.0
+
+    # Exit toggles: ['on'] / [] convention used by dcc.Checklist
+    on   = ["on"]
+    off  = []
+    tp   = p.get("take_profit_pct")
+    sl   = p.get("stop_loss_pct")
+    ts   = p.get("time_stop_days")
+    atr  = p.get("atr_stop_mult") or 0
+
+    filters = p.get("filters", []) or []
+    filter_rows = [
+        _filter_row(i, f.get("field", "rsi_14"), f.get("op", "<"),
+                    float(f.get("value", 30)))
+        for i, f in enumerate(filters)
+    ]
+
+    status = (
+        f"✅ Loaded preset from {run_id}: model={p.get('model_id')}, "
+        f"period={p.get('period_days')}d, {len(filters)} filter(s)."
+    )
+
+    return (
+        p.get("model_id", "rsi_macd_v1"),                          # bt-dd-model
+        int(p.get("period_days", 365) or 365),                     # bt-input-period
+        float(p.get("min_confidence", 0.65) or 0.65),              # bt-input-conf
+        int(p.get("max_symbols", 50) or 50),                       # bt-input-max
+        float(p.get("starting_cash", 10_000) or 10_000),           # bt-acct-cash
+        method,                                                    # bt-acct-sizing
+        float(arg_a),                                              # bt-acct-arg-a
+        float(arg_b),                                              # bt-acct-arg-b
+        float(atr),                                                # bt-acct-atr-stop
+        p.get("execution_model", "next_open"),                     # bt-real-em
+        int(p.get("execution_delay", 0) or 0),                     # bt-real-delay
+        float(p.get("slippage_bps", 5) or 5),                      # bt-real-slip
+        on if tp is not None else off,                             # bt-exit-tp-on
+        float(tp) if tp is not None else 0.15,                     # bt-exit-tp-val
+        on if sl is not None else off,                             # bt-exit-sl-on
+        float(sl) if sl is not None else 0.07,                     # bt-exit-sl-val
+        on if ts is not None else off,                             # bt-exit-ts-on
+        int(ts) if ts is not None else 30,                         # bt-exit-ts-val
+        filter_rows,                                               # bt-filter-rows
+        status,                                                    # bt-preset-status
+    )

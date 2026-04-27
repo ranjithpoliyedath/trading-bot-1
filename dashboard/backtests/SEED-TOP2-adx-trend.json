@@ -6994,7 +6994,25 @@
       "win_rate": 26.3
     }
   ],
-  "run_at": "2026-04-27T09:35:16.775920",
+  "preset": {
+    "model_id": "adx_trend_v1",
+    "filters": [],
+    "period_days": 2190,
+    "min_confidence": 0.55,
+    "max_symbols": 50,
+    "use_signal_exit": true,
+    "take_profit_pct": 0.15,
+    "stop_loss_pct": 0.07,
+    "time_stop_days": 30,
+    "atr_stop_mult": null,
+    "starting_cash": 10000.0,
+    "sizing_method": "fixed_pct",
+    "sizing_kwargs": {},
+    "execution_model": "next_open",
+    "execution_delay": 0,
+    "slippage_bps": 5.0
+  },
+  "run_at": "2026-04-27T16:49:03.289870",
   "label": "ADX trend filter  \u00b7  Sharpe 0.66, +381%",
   "seed_meta": {
     "tag": "TOP2-adx-trend",

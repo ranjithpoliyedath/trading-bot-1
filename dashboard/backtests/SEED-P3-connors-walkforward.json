@@ -29,7 +29,15 @@
         "largest_loss": 0,
         "symbols_traded": 0
       },
-      "trades": []
+      "trades": [],
+      "equity_curve": [
+        {
+          "date": "start",
+          "value": 10000.0
+        }
+      ],
+      "monthly_returns": [],
+      "run_id": "BT-20260427-164920-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 2,
@@ -58,7 +66,15 @@
         "largest_loss": 0,
         "symbols_traded": 0
       },
-      "trades": []
+      "trades": [],
+      "equity_curve": [
+        {
+          "date": "start",
+          "value": 10000.0
+        }
+      ],
+      "monthly_returns": [],
+      "run_id": "BT-20260427-164921-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 3,
@@ -87,7 +103,15 @@
         "largest_loss": 0,
         "symbols_traded": 0
       },
-      "trades": []
+      "trades": [],
+      "equity_curve": [
+        {
+          "date": "start",
+          "value": 10000.0
+        }
+      ],
+      "monthly_returns": [],
+      "run_id": "BT-20260427-164923-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 4,
@@ -116,7 +140,15 @@
         "largest_loss": 0,
         "symbols_traded": 0
       },
-      "trades": []
+      "trades": [],
+      "equity_curve": [
+        {
+          "date": "start",
+          "value": 10000.0
+        }
+      ],
+      "monthly_returns": [],
+      "run_id": "BT-20260427-164924-connors_rsi2_v1-multi-2190d"
     }
   ],
   "aggregate": {
@@ -127,7 +159,7 @@
     "mean_oos_return_pct": 0.0
   },
   "run_id": "SEED-P3-connors-walkforward",
-  "run_at": "2026-04-27T09:35:42.331886",
+  "run_at": "2026-04-27T16:49:24.770490",
   "label": "Phase 3: Connors RSI(2) walk-forward (4 folds)",
   "seed_meta": {
     "tag": "P3-connors-walkforward",

@@ -5254,7 +5254,25 @@
       "win_rate": 57.9
     }
   ],
-  "run_at": "2026-04-27T09:36:03.656550",
+  "preset": {
+    "model_id": "zscore_reversion_v1",
+    "filters": [],
+    "period_days": 2190,
+    "min_confidence": 0.55,
+    "max_symbols": 50,
+    "use_signal_exit": true,
+    "take_profit_pct": 0.15,
+    "stop_loss_pct": 0.07,
+    "time_stop_days": 30,
+    "atr_stop_mult": null,
+    "starting_cash": 10000.0,
+    "sizing_method": "fixed_pct",
+    "sizing_kwargs": {},
+    "execution_model": "next_open",
+    "execution_delay": 0,
+    "slippage_bps": 5.0
+  },
+  "run_at": "2026-04-27T16:49:43.478298",
   "label": "Z-score reversion (stat-arb mean reversion)",
   "seed_meta": {
     "tag": "ZSCORE-reversion",

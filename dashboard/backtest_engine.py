@@ -7,6 +7,7 @@ Saves/loads results as JSON in dashboard/backtests/.
 """
 from __future__ import annotations
 
+import functools
 import json
 import logging
 import os
@@ -18,6 +19,64 @@ import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+
+# ── Benchmark overlay loader (cached) ───────────────────────────────────────
+
+@functools.lru_cache(maxsize=8)
+def _benchmark_close(symbol: str) -> tuple[tuple[str, float], ...]:
+    """
+    Return the symbol's close column as a tuple of (date_iso, close)
+    pairs.  LRU-cached so the equity-chart overlay isn't an N+1 read on
+    every render.  Returns empty tuple if the symbol's parquet isn't
+    on disk (caller renders without overlay).
+    """
+    path = DATA_DIR / f"{symbol.upper()}_features.parquet"
+    if not path.exists():
+        path = DATA_DIR / f"{symbol.upper()}_raw.parquet"
+    if not path.exists():
+        return tuple()
+    try:
+        df = pd.read_parquet(path)
+    except Exception as exc:
+        logger.warning("Could not read benchmark %s: %s", symbol, exc)
+        return tuple()
+    if "close" not in df.columns or df.empty:
+        return tuple()
+    return tuple(
+        (str(idx.date()) if hasattr(idx, "date") else str(idx)[:10], float(c))
+        for idx, c in df["close"].items()
+    )
+
+
+def load_benchmark_curve(
+    symbol:       str,
+    start:        Optional[str] = None,
+    end:          Optional[str] = None,
+    normalize_to: Optional[float] = None,
+) -> list[dict]:
+    """
+    Returns the benchmark close as a list of {date, value} dicts,
+    sliced to ``[start, end]`` and (optionally) normalized so the first
+    value equals ``normalize_to`` — making it visually comparable to an
+    equity curve that started at the same dollar amount.
+    """
+    series = _benchmark_close(symbol)
+    if not series:
+        return []
+    if start:
+        series = tuple((d, c) for d, c in series if d >= start)
+    if end:
+        series = tuple((d, c) for d, c in series if d <= end)
+    if not series:
+        return []
+    first_close = series[0][1]
+    if first_close <= 0:
+        return [{"date": d, "value": round(c, 4)} for d, c in series]
+    if normalize_to is None:
+        return [{"date": d, "value": round(c, 4)} for d, c in series]
+    factor = float(normalize_to) / first_close
+    return [{"date": d, "value": round(c * factor, 2)} for d, c in series]
 
 BACKTEST_DIR = Path(__file__).parent / "backtests"
 BACKTEST_DIR.mkdir(exist_ok=True)
@@ -318,6 +377,27 @@ def run_filtered_backtest(
 
     run_id = f"BT-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-multi-{period_days}d"
 
+    # Preset payload — lets the dashboard re-hydrate every form field
+    # from this saved run via the "Apply preset" UI.
+    preset = {
+        "model_id":         model_id,
+        "filters":          list(filters),
+        "period_days":      int(period_days),
+        "min_confidence":   float(conf_threshold),
+        "max_symbols":      int(max_symbols),
+        "use_signal_exit":  bool(use_signal_exit),
+        "take_profit_pct":  take_profit_pct,
+        "stop_loss_pct":    stop_loss_pct,
+        "time_stop_days":   time_stop_days,
+        "atr_stop_mult":    atr_stop_mult,
+        "starting_cash":    float(starting_cash),
+        "sizing_method":    sizing_method,
+        "sizing_kwargs":    dict(sizing_kwargs or {}),
+        "execution_model":  execution_model,
+        "execution_delay":  int(execution_delay_bars),
+        "slippage_bps":     float(slippage_bps),
+    }
+
     return {
         "run_id":          run_id,
         "model":           model_id,
@@ -330,6 +410,7 @@ def run_filtered_backtest(
         "monthly_returns": monthly,
         "trades":          all_trades,
         "per_symbol":      metric_per_symbol,
+        "preset":          preset,
         "run_at":          datetime.now().isoformat(),
     }
 
@@ -1016,10 +1097,13 @@ def run_walk_forward(
         sharpes.append(float(m.get("sharpe", 0) or 0))
         returns.append(float(m.get("total_return_pct", 0) or 0))
         fold_results.append({
-            "fold":       k,
-            "oos_window": (str(oos_window[0])[:10], str(oos_window[1])[:10]),
-            "metrics":    m,
-            "trades":     oos_out.get("trades", []),
+            "fold":            k,
+            "oos_window":      (str(oos_window[0])[:10], str(oos_window[1])[:10]),
+            "metrics":         m,
+            "trades":          oos_out.get("trades", []),
+            "equity_curve":    oos_out.get("equity_curve", []),
+            "monthly_returns": oos_out.get("monthly_returns", []),
+            "run_id":          oos_out.get("run_id", f"fold-{k}"),
         })
 
     if sharpes:

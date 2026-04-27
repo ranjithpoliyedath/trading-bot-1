@@ -134,17 +134,69 @@ def get_top_n_by_volume(n: int = 100, eligible_only: bool = True) -> list:
 # Universe scope choices used by the dashboard.  Keep keys short and
 # stable — the dashboard dropdown writes them straight into the
 # backtest payload.
-UNIVERSE_SCOPES: dict[str, str] = {
-    "all":       "All eligible (full universe)",
-    "top_100":   "Top 100 by liquidity",
-    "top_500":   "Top 500 by liquidity",
-    "sp500":     "S&P 500 (large-cap)",
-    "sp400":     "S&P MidCap 400",
-    "sp600":     "S&P SmallCap 600",
-    "large_cap": "Large caps (S&P 500)",
-    "mid_cap":   "Mid caps (S&P 400)",
-    "small_cap": "Small caps (S&P 600)",
-}
+#
+# Three families of scopes:
+#   • categorical groupings (all / top_N / sp500 / sp400 / sp600 / *_cap)
+#   • individual ETFs       (etf:SPY, etf:QQQ, …)
+#   • individual stocks     (sym:AAPL, sym:NVDA, …)
+#
+# select_universe() expands `etf:X` and `sym:X` to a single-symbol list.
+
+# Broad-market ETFs the dashboard exposes as one-symbol universes.
+_ETF_OPTIONS = [
+    ("SPY",  "S&P 500"),
+    ("QQQ",  "Nasdaq 100"),
+    ("DIA",  "Dow 30"),
+    ("IWM",  "Russell 2000"),
+    ("VTI",  "Total Market"),
+    ("XLK",  "Tech sector"),
+    ("XLV",  "Healthcare sector"),
+    ("XLF",  "Financials sector"),
+    ("XLE",  "Energy sector"),
+    ("XLY",  "Cons. Disc."),
+    ("XLP",  "Cons. Staples"),
+    ("XLI",  "Industrials"),
+    ("XLU",  "Utilities"),
+    ("XLB",  "Materials"),
+    ("XLRE", "Real Estate"),
+    ("XLC",  "Communication"),
+]
+
+# Mega-cap stocks the dashboard exposes as one-symbol universes.
+_STOCK_OPTIONS = [
+    "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA",
+    "AVGO", "AMD",  "NFLX", "CRM",   "ORCL", "ADBE", "INTC",
+    "BAC",  "JPM",  "WFC",  "C",
+    "XOM",  "CVX",  "COP",
+    "JNJ",  "UNH",  "PFE",
+    "WMT",  "COST", "HD",   "MCD",   "DIS",
+]
+
+
+def _build_scopes() -> dict[str, str]:
+    """Compose UNIVERSE_SCOPES from the three families.  Categorical
+    groupings come first (most useful default), then ETFs, then
+    individual mega-caps alphabetically — that's the order the dashboard
+    dropdown renders."""
+    out: dict[str, str] = {
+        "all":       "All eligible (full universe)",
+        "top_100":   "Top 100 by liquidity",
+        "top_500":   "Top 500 by liquidity",
+        "sp500":     "S&P 500 (large-cap)",
+        "sp400":     "S&P MidCap 400",
+        "sp600":     "S&P SmallCap 600",
+        "large_cap": "Large caps (S&P 500)",
+        "mid_cap":   "Mid caps (S&P 400)",
+        "small_cap": "Small caps (S&P 600)",
+    }
+    for etf, label in _ETF_OPTIONS:
+        out[f"etf:{etf}"] = f"ETF — {etf} ({label})"
+    for sym in sorted(_STOCK_OPTIONS):
+        out[f"sym:{sym}"] = f"Stock — {sym}"
+    return out
+
+
+UNIVERSE_SCOPES: dict[str, str] = _build_scopes()
 
 
 def select_universe(
@@ -156,20 +208,29 @@ def select_universe(
     Resolve a UI scope label into a concrete symbol list.
 
     Args:
-        scope: One of UNIVERSE_SCOPES keys.
+        scope: One of UNIVERSE_SCOPES keys.  Prefixed forms ``etf:`` and
+               ``sym:`` short-circuit to a single-symbol list (these
+               aren't filtered through the eligible-universe check
+               since SPY etc. are not S&P constituents themselves).
         limit: Optional cap on the returned list (after scoping).
-        eligible_only: Apply the universe eligibility filter.
+        eligible_only: Apply the universe eligibility filter (only
+               relevant for categorical scopes).
 
     Returns:
         List of ticker symbols in scan order (most liquid first).
     """
+    s = (scope or "all").lower()
+
+    # Single-symbol shortcuts come first — they don't need the universe parquet.
+    if s.startswith("etf:") or s.startswith("sym:"):
+        return [s.split(":", 1)[1].upper()]
+
     df = load_universe(eligible_only=eligible_only)
     if df.empty:
         return []
     if "avg_volume_14d" in df.columns:
         df = df.sort_values("avg_volume_14d", ascending=False, na_position="last")
 
-    s = (scope or "all").lower()
     if   s == "top_100":                                       df = df.head(100)
     elif s == "top_500":                                       df = df.head(500)
     elif s in ("sp500", "large_cap") and "index" in df.columns: df = df[df["index"] == "sp500"]
