@@ -49,8 +49,29 @@ MODELS_DIR      = ROOT_DIR / "models" / "saved"
 BACKTEST_DIR    = ROOT_DIR / "dashboard" / "backtests"
 LOG_DIR         = ROOT_DIR / "logs"
 
+def _ensure_dir(p: Path) -> None:
+    """Create ``p`` if it doesn't exist.  Tolerates the legitimate cases
+    where the path is already a symlink to a real directory; raises with
+    a useful hint when a *broken* symlink (or a regular file) blocks
+    creation, so users see "fix the broken symlink at <path>" instead
+    of pathlib's bare ``FileExistsError``."""
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+    except FileExistsError:
+        if p.is_symlink() and not p.exists():
+            raise FileExistsError(
+                f"{p} is a broken symlink (target {p.resolve()} doesn't exist). "
+                f"Run: rm '{p}' && mkdir -p '{p}'  to repair."
+            ) from None
+        # Path exists but isn't a directory — surface a clearer message
+        raise FileExistsError(
+            f"{p} exists but is not a directory.  Remove it or move it aside, "
+            f"then re-run."
+        ) from None
+
+
 for _dir in [DATA_DIR, RAW_DIR, MODELS_DIR, BACKTEST_DIR, LOG_DIR]:
-    _dir.mkdir(parents=True, exist_ok=True)
+    _ensure_dir(_dir)
 
 
 # ── Logging ───────────────────────────────────────────────────────────────────
