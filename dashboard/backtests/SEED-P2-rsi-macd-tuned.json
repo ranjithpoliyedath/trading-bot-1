@@ -12,25 +12,27 @@
     }
   ],
   "metrics": {
-    "total_return_pct": 62.93,
-    "sharpe": 0.41,
-    "sortino": 0.12,
-    "expectancy": 170.09,
-    "edge_ratio": 1.27,
-    "profit_factor": 1.34,
-    "max_drawdown_pct": -36.09,
-    "win_rate_pct": 51.4,
-    "loss_rate_pct": 48.6,
-    "total_trades": 37,
-    "wins": 19,
-    "losses": 18,
-    "avg_win": 1301.43,
-    "avg_loss": -1024.1,
-    "avg_win_pct": 13.01,
-    "avg_loss_pct": -10.24,
-    "largest_win": 2522.83,
-    "largest_loss": -3557.63,
-    "symbols_traded": 15
+    "total_return_pct": 60.85,
+    "sharpe": 0.33,
+    "sortino": 0.07,
+    "expectancy": 184.4,
+    "edge_ratio": 1.02,
+    "profit_factor": 1.22,
+    "max_drawdown_pct": -60.76,
+    "win_rate_pct": 54.5,
+    "loss_rate_pct": 45.5,
+    "total_trades": 33,
+    "wins": 18,
+    "losses": 15,
+    "avg_win": 1886.17,
+    "avg_loss": -1857.72,
+    "avg_win_pct": 18.86,
+    "avg_loss_pct": -18.58,
+    "largest_win": 4207.88,
+    "largest_loss": -8090.45,
+    "symbols_traded": 15,
+    "starting_cash": 10000.0,
+    "ending_cash": 16085.329085000058
   },
   "equity_curve": [
     {
@@ -38,152 +40,136 @@
       "value": 10000.0
     },
     {
+      "date": "2020-11-05",
+      "value": 10532.96
+    },
+    {
       "date": "2021-09-01",
-      "value": 10518.3
+      "value": 11079.97
     },
     {
       "date": "2021-10-20",
-      "value": 11218.48
+      "value": 11818.17
     },
     {
       "date": "2022-06-03",
-      "value": 12430.93
+      "value": 13259.38
     },
     {
       "date": "2022-06-22",
-      "value": 13824.87
+      "value": 15108.63
     },
     {
-      "date": "2022-07-08",
-      "value": 16347.7
+      "date": "2022-06-29",
+      "value": 13903.61
+    },
+    {
+      "date": "2022-07-22",
+      "value": 15956.07
+    },
+    {
+      "date": "2022-08-05",
+      "value": 18073.35
     },
     {
       "date": "2022-10-31",
-      "value": 17933.43
+      "value": 20944.35
     },
     {
       "date": "2022-12-19",
-      "value": 15743.13
+      "value": 17647.89
     },
     {
       "date": "2022-12-28",
-      "value": 14269.48
+      "value": 15429.85
     },
     {
       "date": "2023-01-05",
-      "value": 16684.91
+      "value": 19637.73
     },
     {
       "date": "2023-04-12",
-      "value": 16728.06
-    },
-    {
-      "date": "2023-09-07",
-      "value": 15969.87
-    },
-    {
-      "date": "2023-10-19",
-      "value": 15137.83
-    },
-    {
-      "date": "2023-10-26",
-      "value": 14422.34
+      "value": 19722.34
     },
     {
       "date": "2023-11-03",
-      "value": 14750.01
+      "value": 20368.71
     },
     {
       "date": "2024-06-26",
-      "value": 14862.06
-    },
-    {
-      "date": "2024-07-08",
-      "value": 16377.51
+      "value": 20566.18
     },
     {
       "date": "2024-07-26",
-      "value": 15938.46
+      "value": 19665.56
     },
     {
-      "date": "2024-08-06",
-      "value": 15307.25
+      "date": "2024-07-31",
+      "value": 19528.08
     },
     {
-      "date": "2024-08-15",
-      "value": 16704.52
+      "date": "2024-08-16",
+      "value": 22724.45
     },
     {
       "date": "2024-10-31",
-      "value": 13146.89
+      "value": 14633.99
     },
     {
       "date": "2024-11-07",
-      "value": 12544.51
+      "value": 12041.01
     },
     {
-      "date": "2024-11-14",
-      "value": 11461.34
+      "date": "2024-11-12",
+      "value": 10441.72
+    },
+    {
+      "date": "2024-11-15",
+      "value": 8915.96
     },
     {
       "date": "2024-11-20",
-      "value": 13089.51
+      "value": 11962.45
+    },
+    {
+      "date": "2024-11-25",
+      "value": 15381.08
     },
     {
       "date": "2025-04-09",
-      "value": 12200.77
-    },
-    {
-      "date": "2025-04-24",
-      "value": 13829.78
+      "value": 13890.2
     },
     {
       "date": "2025-08-05",
-      "value": 15272.26
+      "value": 15893.87
     },
     {
       "date": "2025-11-10",
-      "value": 16900.41
+      "value": 18483.66
     },
     {
       "date": "2025-12-11",
-      "value": 16256.8
-    },
-    {
-      "date": "2026-01-06",
-      "value": 18157.88
+      "value": 17421.09
     },
     {
       "date": "2026-01-15",
-      "value": 17418.18
+      "value": 16278.9
     },
     {
-      "date": "2026-01-15",
-      "value": 16684.04
+      "date": "2026-01-21",
+      "value": 15398.08
     },
     {
-      "date": "2026-01-30",
-      "value": 16043.92
-    },
-    {
-      "date": "2026-02-03",
-      "value": 15323.14
-    },
-    {
-      "date": "2026-02-06",
-      "value": 14402.72
-    },
-    {
-      "date": "2026-03-02",
-      "value": 15871.0
-    },
-    {
-      "date": "2026-03-02",
-      "value": 15007.76
+      "date": "2026-02-13",
+      "value": 14258.32
     },
     {
       "date": "2026-03-09",
-      "value": 16293.28
+      "value": 16668.78
+    },
+    {
+      "date": "2026-04-27",
+      "value": 16085.33
     }
   ],
   "monthly_returns": [
@@ -193,550 +179,512 @@
     },
     {
       "month": "2022-07",
-      "return": 18.25
+      "return": 14.76
+    },
+    {
+      "month": "2022-08",
+      "return": 13.27
     },
     {
       "month": "2023-01",
-      "return": 16.93
-    },
-    {
-      "month": "2023-10",
-      "return": -9.69
-    },
-    {
-      "month": "2023-11",
-      "return": 2.27
+      "return": 27.27
     },
     {
       "month": "2024-07",
-      "return": 7.24
+      "return": -5.05
     },
     {
       "month": "2024-08",
-      "return": 4.81
+      "return": 16.37
     },
     {
       "month": "2024-11",
-      "return": -0.44
+      "return": 5.11
     },
     {
       "month": "2025-12",
-      "return": -3.81
+      "return": -5.75
     },
     {
       "month": "2026-01",
-      "return": -1.31
+      "return": -11.61
     },
     {
       "month": "2026-02",
-      "return": -10.23
+      "return": -7.4
     },
     {
       "month": "2026-03",
-      "return": 13.13
+      "return": 16.91
+    },
+    {
+      "month": "2026-04",
+      "return": -3.5
     }
   ],
   "trades": [
     {
+      "date": "2020-11-05",
+      "entry_date": "2020-09-23",
+      "symbol": "AAPL",
+      "pl": 532.96,
+      "win": true,
+      "exit_reason": "time_stop",
+      "entry_price": 111.69,
+      "exit_price": 117.96,
+      "shares": 85
+    },
+    {
       "date": "2021-09-01",
       "entry_date": "2021-07-20",
       "symbol": "CSX",
-      "pl": 518.3,
+      "pl": 547.0,
       "win": true,
       "exit_reason": "time_stop",
       "entry_price": 30.88,
       "exit_price": 32.56,
-      "shares": 307
+      "shares": 324
     },
     {
       "date": "2021-10-20",
       "entry_date": "2021-09-07",
       "symbol": "CSX",
-      "pl": 700.18,
+      "pl": 738.21,
       "win": true,
       "exit_reason": "time_stop",
       "entry_price": 31.9,
       "exit_price": 34.13,
-      "shares": 313
+      "shares": 330
     },
     {
       "date": "2022-06-03",
       "entry_date": "2022-05-13",
       "symbol": "NFLX",
-      "pl": 1212.45,
+      "pl": 1441.21,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 177.18,
       "exit_price": 200.06,
-      "shares": 53
+      "shares": 63
     },
     {
       "date": "2022-06-22",
       "entry_date": "2022-06-13",
       "symbol": "MARA",
-      "pl": 1393.94,
+      "pl": 1849.25,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 6.15,
       "exit_price": 7.06,
-      "shares": 1543
+      "shares": 2047
     },
     {
-      "date": "2022-07-08",
-      "entry_date": "2022-07-01",
-      "symbol": "MARA",
-      "pl": 2522.83,
+      "date": "2022-06-29",
+      "entry_date": "2022-06-27",
+      "symbol": "AMZN",
+      "pl": -1205.02,
+      "win": false,
+      "exit_reason": "stop_loss",
+      "entry_price": 117.18,
+      "exit_price": 107.31,
+      "shares": 122
+    },
+    {
+      "date": "2022-07-22",
+      "entry_date": "2022-06-30",
+      "symbol": "AMZN",
+      "pl": 2052.46,
       "win": true,
       "exit_reason": "take_profit",
-      "entry_price": 5.42,
-      "exit_price": 6.69,
-      "shares": 1996
+      "entry_price": 108.1,
+      "exit_price": 124.93,
+      "shares": 122
+    },
+    {
+      "date": "2022-08-05",
+      "entry_date": "2022-07-25",
+      "symbol": "AMZN",
+      "pl": 2117.27,
+      "win": true,
+      "exit_reason": "take_profit",
+      "entry_price": 122.8,
+      "exit_price": 140.01,
+      "shares": 123
     },
     {
       "date": "2022-10-31",
       "entry_date": "2022-10-12",
       "symbol": "INTC",
-      "pl": 1585.73,
+      "pl": 2871.0,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 24.94,
       "exit_price": 29.12,
-      "shares": 380
+      "shares": 688
     },
     {
       "date": "2022-12-19",
       "entry_date": "2022-12-15",
       "symbol": "MARA",
-      "pl": -2190.3,
+      "pl": -3296.46,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 4.58,
       "exit_price": 3.82,
-      "shares": 2885
+      "shares": 4342
     },
     {
       "date": "2022-12-28",
       "entry_date": "2022-12-23",
       "symbol": "MARA",
-      "pl": -1473.65,
+      "pl": -2218.04,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 3.69,
       "exit_price": 3.2,
-      "shares": 3017
+      "shares": 4541
     },
     {
       "date": "2023-01-05",
-      "entry_date": "2022-12-30",
+      "entry_date": "2022-12-29",
       "symbol": "MARA",
-      "pl": 2415.43,
+      "pl": 4207.88,
       "win": true,
       "exit_reason": "take_profit",
-      "entry_price": 3.29,
+      "entry_price": 3.19,
       "exit_price": 4.11,
-      "shares": 2959
+      "shares": 4592
     },
     {
       "date": "2023-04-12",
       "entry_date": "2023-02-27",
       "symbol": "PFE",
-      "pl": 43.15,
+      "pl": 84.61,
       "win": true,
       "exit_reason": "time_stop",
       "entry_price": 41.46,
       "exit_price": 41.65,
-      "shares": 229
-    },
-    {
-      "date": "2023-09-07",
-      "entry_date": "2023-08-31",
-      "symbol": "JBLU",
-      "pl": -758.19,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 6.02,
-      "exit_price": 5.54,
-      "shares": 1577
-    },
-    {
-      "date": "2023-10-19",
-      "entry_date": "2023-10-04",
-      "symbol": "AAL",
-      "pl": -832.04,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 12.46,
-      "exit_price": 11.36,
-      "shares": 762
-    },
-    {
-      "date": "2023-10-26",
-      "entry_date": "2023-09-29",
-      "symbol": "JBLU",
-      "pl": -715.49,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 4.59,
-      "exit_price": 4.22,
-      "shares": 1911
+      "shares": 449
     },
     {
       "date": "2023-11-03",
       "entry_date": "2023-09-21",
       "symbol": "HIMS",
-      "pl": 327.67,
+      "pl": 646.37,
       "win": true,
       "exit_reason": "time_stop",
       "entry_price": 6.05,
       "exit_price": 6.26,
-      "shares": 1569
+      "shares": 3095
     },
     {
       "date": "2024-06-26",
       "entry_date": "2024-05-10",
       "symbol": "INTC",
-      "pl": 112.05,
+      "pl": 197.47,
       "win": true,
       "exit_reason": "time_stop",
       "entry_price": 30.33,
       "exit_price": 30.63,
-      "shares": 362
-    },
-    {
-      "date": "2024-07-08",
-      "entry_date": "2024-06-21",
-      "symbol": "PATH",
-      "pl": 1515.45,
-      "win": true,
-      "exit_reason": "take_profit",
-      "entry_price": 11.35,
-      "exit_price": 13.16,
-      "shares": 836
+      "shares": 638
     },
     {
       "date": "2024-07-26",
       "entry_date": "2024-07-03",
       "symbol": "NVDA",
-      "pl": -439.05,
+      "pl": -900.62,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 121.72,
       "exit_price": 116.09,
-      "shares": 78
+      "shares": 160
     },
     {
-      "date": "2024-08-06",
-      "entry_date": "2024-07-30",
+      "date": "2024-07-31",
+      "entry_date": "2024-07-29",
       "symbol": "NVDA",
-      "pl": -631.21,
+      "pl": -137.48,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 111.59,
-      "exit_price": 103.79,
-      "shares": 81
+      "entry_price": 113.7,
+      "exit_price": 112.86,
+      "shares": 164
     },
     {
-      "date": "2024-08-15",
-      "entry_date": "2024-08-08",
+      "date": "2024-08-16",
+      "entry_date": "2024-08-02",
       "symbol": "NVDA",
-      "pl": 1397.27,
+      "pl": 3196.37,
       "win": true,
       "exit_reason": "take_profit",
-      "entry_price": 102.05,
-      "exit_price": 118.89,
-      "shares": 83
+      "entry_price": 103.9,
+      "exit_price": 121.86,
+      "shares": 178
     },
     {
       "date": "2024-10-31",
       "entry_date": "2024-10-18",
       "symbol": "SMCI",
-      "pl": -3557.63,
+      "pl": -8090.45,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 48.08,
       "exit_price": 30.02,
-      "shares": 197
+      "shares": 448
     },
     {
       "date": "2024-11-07",
-      "entry_date": "2024-11-04",
+      "entry_date": "2024-11-01",
       "symbol": "SMCI",
-      "pl": -602.38,
+      "pl": -2592.99,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 24.93,
+      "entry_price": 27.62,
       "exit_price": 22.47,
-      "shares": 245
+      "shares": 503
     },
     {
-      "date": "2024-11-14",
-      "entry_date": "2024-11-11",
+      "date": "2024-11-12",
+      "entry_date": "2024-11-08",
       "symbol": "SMCI",
-      "pl": -1083.17,
+      "pl": -1599.29,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 22.26,
-      "exit_price": 17.91,
-      "shares": 249
+      "entry_price": 25.7,
+      "exit_price": 22.1,
+      "shares": 445
+    },
+    {
+      "date": "2024-11-15",
+      "entry_date": "2024-11-13",
+      "symbol": "SMCI",
+      "pl": -1525.76,
+      "win": false,
+      "exit_reason": "stop_loss",
+      "entry_price": 21.02,
+      "exit_price": 17.78,
+      "shares": 471
     },
     {
       "date": "2024-11-20",
       "entry_date": "2024-11-18",
       "symbol": "SMCI",
-      "pl": 1628.17,
+      "pl": 3046.48,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 20.08,
       "exit_price": 27.32,
-      "shares": 225
+      "shares": 421
+    },
+    {
+      "date": "2024-11-25",
+      "entry_date": "2024-11-21",
+      "symbol": "SMCI",
+      "pl": 3418.64,
+      "win": true,
+      "exit_reason": "take_profit",
+      "entry_price": 27.69,
+      "exit_price": 36.03,
+      "shares": 410
     },
     {
       "date": "2025-04-09",
       "entry_date": "2025-04-02",
       "symbol": "AAL",
-      "pl": -888.74,
+      "pl": -1490.88,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 10.14,
       "exit_price": 9.1,
-      "shares": 859
-    },
-    {
-      "date": "2025-04-24",
-      "entry_date": "2025-04-04",
-      "symbol": "HPE",
-      "pl": 1629.01,
-      "win": true,
-      "exit_reason": "take_profit",
-      "entry_price": 13.21,
-      "exit_price": 15.47,
-      "shares": 719
+      "shares": 1441
     },
     {
       "date": "2025-08-05",
       "entry_date": "2025-07-16",
       "symbol": "PCG",
-      "pl": 1442.48,
+      "pl": 2003.67,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 13.01,
       "exit_price": 14.98,
-      "shares": 730
+      "shares": 1014
     },
     {
       "date": "2025-11-10",
       "entry_date": "2025-10-17",
       "symbol": "KVUE",
-      "pl": 1628.15,
+      "pl": 2589.79,
       "win": true,
       "exit_reason": "take_profit",
       "entry_price": 14.33,
       "exit_price": 16.79,
-      "shares": 662
+      "shares": 1053
     },
     {
       "date": "2025-12-11",
       "entry_date": "2025-12-08",
       "symbol": "NFLX",
-      "pl": -643.61,
+      "pl": -1062.57,
       "win": false,
       "exit_reason": "stop_loss",
       "entry_price": 99.86,
       "exit_price": 93.79,
-      "shares": 106
-    },
-    {
-      "date": "2026-01-06",
-      "entry_date": "2026-01-02",
-      "symbol": "MARA",
-      "pl": 1901.08,
-      "win": true,
-      "exit_reason": "take_profit",
-      "entry_price": 9.17,
-      "exit_price": 10.62,
-      "shares": 1311
+      "shares": 175
     },
     {
       "date": "2026-01-15",
-      "entry_date": "2025-12-15",
+      "entry_date": "2025-12-12",
       "symbol": "NFLX",
-      "pl": -739.7,
+      "pl": -1142.19,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 96.06,
+      "entry_price": 95.55,
       "exit_price": 88.95,
-      "shares": 104
+      "shares": 173
     },
     {
-      "date": "2026-01-15",
-      "entry_date": "2026-01-09",
+      "date": "2026-01-21",
+      "entry_date": "2026-01-15",
       "symbol": "NOW",
-      "pl": -734.14,
+      "pl": -880.82,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 146.66,
-      "exit_price": 135.19,
-      "shares": 64
+      "entry_price": 135.33,
+      "exit_price": 127.6,
+      "shares": 114
     },
     {
-      "date": "2026-01-30",
-      "entry_date": "2026-01-20",
-      "symbol": "NOW",
-      "pl": -640.12,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 126.79,
-      "exit_price": 117.51,
-      "shares": 69
-    },
-    {
-      "date": "2026-02-03",
-      "entry_date": "2026-01-20",
+      "date": "2026-02-13",
+      "entry_date": "2026-01-21",
       "symbol": "NFLX",
-      "pl": -720.78,
+      "pl": -1139.76,
       "win": false,
       "exit_reason": "stop_loss",
-      "entry_price": 89.01,
-      "exit_price": 82.08,
-      "shares": 104
-    },
-    {
-      "date": "2026-02-06",
-      "entry_date": "2026-02-03",
-      "symbol": "NOW",
-      "pl": -920.42,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 115.08,
-      "exit_price": 102.11,
-      "shares": 71
-    },
-    {
-      "date": "2026-03-02",
-      "entry_date": "2026-02-05",
-      "symbol": "NFLX",
-      "pl": 1468.28,
-      "win": true,
-      "exit_reason": "take_profit",
-      "entry_price": 81.4,
-      "exit_price": 95.25,
-      "shares": 106
-    },
-    {
-      "date": "2026-03-02",
-      "entry_date": "2026-02-26",
-      "symbol": "HIMS",
-      "pl": -863.24,
-      "win": false,
-      "exit_reason": "stop_loss",
-      "entry_price": 15.78,
-      "exit_price": 14.39,
-      "shares": 621
+      "entry_price": 82.55,
+      "exit_price": 76.11,
+      "shares": 177
     },
     {
       "date": "2026-03-09",
-      "entry_date": "2026-02-10",
+      "entry_date": "2026-02-13",
       "symbol": "NOW",
-      "pl": 1285.52,
+      "pl": 2410.46,
       "win": true,
       "exit_reason": "take_profit",
-      "entry_price": 104.95,
+      "entry_price": 104.9,
       "exit_price": 123.58,
-      "shares": 69
+      "shares": 129
+    },
+    {
+      "date": "2026-04-27",
+      "entry_date": "2026-03-31",
+      "symbol": "BSX",
+      "pl": -583.45,
+      "win": false,
+      "exit_reason": "final_liquidation",
+      "entry_price": 63.81,
+      "exit_price": 61.46,
+      "shares": 248
     }
   ],
   "per_symbol": [
     {
-      "symbol": "NVDA",
-      "trades": 3,
-      "pl": 327.01,
-      "win_rate": 33.3
-    },
-    {
       "symbol": "INTC",
       "trades": 2,
-      "pl": 1697.78,
+      "pl": 3068.47,
       "win_rate": 100.0
     },
     {
-      "symbol": "AAL",
-      "trades": 2,
-      "pl": -1720.78,
-      "win_rate": 0.0
-    },
-    {
-      "symbol": "NFLX",
-      "trades": 5,
-      "pl": 576.64,
-      "win_rate": 40.0
-    },
-    {
-      "symbol": "PFE",
-      "trades": 1,
-      "pl": 43.15,
-      "win_rate": 100.0
-    },
-    {
-      "symbol": "PCG",
-      "trades": 1,
-      "pl": 1442.48,
-      "win_rate": 100.0
-    },
-    {
-      "symbol": "JBLU",
-      "trades": 2,
-      "pl": -1473.68,
-      "win_rate": 0.0
-    },
-    {
-      "symbol": "SMCI",
-      "trades": 4,
-      "pl": -3615.01,
-      "win_rate": 25.0
-    },
-    {
-      "symbol": "NOW",
-      "trades": 4,
-      "pl": -1009.16,
-      "win_rate": 25.0
-    },
-    {
-      "symbol": "MARA",
-      "trades": 6,
-      "pl": 4569.33,
+      "symbol": "AMZN",
+      "trades": 3,
+      "pl": 2964.71,
       "win_rate": 66.7
-    },
-    {
-      "symbol": "HPE",
-      "trades": 1,
-      "pl": 1629.01,
-      "win_rate": 100.0
     },
     {
       "symbol": "KVUE",
       "trades": 1,
-      "pl": 1628.15,
+      "pl": 2589.79,
       "win_rate": 100.0
     },
     {
-      "symbol": "HIMS",
+      "symbol": "NVDA",
+      "trades": 3,
+      "pl": 2158.27,
+      "win_rate": 33.3
+    },
+    {
+      "symbol": "PCG",
+      "trades": 1,
+      "pl": 2003.67,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "NOW",
       "trades": 2,
-      "pl": -535.57,
+      "pl": 1529.64,
       "win_rate": 50.0
     },
     {
       "symbol": "CSX",
       "trades": 2,
-      "pl": 1218.48,
+      "pl": 1285.21,
       "win_rate": 100.0
     },
     {
-      "symbol": "PATH",
+      "symbol": "HIMS",
       "trades": 1,
-      "pl": 1515.45,
+      "pl": 646.37,
       "win_rate": 100.0
+    },
+    {
+      "symbol": "MARA",
+      "trades": 4,
+      "pl": 542.63,
+      "win_rate": 50.0
+    },
+    {
+      "symbol": "AAPL",
+      "trades": 1,
+      "pl": 532.96,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "PFE",
+      "trades": 1,
+      "pl": 84.61,
+      "win_rate": 100.0
+    },
+    {
+      "symbol": "BSX",
+      "trades": 1,
+      "pl": -583.45,
+      "win_rate": 0.0
+    },
+    {
+      "symbol": "AAL",
+      "trades": 1,
+      "pl": -1490.88,
+      "win_rate": 0.0
+    },
+    {
+      "symbol": "NFLX",
+      "trades": 4,
+      "pl": -1903.31,
+      "win_rate": 25.0
+    },
+    {
+      "symbol": "SMCI",
+      "trades": 6,
+      "pl": -7343.37,
+      "win_rate": 33.3
     }
   ],
+  "load_report": {
+    "requested": 30,
+    "loaded": 30,
+    "missing_features": [],
+    "empty_after_window": []
+  },
   "preset": {
     "model_id": "rsi_macd_v1",
     "filters": [
@@ -761,7 +709,7 @@
     "execution_delay": 0,
     "slippage_bps": 5.0
   },
-  "run_at": "2026-04-27T18:27:38.337634",
+  "run_at": "2026-04-28T07:10:43.313967",
   "label": "Phase 2: RSI+MACD tuned via Strategy Finder",
   "seed_meta": {
     "tag": "P2-rsi-macd-tuned",

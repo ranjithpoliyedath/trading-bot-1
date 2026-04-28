@@ -5,161 +5,2910 @@
     {
       "fold": 1,
       "oos_window": [
-        "2025-05-22",
-        "2025-08-14"
+        "2021-08-21",
+        "2022-10-22"
       ],
       "metrics": {
-        "total_return_pct": 0,
-        "sharpe": 0,
-        "sortino": 0,
-        "expectancy": 0,
-        "edge_ratio": 0,
-        "profit_factor": 0,
-        "max_drawdown_pct": 0,
-        "win_rate_pct": 0,
-        "loss_rate_pct": 0,
-        "total_trades": 0,
-        "wins": 0,
-        "losses": 0,
-        "avg_win": 0,
-        "avg_loss": 0,
-        "avg_win_pct": 0,
-        "avg_loss_pct": 0,
-        "largest_win": 0,
-        "largest_loss": 0,
-        "symbols_traded": 0
+        "total_return_pct": -29.63,
+        "sharpe": -0.83,
+        "sortino": -0.34,
+        "expectancy": -98.77,
+        "edge_ratio": 0.5,
+        "profit_factor": 0.65,
+        "max_drawdown_pct": -41.27,
+        "win_rate_pct": 56.7,
+        "loss_rate_pct": 43.3,
+        "total_trades": 30,
+        "wins": 17,
+        "losses": 13,
+        "avg_win": 319.99,
+        "avg_loss": -646.39,
+        "avg_win_pct": 3.2,
+        "avg_loss_pct": -6.46,
+        "largest_win": 1164.02,
+        "largest_loss": -1163.95,
+        "symbols_traded": 16,
+        "starting_cash": 10000.0,
+        "ending_cash": 7036.810967500044
       },
-      "trades": [],
+      "trades": [
+        {
+          "date": "2021-11-29",
+          "entry_date": "2021-11-24",
+          "symbol": "NFLX",
+          "pl": 136.67,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 653.11,
+          "exit_price": 662.87,
+          "shares": 14
+        },
+        {
+          "date": "2021-12-08",
+          "entry_date": "2021-11-29",
+          "symbol": "AMZN",
+          "pl": -42.75,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 3546.61,
+          "exit_price": 3525.24,
+          "shares": 2
+        },
+        {
+          "date": "2021-12-16",
+          "entry_date": "2021-12-14",
+          "symbol": "NVDA",
+          "pl": 1164.02,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 277.13,
+          "exit_price": 311.36,
+          "shares": 34
+        },
+        {
+          "date": "2021-12-22",
+          "entry_date": "2021-12-16",
+          "symbol": "NKE",
+          "pl": 264.21,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 163.18,
+          "exit_price": 167.25,
+          "shares": 65
+        },
+        {
+          "date": "2022-01-10",
+          "entry_date": "2022-01-05",
+          "symbol": "PFE",
+          "pl": -28.57,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 55.82,
+          "exit_price": 55.67,
+          "shares": 196
+        },
+        {
+          "date": "2022-01-14",
+          "entry_date": "2022-01-11",
+          "symbol": "CSX",
+          "pl": -43.67,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 36.61,
+          "exit_price": 36.46,
+          "shares": 298
+        },
+        {
+          "date": "2022-01-25",
+          "entry_date": "2022-01-18",
+          "symbol": "BAC",
+          "pl": -816.3,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 47.83,
+          "exit_price": 44.24,
+          "shares": 227
+        },
+        {
+          "date": "2022-01-28",
+          "entry_date": "2022-01-25",
+          "symbol": "T",
+          "pl": -806.62,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 26.17,
+          "exit_price": 24.08,
+          "shares": 385
+        },
+        {
+          "date": "2022-02-01",
+          "entry_date": "2022-01-28",
+          "symbol": "F",
+          "pl": 598.96,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 19.3,
+          "exit_price": 20.54,
+          "shares": 483
+        },
+        {
+          "date": "2022-02-11",
+          "entry_date": "2022-02-07",
+          "symbol": "F",
+          "pl": 196.1,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 17.76,
+          "exit_price": 18.11,
+          "shares": 557
+        },
+        {
+          "date": "2022-02-24",
+          "entry_date": "2022-02-11",
+          "symbol": "PFE",
+          "pl": -897.63,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 50.41,
+          "exit_price": 45.92,
+          "shares": 200
+        },
+        {
+          "date": "2022-02-28",
+          "entry_date": "2022-02-24",
+          "symbol": "AAPL",
+          "pl": 617.53,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 152.77,
+          "exit_price": 163.06,
+          "shares": 60
+        },
+        {
+          "date": "2022-03-03",
+          "entry_date": "2022-02-28",
+          "symbol": "HPE",
+          "pl": 742.43,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 15.78,
+          "exit_price": 16.97,
+          "shares": 622
+        },
+        {
+          "date": "2022-03-21",
+          "entry_date": "2022-03-16",
+          "symbol": "SLB",
+          "pl": 344.42,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 39.39,
+          "exit_price": 40.68,
+          "shares": 267
+        },
+        {
+          "date": "2022-03-29",
+          "entry_date": "2022-03-24",
+          "symbol": "PFE",
+          "pl": 273.31,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 52.57,
+          "exit_price": 53.89,
+          "shares": 206
+        },
+        {
+          "date": "2022-04-07",
+          "entry_date": "2022-04-01",
+          "symbol": "PFE",
+          "pl": 114.54,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 52.01,
+          "exit_price": 52.54,
+          "shares": 213
+        },
+        {
+          "date": "2022-04-14",
+          "entry_date": "2022-04-07",
+          "symbol": "CSX",
+          "pl": 164.2,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 34.5,
+          "exit_price": 35.01,
+          "shares": 325
+        },
+        {
+          "date": "2022-04-25",
+          "entry_date": "2022-04-19",
+          "symbol": "PFE",
+          "pl": -873.76,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 51.78,
+          "exit_price": 47.79,
+          "shares": 219
+        },
+        {
+          "date": "2022-04-29",
+          "entry_date": "2022-04-25",
+          "symbol": "AAPL",
+          "pl": 37.6,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 161.19,
+          "exit_price": 161.77,
+          "shares": 65
+        },
+        {
+          "date": "2022-05-17",
+          "entry_date": "2022-05-10",
+          "symbol": "PCG",
+          "pl": -202.54,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 12.13,
+          "exit_price": 11.89,
+          "shares": 873
+        },
+        {
+          "date": "2022-05-27",
+          "entry_date": "2022-05-24",
+          "symbol": "SMCI",
+          "pl": 104.08,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 48.82,
+          "exit_price": 49.32,
+          "shares": 212
+        },
+        {
+          "date": "2022-06-06",
+          "entry_date": "2022-06-02",
+          "symbol": "PFE",
+          "pl": 171.45,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 52.33,
+          "exit_price": 53.18,
+          "shares": 200
+        },
+        {
+          "date": "2022-06-13",
+          "entry_date": "2022-06-09",
+          "symbol": "PCG",
+          "pl": -1076.91,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 11.98,
+          "exit_price": 10.76,
+          "shares": 889
+        },
+        {
+          "date": "2022-06-17",
+          "entry_date": "2022-06-13",
+          "symbol": "SMCI",
+          "pl": -668.21,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 47.18,
+          "exit_price": 43.91,
+          "shares": 204
+        },
+        {
+          "date": "2022-06-24",
+          "entry_date": "2022-06-17",
+          "symbol": "HAL",
+          "pl": -787.35,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 33.42,
+          "exit_price": 30.49,
+          "shares": 269
+        },
+        {
+          "date": "2022-07-25",
+          "entry_date": "2022-07-14",
+          "symbol": "PFE",
+          "pl": 60.99,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 51.01,
+          "exit_price": 51.38,
+          "shares": 161
+        },
+        {
+          "date": "2022-08-25",
+          "entry_date": "2022-08-19",
+          "symbol": "HIMS",
+          "pl": 339.66,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 6.2,
+          "exit_price": 6.46,
+          "shares": 1339
+        },
+        {
+          "date": "2022-09-23",
+          "entry_date": "2022-09-14",
+          "symbol": "HIMS",
+          "pl": -994.83,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 6.03,
+          "exit_price": 5.34,
+          "shares": 1430
+        },
+        {
+          "date": "2022-09-29",
+          "entry_date": "2022-09-23",
+          "symbol": "SMCI",
+          "pl": 109.74,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 52.83,
+          "exit_price": 53.58,
+          "shares": 145
+        },
+        {
+          "date": "2022-10-17",
+          "entry_date": "2022-10-10",
+          "symbol": "HIMS",
+          "pl": -1163.95,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 5.25,
+          "exit_price": 4.47,
+          "shares": 1483
+        }
+      ],
       "equity_curve": [
         {
           "date": "start",
           "value": 10000.0
+        },
+        {
+          "date": "2021-11-29",
+          "value": 10136.67
+        },
+        {
+          "date": "2021-12-08",
+          "value": 10093.92
+        },
+        {
+          "date": "2021-12-16",
+          "value": 11257.93
+        },
+        {
+          "date": "2021-12-22",
+          "value": 11522.14
+        },
+        {
+          "date": "2022-01-10",
+          "value": 11493.58
+        },
+        {
+          "date": "2022-01-14",
+          "value": 11449.91
+        },
+        {
+          "date": "2022-01-25",
+          "value": 10633.61
+        },
+        {
+          "date": "2022-01-28",
+          "value": 9826.99
+        },
+        {
+          "date": "2022-02-01",
+          "value": 10425.94
+        },
+        {
+          "date": "2022-02-11",
+          "value": 10622.04
+        },
+        {
+          "date": "2022-02-24",
+          "value": 9724.41
+        },
+        {
+          "date": "2022-02-28",
+          "value": 10341.94
+        },
+        {
+          "date": "2022-03-03",
+          "value": 11084.37
+        },
+        {
+          "date": "2022-03-21",
+          "value": 11428.79
+        },
+        {
+          "date": "2022-03-29",
+          "value": 11702.11
+        },
+        {
+          "date": "2022-04-07",
+          "value": 11816.64
+        },
+        {
+          "date": "2022-04-14",
+          "value": 11980.85
+        },
+        {
+          "date": "2022-04-25",
+          "value": 11107.09
+        },
+        {
+          "date": "2022-04-29",
+          "value": 11144.69
+        },
+        {
+          "date": "2022-05-17",
+          "value": 10942.15
+        },
+        {
+          "date": "2022-05-27",
+          "value": 11046.22
+        },
+        {
+          "date": "2022-06-06",
+          "value": 11217.67
+        },
+        {
+          "date": "2022-06-13",
+          "value": 10140.76
+        },
+        {
+          "date": "2022-06-17",
+          "value": 9472.55
+        },
+        {
+          "date": "2022-06-24",
+          "value": 8685.2
+        },
+        {
+          "date": "2022-07-25",
+          "value": 8746.19
+        },
+        {
+          "date": "2022-08-25",
+          "value": 9085.85
+        },
+        {
+          "date": "2022-09-23",
+          "value": 8091.02
+        },
+        {
+          "date": "2022-09-29",
+          "value": 8200.76
+        },
+        {
+          "date": "2022-10-17",
+          "value": 7036.81
+        },
+        {
+          "date": "2022-10-21",
+          "value": 7036.81
         }
       ],
-      "monthly_returns": [],
-      "run_id": "BT-20260427-182729-connors_rsi2_v1-multi-2190d"
+      "monthly_returns": [
+        {
+          "month": "2021-12",
+          "return": 13.67
+        },
+        {
+          "month": "2022-01",
+          "return": -14.71
+        },
+        {
+          "month": "2022-02",
+          "return": 5.24
+        },
+        {
+          "month": "2022-03",
+          "return": 13.15
+        },
+        {
+          "month": "2022-04",
+          "return": -4.76
+        },
+        {
+          "month": "2022-05",
+          "return": -0.88
+        },
+        {
+          "month": "2022-06",
+          "return": -21.37
+        },
+        {
+          "month": "2022-07",
+          "return": 0.7
+        },
+        {
+          "month": "2022-08",
+          "return": 3.88
+        },
+        {
+          "month": "2022-09",
+          "return": -9.74
+        },
+        {
+          "month": "2022-10",
+          "return": -14.19
+        }
+      ],
+      "run_id": "BT-20260428-071035-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 2,
       "oos_window": [
-        "2025-08-14",
-        "2025-11-06"
+        "2022-10-22",
+        "2023-12-23"
       ],
       "metrics": {
-        "total_return_pct": 0,
-        "sharpe": 0,
-        "sortino": 0,
-        "expectancy": 0,
-        "edge_ratio": 0,
-        "profit_factor": 0,
-        "max_drawdown_pct": 0,
-        "win_rate_pct": 0,
-        "loss_rate_pct": 0,
-        "total_trades": 0,
-        "wins": 0,
-        "losses": 0,
-        "avg_win": 0,
-        "avg_loss": 0,
-        "avg_win_pct": 0,
-        "avg_loss_pct": 0,
-        "largest_win": 0,
-        "largest_loss": 0,
-        "symbols_traded": 0
+        "total_return_pct": 14.68,
+        "sharpe": 0.48,
+        "sortino": 0.2,
+        "expectancy": 34.15,
+        "edge_ratio": 0.67,
+        "profit_factor": 1.25,
+        "max_drawdown_pct": -17.21,
+        "win_rate_pct": 65.1,
+        "loss_rate_pct": 34.9,
+        "total_trades": 43,
+        "wins": 28,
+        "losses": 15,
+        "avg_win": 261.48,
+        "avg_loss": -390.19,
+        "avg_win_pct": 2.61,
+        "avg_loss_pct": -3.9,
+        "largest_win": 1667.95,
+        "largest_loss": -1189.47,
+        "symbols_traded": 21,
+        "starting_cash": 10000.0,
+        "ending_cash": 11468.489335000042
       },
-      "trades": [],
+      "trades": [
+        {
+          "date": "2023-02-09",
+          "entry_date": "2023-02-03",
+          "symbol": "HAL",
+          "pl": 173.2,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 38.44,
+          "exit_price": 39.14,
+          "shares": 247
+        },
+        {
+          "date": "2023-02-14",
+          "entry_date": "2023-02-09",
+          "symbol": "T",
+          "pl": 50.57,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 19.22,
+          "exit_price": 19.32,
+          "shares": 502
+        },
+        {
+          "date": "2023-03-01",
+          "entry_date": "2023-02-17",
+          "symbol": "BAC",
+          "pl": -275.49,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 35.05,
+          "exit_price": 34.05,
+          "shares": 277
+        },
+        {
+          "date": "2023-03-03",
+          "entry_date": "2023-03-01",
+          "symbol": "PLTR",
+          "pl": 279.85,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 7.83,
+          "exit_price": 8.07,
+          "shares": 1206
+        },
+        {
+          "date": "2023-03-10",
+          "entry_date": "2023-03-03",
+          "symbol": "HBAN",
+          "pl": -1189.47,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 15.06,
+          "exit_price": 13.21,
+          "shares": 645
+        },
+        {
+          "date": "2023-03-14",
+          "entry_date": "2023-03-10",
+          "symbol": "CCL",
+          "pl": -370.85,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 9.94,
+          "exit_price": 9.51,
+          "shares": 863
+        },
+        {
+          "date": "2023-03-17",
+          "entry_date": "2023-03-14",
+          "symbol": "PCG",
+          "pl": 135.9,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 15.98,
+          "exit_price": 16.24,
+          "shares": 515
+        },
+        {
+          "date": "2023-03-30",
+          "entry_date": "2023-03-29",
+          "symbol": "AMZN",
+          "pl": 232.67,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 98.78,
+          "exit_price": 101.55,
+          "shares": 84
+        },
+        {
+          "date": "2023-04-11",
+          "entry_date": "2023-04-06",
+          "symbol": "PLTR",
+          "pl": 574.82,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 7.86,
+          "exit_price": 8.39,
+          "shares": 1091
+        },
+        {
+          "date": "2023-04-18",
+          "entry_date": "2023-04-13",
+          "symbol": "INTC",
+          "pl": 136.18,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 31.94,
+          "exit_price": 32.41,
+          "shares": 285
+        },
+        {
+          "date": "2023-04-26",
+          "entry_date": "2023-04-19",
+          "symbol": "HPE",
+          "pl": -812.84,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 15.42,
+          "exit_price": 14.06,
+          "shares": 600
+        },
+        {
+          "date": "2023-04-27",
+          "entry_date": "2023-04-26",
+          "symbol": "NVDA",
+          "pl": 96.82,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 270.16,
+          "exit_price": 273.28,
+          "shares": 31
+        },
+        {
+          "date": "2023-04-28",
+          "entry_date": "2023-04-27",
+          "symbol": "CMCSA",
+          "pl": 513.27,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 37.78,
+          "exit_price": 40.04,
+          "shares": 227
+        },
+        {
+          "date": "2023-05-09",
+          "entry_date": "2023-05-04",
+          "symbol": "NOW",
+          "pl": -61.97,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 440.03,
+          "exit_price": 436.93,
+          "shares": 20
+        },
+        {
+          "date": "2023-05-16",
+          "entry_date": "2023-05-10",
+          "symbol": "HIMS",
+          "pl": -4.81,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 10.74,
+          "exit_price": 10.73,
+          "shares": 838
+        },
+        {
+          "date": "2023-05-19",
+          "entry_date": "2023-05-16",
+          "symbol": "NKE",
+          "pl": -215.54,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 117.53,
+          "exit_price": 114.69,
+          "shares": 76
+        },
+        {
+          "date": "2023-05-30",
+          "entry_date": "2023-05-19",
+          "symbol": "PCG",
+          "pl": 7.07,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 16.63,
+          "exit_price": 16.64,
+          "shares": 529
+        },
+        {
+          "date": "2023-06-01",
+          "entry_date": "2023-05-31",
+          "symbol": "BSX",
+          "pl": 152.1,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 50.42,
+          "exit_price": 51.29,
+          "shares": 174
+        },
+        {
+          "date": "2023-06-12",
+          "entry_date": "2023-06-08",
+          "symbol": "NVDA",
+          "pl": 326.84,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 377.46,
+          "exit_price": 391.67,
+          "shares": 23
+        },
+        {
+          "date": "2023-06-29",
+          "entry_date": "2023-06-15",
+          "symbol": "HIMS",
+          "pl": -63.03,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 8.6,
+          "exit_price": 8.55,
+          "shares": 1076
+        },
+        {
+          "date": "2023-07-03",
+          "entry_date": "2023-06-30",
+          "symbol": "BSX",
+          "pl": -9.19,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 53.77,
+          "exit_price": 53.71,
+          "shares": 171
+        },
+        {
+          "date": "2023-07-11",
+          "entry_date": "2023-07-10",
+          "symbol": "INTC",
+          "pl": 270.05,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 31.87,
+          "exit_price": 32.8,
+          "shares": 288
+        },
+        {
+          "date": "2023-07-14",
+          "entry_date": "2023-07-11",
+          "symbol": "AAPL",
+          "pl": 34.8,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 189.39,
+          "exit_price": 190.1,
+          "shares": 49
+        },
+        {
+          "date": "2023-07-19",
+          "entry_date": "2023-07-14",
+          "symbol": "CCL",
+          "pl": 385.49,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 17.75,
+          "exit_price": 18.47,
+          "shares": 534
+        },
+        {
+          "date": "2023-08-03",
+          "entry_date": "2023-07-21",
+          "symbol": "F",
+          "pl": -813.32,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 14.15,
+          "exit_price": 12.98,
+          "shares": 696
+        },
+        {
+          "date": "2023-08-08",
+          "entry_date": "2023-08-03",
+          "symbol": "NVDA",
+          "pl": 200.23,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 438.41,
+          "exit_price": 448.42,
+          "shares": 20
+        },
+        {
+          "date": "2023-08-16",
+          "entry_date": "2023-08-08",
+          "symbol": "MARA",
+          "pl": -1136.22,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 15.56,
+          "exit_price": 13.65,
+          "shares": 595
+        },
+        {
+          "date": "2023-08-23",
+          "entry_date": "2023-08-16",
+          "symbol": "PCG",
+          "pl": -34.73,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 16.93,
+          "exit_price": 16.86,
+          "shares": 483
+        },
+        {
+          "date": "2023-08-24",
+          "entry_date": "2023-08-23",
+          "symbol": "MARA",
+          "pl": 621.91,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 10.93,
+          "exit_price": 11.76,
+          "shares": 746
+        },
+        {
+          "date": "2023-08-29",
+          "entry_date": "2023-08-24",
+          "symbol": "CMCSA",
+          "pl": 125.63,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 45.37,
+          "exit_price": 46.03,
+          "shares": 192
+        },
+        {
+          "date": "2023-09-07",
+          "entry_date": "2023-08-31",
+          "symbol": "PCG",
+          "pl": -3.52,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 16.6,
+          "exit_price": 16.6,
+          "shares": 533
+        },
+        {
+          "date": "2023-09-14",
+          "entry_date": "2023-09-07",
+          "symbol": "NVDA",
+          "pl": 78.91,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 454.97,
+          "exit_price": 459.12,
+          "shares": 19
+        },
+        {
+          "date": "2023-09-25",
+          "entry_date": "2023-09-14",
+          "symbol": "NFLX",
+          "pl": -592.34,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 411.01,
+          "exit_price": 382.8,
+          "shares": 21
+        },
+        {
+          "date": "2023-09-28",
+          "entry_date": "2023-09-25",
+          "symbol": "INTC",
+          "pl": 153.92,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 34.01,
+          "exit_price": 34.63,
+          "shares": 246
+        },
+        {
+          "date": "2023-09-29",
+          "entry_date": "2023-09-28",
+          "symbol": "BSX",
+          "pl": 168.03,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 52.26,
+          "exit_price": 53.3,
+          "shares": 162
+        },
+        {
+          "date": "2023-10-10",
+          "entry_date": "2023-10-04",
+          "symbol": "CMCSA",
+          "pl": 169.24,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 43.37,
+          "exit_price": 44.22,
+          "shares": 200
+        },
+        {
+          "date": "2023-10-24",
+          "entry_date": "2023-10-19",
+          "symbol": "NVDA",
+          "pl": 42.21,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 428.31,
+          "exit_price": 430.42,
+          "shares": 20
+        },
+        {
+          "date": "2023-10-30",
+          "entry_date": "2023-10-24",
+          "symbol": "INTC",
+          "pl": 451.15,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 33.76,
+          "exit_price": 35.47,
+          "shares": 263
+        },
+        {
+          "date": "2023-11-03",
+          "entry_date": "2023-10-30",
+          "symbol": "PLTR",
+          "pl": 1667.95,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 15.29,
+          "exit_price": 18.03,
+          "shares": 608
+        },
+        {
+          "date": "2023-11-13",
+          "entry_date": "2023-11-08",
+          "symbol": "HAL",
+          "pl": 196.4,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 37.72,
+          "exit_price": 38.4,
+          "shares": 288
+        },
+        {
+          "date": "2023-12-08",
+          "entry_date": "2023-11-27",
+          "symbol": "NVDA",
+          "pl": -269.5,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 478.12,
+          "exit_price": 466.41,
+          "shares": 23
+        },
+        {
+          "date": "2023-12-15",
+          "entry_date": "2023-12-12",
+          "symbol": "VZ",
+          "pl": 22.29,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 37.58,
+          "exit_price": 37.66,
+          "shares": 288
+        },
+        {
+          "date": "2023-12-22",
+          "entry_date": "2023-12-21",
+          "symbol": "PLTR",
+          "pl": 53.82,
+          "win": true,
+          "exit_reason": "final_liquidation",
+          "entry_price": 17.58,
+          "exit_price": 17.67,
+          "shares": 616
+        }
+      ],
       "equity_curve": [
         {
           "date": "start",
           "value": 10000.0
+        },
+        {
+          "date": "2023-02-09",
+          "value": 10173.2
+        },
+        {
+          "date": "2023-02-14",
+          "value": 10223.77
+        },
+        {
+          "date": "2023-03-01",
+          "value": 9948.27
+        },
+        {
+          "date": "2023-03-03",
+          "value": 10228.13
+        },
+        {
+          "date": "2023-03-10",
+          "value": 9038.66
+        },
+        {
+          "date": "2023-03-14",
+          "value": 8667.81
+        },
+        {
+          "date": "2023-03-17",
+          "value": 8803.71
+        },
+        {
+          "date": "2023-03-30",
+          "value": 9036.38
+        },
+        {
+          "date": "2023-04-11",
+          "value": 9611.19
+        },
+        {
+          "date": "2023-04-18",
+          "value": 9747.38
+        },
+        {
+          "date": "2023-04-26",
+          "value": 8934.53
+        },
+        {
+          "date": "2023-04-27",
+          "value": 9031.35
+        },
+        {
+          "date": "2023-04-28",
+          "value": 9544.62
+        },
+        {
+          "date": "2023-05-09",
+          "value": 9482.65
+        },
+        {
+          "date": "2023-05-16",
+          "value": 9477.84
+        },
+        {
+          "date": "2023-05-19",
+          "value": 9262.3
+        },
+        {
+          "date": "2023-05-30",
+          "value": 9269.37
+        },
+        {
+          "date": "2023-06-01",
+          "value": 9421.47
+        },
+        {
+          "date": "2023-06-12",
+          "value": 9748.31
+        },
+        {
+          "date": "2023-06-29",
+          "value": 9685.28
+        },
+        {
+          "date": "2023-07-03",
+          "value": 9676.09
+        },
+        {
+          "date": "2023-07-11",
+          "value": 9946.14
+        },
+        {
+          "date": "2023-07-14",
+          "value": 9980.94
+        },
+        {
+          "date": "2023-07-19",
+          "value": 10366.43
+        },
+        {
+          "date": "2023-08-03",
+          "value": 9553.11
+        },
+        {
+          "date": "2023-08-08",
+          "value": 9753.34
+        },
+        {
+          "date": "2023-08-16",
+          "value": 8617.13
+        },
+        {
+          "date": "2023-08-23",
+          "value": 8582.4
+        },
+        {
+          "date": "2023-08-24",
+          "value": 9204.31
+        },
+        {
+          "date": "2023-08-29",
+          "value": 9329.94
+        },
+        {
+          "date": "2023-09-07",
+          "value": 9326.42
+        },
+        {
+          "date": "2023-09-14",
+          "value": 9405.32
+        },
+        {
+          "date": "2023-09-25",
+          "value": 8812.98
+        },
+        {
+          "date": "2023-09-28",
+          "value": 8966.9
+        },
+        {
+          "date": "2023-09-29",
+          "value": 9134.93
+        },
+        {
+          "date": "2023-10-10",
+          "value": 9304.17
+        },
+        {
+          "date": "2023-10-24",
+          "value": 9346.38
+        },
+        {
+          "date": "2023-10-30",
+          "value": 9797.53
+        },
+        {
+          "date": "2023-11-03",
+          "value": 11465.48
+        },
+        {
+          "date": "2023-11-13",
+          "value": 11661.88
+        },
+        {
+          "date": "2023-12-08",
+          "value": 11392.38
+        },
+        {
+          "date": "2023-12-15",
+          "value": 11414.66
+        },
+        {
+          "date": "2023-12-22",
+          "value": 11468.49
         }
       ],
-      "monthly_returns": [],
-      "run_id": "BT-20260427-182731-connors_rsi2_v1-multi-2190d"
+      "monthly_returns": [
+        {
+          "month": "2023-03",
+          "return": -11.61
+        },
+        {
+          "month": "2023-04",
+          "return": 5.62
+        },
+        {
+          "month": "2023-05",
+          "return": -2.88
+        },
+        {
+          "month": "2023-06",
+          "return": 4.49
+        },
+        {
+          "month": "2023-07",
+          "return": 7.03
+        },
+        {
+          "month": "2023-08",
+          "return": -10.0
+        },
+        {
+          "month": "2023-09",
+          "return": -2.09
+        },
+        {
+          "month": "2023-10",
+          "return": 7.25
+        },
+        {
+          "month": "2023-11",
+          "return": 19.03
+        },
+        {
+          "month": "2023-12",
+          "return": -1.66
+        }
+      ],
+      "run_id": "BT-20260428-071036-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 3,
       "oos_window": [
-        "2025-11-06",
-        "2026-01-29"
+        "2023-12-23",
+        "2025-02-22"
       ],
       "metrics": {
-        "total_return_pct": 0,
-        "sharpe": 0,
-        "sortino": 0,
-        "expectancy": 0,
-        "edge_ratio": 0,
-        "profit_factor": 0,
-        "max_drawdown_pct": 0,
-        "win_rate_pct": 0,
-        "loss_rate_pct": 0,
-        "total_trades": 0,
-        "wins": 0,
-        "losses": 0,
-        "avg_win": 0,
-        "avg_loss": 0,
-        "avg_win_pct": 0,
-        "avg_loss_pct": 0,
-        "largest_win": 0,
-        "largest_loss": 0,
-        "symbols_traded": 0
+        "total_return_pct": 58.9,
+        "sharpe": 1.79,
+        "sortino": 1.01,
+        "expectancy": 128.05,
+        "edge_ratio": 1.48,
+        "profit_factor": 2.52,
+        "max_drawdown_pct": -9.84,
+        "win_rate_pct": 63.0,
+        "loss_rate_pct": 37.0,
+        "total_trades": 46,
+        "wins": 29,
+        "losses": 17,
+        "avg_win": 336.31,
+        "avg_loss": -227.22,
+        "avg_win_pct": 3.36,
+        "avg_loss_pct": -2.27,
+        "largest_win": 1209.84,
+        "largest_loss": -1568.81,
+        "symbols_traded": 20,
+        "starting_cash": 10000.0,
+        "ending_cash": 15890.259577500055
       },
-      "trades": [],
+      "trades": [
+        {
+          "date": "2024-04-08",
+          "entry_date": "2024-04-02",
+          "symbol": "PLTR",
+          "pl": 464.38,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 22.01,
+          "exit_price": 23.09,
+          "shares": 431
+        },
+        {
+          "date": "2024-04-12",
+          "entry_date": "2024-04-08",
+          "symbol": "SMCI",
+          "pl": -426.78,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 959.21,
+          "exit_price": 916.53,
+          "shares": 10
+        },
+        {
+          "date": "2024-04-19",
+          "entry_date": "2024-04-15",
+          "symbol": "BAC",
+          "pl": -76.3,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 36.38,
+          "exit_price": 36.09,
+          "shares": 262
+        },
+        {
+          "date": "2024-04-24",
+          "entry_date": "2024-04-19",
+          "symbol": "AMZN",
+          "pl": 53.08,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 178.78,
+          "exit_price": 179.8,
+          "shares": 52
+        },
+        {
+          "date": "2024-05-06",
+          "entry_date": "2024-05-01",
+          "symbol": "BAC",
+          "pl": 88.26,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 37.36,
+          "exit_price": 37.71,
+          "shares": 254
+        },
+        {
+          "date": "2024-05-15",
+          "entry_date": "2024-05-14",
+          "symbol": "SMCI",
+          "pl": 815.92,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 772.39,
+          "exit_price": 840.38,
+          "shares": 12
+        },
+        {
+          "date": "2024-05-29",
+          "entry_date": "2024-05-17",
+          "symbol": "AMZN",
+          "pl": -115.51,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 183.79,
+          "exit_price": 181.73,
+          "shares": 56
+        },
+        {
+          "date": "2024-05-31",
+          "entry_date": "2024-05-30",
+          "symbol": "T",
+          "pl": 150.32,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 17.23,
+          "exit_price": 17.48,
+          "shares": 595
+        },
+        {
+          "date": "2024-06-05",
+          "entry_date": "2024-06-03",
+          "symbol": "AMZN",
+          "pl": 133.47,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 177.6,
+          "exit_price": 179.9,
+          "shares": 58
+        },
+        {
+          "date": "2024-06-06",
+          "entry_date": "2024-06-05",
+          "symbol": "NFLX",
+          "pl": 213.44,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 633.03,
+          "exit_price": 646.37,
+          "shares": 16
+        },
+        {
+          "date": "2024-06-17",
+          "entry_date": "2024-06-07",
+          "symbol": "WFC",
+          "pl": -91.11,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 57.72,
+          "exit_price": 57.23,
+          "shares": 185
+        },
+        {
+          "date": "2024-06-21",
+          "entry_date": "2024-06-18",
+          "symbol": "BSX",
+          "pl": 115.14,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 76.22,
+          "exit_price": 77.05,
+          "shares": 139
+        },
+        {
+          "date": "2024-06-28",
+          "entry_date": "2024-06-25",
+          "symbol": "SMCI",
+          "pl": 644.74,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 845.18,
+          "exit_price": 898.91,
+          "shares": 12
+        },
+        {
+          "date": "2024-07-08",
+          "entry_date": "2024-06-28",
+          "symbol": "PCG",
+          "pl": -215.38,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 17.54,
+          "exit_price": 17.21,
+          "shares": 648
+        },
+        {
+          "date": "2024-07-09",
+          "entry_date": "2024-07-08",
+          "symbol": "CCL",
+          "pl": 139.65,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 17.37,
+          "exit_price": 17.59,
+          "shares": 642
+        },
+        {
+          "date": "2024-07-23",
+          "entry_date": "2024-07-12",
+          "symbol": "NFLX",
+          "pl": -102.93,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 652.84,
+          "exit_price": 646.78,
+          "shares": 17
+        },
+        {
+          "date": "2024-07-25",
+          "entry_date": "2024-07-23",
+          "symbol": "T",
+          "pl": 350.43,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 18.56,
+          "exit_price": 19.14,
+          "shares": 603
+        },
+        {
+          "date": "2024-07-31",
+          "entry_date": "2024-07-25",
+          "symbol": "AAPL",
+          "pl": 125.83,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 218.99,
+          "exit_price": 221.41,
+          "shares": 52
+        },
+        {
+          "date": "2024-08-09",
+          "entry_date": "2024-07-31",
+          "symbol": "NFLX",
+          "pl": -90.1,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 628.03,
+          "exit_price": 623.03,
+          "shares": 18
+        },
+        {
+          "date": "2024-08-14",
+          "entry_date": "2024-08-09",
+          "symbol": "PFE",
+          "pl": 24.7,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 28.67,
+          "exit_price": 28.74,
+          "shares": 403
+        },
+        {
+          "date": "2024-08-20",
+          "entry_date": "2024-08-15",
+          "symbol": "HIMS",
+          "pl": 570.14,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 16.03,
+          "exit_price": 16.82,
+          "shares": 723
+        },
+        {
+          "date": "2024-08-30",
+          "entry_date": "2024-08-27",
+          "symbol": "PLTR",
+          "pl": 210.1,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 30.52,
+          "exit_price": 31.04,
+          "shares": 397
+        },
+        {
+          "date": "2024-09-03",
+          "entry_date": "2024-08-30",
+          "symbol": "HPE",
+          "pl": 71.36,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 19.14,
+          "exit_price": 19.25,
+          "shares": 644
+        },
+        {
+          "date": "2024-09-11",
+          "entry_date": "2024-09-05",
+          "symbol": "CCL",
+          "pl": -148.94,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 16.33,
+          "exit_price": 16.13,
+          "shares": 759
+        },
+        {
+          "date": "2024-09-19",
+          "entry_date": "2024-09-17",
+          "symbol": "AAPL",
+          "pl": 510.98,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 215.86,
+          "exit_price": 224.98,
+          "shares": 56
+        },
+        {
+          "date": "2024-09-25",
+          "entry_date": "2024-09-20",
+          "symbol": "KVUE",
+          "pl": 173.43,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 22.91,
+          "exit_price": 23.22,
+          "shares": 556
+        },
+        {
+          "date": "2024-10-07",
+          "entry_date": "2024-09-26",
+          "symbol": "CCL",
+          "pl": -347.77,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 18.49,
+          "exit_price": 17.99,
+          "shares": 698
+        },
+        {
+          "date": "2024-10-16",
+          "entry_date": "2024-10-07",
+          "symbol": "VZ",
+          "pl": -110.83,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 44.09,
+          "exit_price": 43.7,
+          "shares": 285
+        },
+        {
+          "date": "2024-10-21",
+          "entry_date": "2024-10-16",
+          "symbol": "NFLX",
+          "pl": 1078.59,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 701.93,
+          "exit_price": 765.38,
+          "shares": 17
+        },
+        {
+          "date": "2024-10-29",
+          "entry_date": "2024-10-22",
+          "symbol": "HPE",
+          "pl": -94.67,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 19.91,
+          "exit_price": 19.77,
+          "shares": 677
+        },
+        {
+          "date": "2024-11-05",
+          "entry_date": "2024-10-29",
+          "symbol": "BSX",
+          "pl": -69.83,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 84.99,
+          "exit_price": 84.54,
+          "shares": 157
+        },
+        {
+          "date": "2024-11-06",
+          "entry_date": "2024-11-05",
+          "symbol": "BAC",
+          "pl": 1023.0,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 41.48,
+          "exit_price": 44.67,
+          "shares": 321
+        },
+        {
+          "date": "2024-11-21",
+          "entry_date": "2024-11-18",
+          "symbol": "CMCSA",
+          "pl": 50.63,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 42.88,
+          "exit_price": 43.03,
+          "shares": 333
+        },
+        {
+          "date": "2024-11-26",
+          "entry_date": "2024-11-25",
+          "symbol": "AMZN",
+          "pl": 174.92,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 199.38,
+          "exit_price": 201.81,
+          "shares": 72
+        },
+        {
+          "date": "2024-12-05",
+          "entry_date": "2024-11-29",
+          "symbol": "HPE",
+          "pl": 1209.84,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 20.85,
+          "exit_price": 22.59,
+          "shares": 696
+        },
+        {
+          "date": "2024-12-06",
+          "entry_date": "2024-12-05",
+          "symbol": "BAC",
+          "pl": 88.48,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 46.54,
+          "exit_price": 46.81,
+          "shares": 336
+        },
+        {
+          "date": "2024-12-16",
+          "entry_date": "2024-12-06",
+          "symbol": "VZ",
+          "pl": -183.53,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 42.61,
+          "exit_price": 42.11,
+          "shares": 369
+        },
+        {
+          "date": "2024-12-17",
+          "entry_date": "2024-12-16",
+          "symbol": "WFC",
+          "pl": 129.61,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 70.58,
+          "exit_price": 71.16,
+          "shares": 220
+        },
+        {
+          "date": "2024-12-23",
+          "entry_date": "2024-12-17",
+          "symbol": "AAL",
+          "pl": 432.0,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 16.47,
+          "exit_price": 16.92,
+          "shares": 953
+        },
+        {
+          "date": "2024-12-30",
+          "entry_date": "2024-12-23",
+          "symbol": "MARA",
+          "pl": -1568.81,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 19.97,
+          "exit_price": 18.03,
+          "shares": 807
+        },
+        {
+          "date": "2025-01-15",
+          "entry_date": "2024-12-31",
+          "symbol": "KVUE",
+          "pl": -100.32,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 21.32,
+          "exit_price": 21.17,
+          "shares": 686
+        },
+        {
+          "date": "2025-01-16",
+          "entry_date": "2025-01-15",
+          "symbol": "NFLX",
+          "pl": 396.29,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 837.22,
+          "exit_price": 860.53,
+          "shares": 17
+        },
+        {
+          "date": "2025-01-30",
+          "entry_date": "2025-01-24",
+          "symbol": "AAL",
+          "pl": 69.14,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 16.83,
+          "exit_price": 16.91,
+          "shares": 885
+        },
+        {
+          "date": "2025-02-06",
+          "entry_date": "2025-01-31",
+          "symbol": "NOW",
+          "pl": -104.83,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 1031.82,
+          "exit_price": 1024.33,
+          "shares": 14
+        },
+        {
+          "date": "2025-02-18",
+          "entry_date": "2025-02-11",
+          "symbol": "CCL",
+          "pl": 245.1,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 25.73,
+          "exit_price": 26.16,
+          "shares": 578
+        },
+        {
+          "date": "2025-02-21",
+          "entry_date": "2025-02-21",
+          "symbol": "BAC",
+          "pl": -15.07,
+          "win": false,
+          "exit_reason": "final_liquidation",
+          "entry_price": 45.29,
+          "exit_price": 45.25,
+          "shares": 333
+        }
+      ],
       "equity_curve": [
         {
           "date": "start",
           "value": 10000.0
+        },
+        {
+          "date": "2024-04-08",
+          "value": 10464.38
+        },
+        {
+          "date": "2024-04-12",
+          "value": 10037.6
+        },
+        {
+          "date": "2024-04-19",
+          "value": 9961.3
+        },
+        {
+          "date": "2024-04-24",
+          "value": 10014.38
+        },
+        {
+          "date": "2024-05-06",
+          "value": 10102.63
+        },
+        {
+          "date": "2024-05-15",
+          "value": 10918.56
+        },
+        {
+          "date": "2024-05-29",
+          "value": 10803.04
+        },
+        {
+          "date": "2024-05-31",
+          "value": 10953.37
+        },
+        {
+          "date": "2024-06-05",
+          "value": 11086.84
+        },
+        {
+          "date": "2024-06-06",
+          "value": 11300.28
+        },
+        {
+          "date": "2024-06-17",
+          "value": 11209.17
+        },
+        {
+          "date": "2024-06-21",
+          "value": 11324.32
+        },
+        {
+          "date": "2024-06-28",
+          "value": 11969.05
+        },
+        {
+          "date": "2024-07-08",
+          "value": 11753.67
+        },
+        {
+          "date": "2024-07-09",
+          "value": 11893.32
+        },
+        {
+          "date": "2024-07-23",
+          "value": 11790.39
+        },
+        {
+          "date": "2024-07-25",
+          "value": 12140.83
+        },
+        {
+          "date": "2024-07-31",
+          "value": 12266.66
+        },
+        {
+          "date": "2024-08-09",
+          "value": 12176.56
+        },
+        {
+          "date": "2024-08-14",
+          "value": 12201.26
+        },
+        {
+          "date": "2024-08-20",
+          "value": 12771.4
+        },
+        {
+          "date": "2024-08-30",
+          "value": 12981.5
+        },
+        {
+          "date": "2024-09-03",
+          "value": 13052.86
+        },
+        {
+          "date": "2024-09-11",
+          "value": 12903.92
+        },
+        {
+          "date": "2024-09-19",
+          "value": 13414.9
+        },
+        {
+          "date": "2024-09-25",
+          "value": 13588.33
+        },
+        {
+          "date": "2024-10-07",
+          "value": 13240.56
+        },
+        {
+          "date": "2024-10-16",
+          "value": 13129.72
+        },
+        {
+          "date": "2024-10-21",
+          "value": 14208.31
+        },
+        {
+          "date": "2024-10-29",
+          "value": 14113.64
+        },
+        {
+          "date": "2024-11-05",
+          "value": 14043.81
+        },
+        {
+          "date": "2024-11-06",
+          "value": 15066.82
+        },
+        {
+          "date": "2024-11-21",
+          "value": 15117.45
+        },
+        {
+          "date": "2024-11-26",
+          "value": 15292.36
+        },
+        {
+          "date": "2024-12-05",
+          "value": 16502.21
+        },
+        {
+          "date": "2024-12-06",
+          "value": 16590.68
+        },
+        {
+          "date": "2024-12-16",
+          "value": 16407.16
+        },
+        {
+          "date": "2024-12-17",
+          "value": 16536.76
+        },
+        {
+          "date": "2024-12-23",
+          "value": 16968.76
+        },
+        {
+          "date": "2024-12-30",
+          "value": 15399.95
+        },
+        {
+          "date": "2025-01-15",
+          "value": 15299.63
+        },
+        {
+          "date": "2025-01-16",
+          "value": 15695.92
+        },
+        {
+          "date": "2025-01-30",
+          "value": 15765.06
+        },
+        {
+          "date": "2025-02-06",
+          "value": 15660.23
+        },
+        {
+          "date": "2025-02-18",
+          "value": 15905.33
+        },
+        {
+          "date": "2025-02-21",
+          "value": 15890.26
         }
       ],
-      "monthly_returns": [],
-      "run_id": "BT-20260427-182732-connors_rsi2_v1-multi-2190d"
+      "monthly_returns": [
+        {
+          "month": "2024-05",
+          "return": 9.38
+        },
+        {
+          "month": "2024-06",
+          "return": 9.27
+        },
+        {
+          "month": "2024-07",
+          "return": 2.49
+        },
+        {
+          "month": "2024-08",
+          "return": 5.83
+        },
+        {
+          "month": "2024-09",
+          "return": 4.67
+        },
+        {
+          "month": "2024-10",
+          "return": 3.87
+        },
+        {
+          "month": "2024-11",
+          "return": 8.35
+        },
+        {
+          "month": "2024-12",
+          "return": 0.7
+        },
+        {
+          "month": "2025-01",
+          "return": 2.37
+        },
+        {
+          "month": "2025-02",
+          "return": 0.79
+        }
+      ],
+      "run_id": "BT-20260428-071038-connors_rsi2_v1-multi-2190d"
     },
     {
       "fold": 4,
       "oos_window": [
-        "2026-01-29",
-        "2026-04-23"
+        "2025-02-22",
+        "2026-04-27"
       ],
       "metrics": {
-        "total_return_pct": 0,
-        "sharpe": 0,
-        "sortino": 0,
-        "expectancy": 0,
-        "edge_ratio": 0,
-        "profit_factor": 0,
-        "max_drawdown_pct": 0,
-        "win_rate_pct": 0,
-        "loss_rate_pct": 0,
-        "total_trades": 0,
-        "wins": 0,
-        "losses": 0,
-        "avg_win": 0,
-        "avg_loss": 0,
-        "avg_win_pct": 0,
-        "avg_loss_pct": 0,
-        "largest_win": 0,
-        "largest_loss": 0,
-        "symbols_traded": 0
+        "total_return_pct": -6.11,
+        "sharpe": -0.12,
+        "sortino": -0.05,
+        "expectancy": -11.74,
+        "edge_ratio": 0.57,
+        "profit_factor": 0.92,
+        "max_drawdown_pct": -18.84,
+        "win_rate_pct": 61.5,
+        "loss_rate_pct": 38.5,
+        "total_trades": 52,
+        "wins": 32,
+        "losses": 20,
+        "avg_win": 205.46,
+        "avg_loss": -359.27,
+        "avg_win_pct": 2.05,
+        "avg_loss_pct": -3.59,
+        "largest_win": 528.91,
+        "largest_loss": -1278.07,
+        "symbols_traded": 21,
+        "starting_cash": 10000.0,
+        "ending_cash": 9389.410647500043
       },
-      "trades": [],
+      "trades": [
+        {
+          "date": "2025-06-02",
+          "entry_date": "2025-05-29",
+          "symbol": "F",
+          "pl": 46.23,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 10.22,
+          "exit_price": 10.26,
+          "shares": 929
+        },
+        {
+          "date": "2025-06-16",
+          "entry_date": "2025-06-05",
+          "symbol": "BSX",
+          "pl": -225.56,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 102.95,
+          "exit_price": 100.5,
+          "shares": 92
+        },
+        {
+          "date": "2025-06-20",
+          "entry_date": "2025-06-16",
+          "symbol": "BAC",
+          "pl": 144.55,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 44.68,
+          "exit_price": 45.37,
+          "shares": 208
+        },
+        {
+          "date": "2025-06-24",
+          "entry_date": "2025-06-20",
+          "symbol": "T",
+          "pl": 170.01,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 27.64,
+          "exit_price": 28.14,
+          "shares": 342
+        },
+        {
+          "date": "2025-06-25",
+          "entry_date": "2025-06-24",
+          "symbol": "AMZN",
+          "pl": 96.38,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 212.24,
+          "exit_price": 214.38,
+          "shares": 45
+        },
+        {
+          "date": "2025-07-07",
+          "entry_date": "2025-06-30",
+          "symbol": "PLTR",
+          "pl": -249.98,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 137.86,
+          "exit_price": 134.29,
+          "shares": 70
+        },
+        {
+          "date": "2025-07-15",
+          "entry_date": "2025-07-10",
+          "symbol": "BAC",
+          "pl": -5.43,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 46.88,
+          "exit_price": 46.86,
+          "shares": 202
+        },
+        {
+          "date": "2025-07-18",
+          "entry_date": "2025-07-15",
+          "symbol": "HBAN",
+          "pl": -53.83,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 17.05,
+          "exit_price": 16.95,
+          "shares": 555
+        },
+        {
+          "date": "2025-07-22",
+          "entry_date": "2025-07-18",
+          "symbol": "F",
+          "pl": 41.08,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 11.19,
+          "exit_price": 11.23,
+          "shares": 842
+        },
+        {
+          "date": "2025-07-23",
+          "entry_date": "2025-07-22",
+          "symbol": "PFE",
+          "pl": 382.23,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 24.38,
+          "exit_price": 25.37,
+          "shares": 388
+        },
+        {
+          "date": "2025-07-25",
+          "entry_date": "2025-07-23",
+          "symbol": "NVDA",
+          "pl": 223.64,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 169.6,
+          "exit_price": 173.53,
+          "shares": 57
+        },
+        {
+          "date": "2025-08-06",
+          "entry_date": "2025-07-29",
+          "symbol": "PFE",
+          "pl": 120.32,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 24.23,
+          "exit_price": 24.52,
+          "shares": 414
+        },
+        {
+          "date": "2025-08-08",
+          "entry_date": "2025-08-06",
+          "symbol": "WBD",
+          "pl": -737.5,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 12.84,
+          "exit_price": 11.9,
+          "shares": 791
+        },
+        {
+          "date": "2025-08-11",
+          "entry_date": "2025-08-08",
+          "symbol": "BAC",
+          "pl": 177.52,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 45.18,
+          "exit_price": 46.03,
+          "shares": 209
+        },
+        {
+          "date": "2025-08-13",
+          "entry_date": "2025-08-11",
+          "symbol": "CCL",
+          "pl": 528.91,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 28.17,
+          "exit_price": 29.72,
+          "shares": 341
+        },
+        {
+          "date": "2025-08-20",
+          "entry_date": "2025-08-13",
+          "symbol": "HIMS",
+          "pl": -1278.07,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 48.22,
+          "exit_price": 42.11,
+          "shares": 209
+        },
+        {
+          "date": "2025-08-25",
+          "entry_date": "2025-08-20",
+          "symbol": "SMCI",
+          "pl": 155.82,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 43.22,
+          "exit_price": 43.98,
+          "shares": 206
+        },
+        {
+          "date": "2025-09-03",
+          "entry_date": "2025-08-25",
+          "symbol": "CSX",
+          "pl": -658.7,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 34.74,
+          "exit_price": 32.21,
+          "shares": 260
+        },
+        {
+          "date": "2025-09-10",
+          "entry_date": "2025-09-03",
+          "symbol": "NVDA",
+          "pl": 267.6,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 171.11,
+          "exit_price": 176.57,
+          "shares": 49
+        },
+        {
+          "date": "2025-09-12",
+          "entry_date": "2025-09-11",
+          "symbol": "F",
+          "pl": 210.75,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 11.47,
+          "exit_price": 11.74,
+          "shares": 757
+        },
+        {
+          "date": "2025-09-25",
+          "entry_date": "2025-09-12",
+          "symbol": "BSX",
+          "pl": -482.88,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 103.79,
+          "exit_price": 98.11,
+          "shares": 85
+        },
+        {
+          "date": "2025-10-03",
+          "entry_date": "2025-09-25",
+          "symbol": "AAL",
+          "pl": -197.54,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 11.8,
+          "exit_price": 11.52,
+          "shares": 714
+        },
+        {
+          "date": "2025-10-08",
+          "entry_date": "2025-10-03",
+          "symbol": "NFLX",
+          "pl": 219.79,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 1165.88,
+          "exit_price": 1197.28,
+          "shares": 7
+        },
+        {
+          "date": "2025-10-15",
+          "entry_date": "2025-10-08",
+          "symbol": "NKE",
+          "pl": -43.77,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 68.92,
+          "exit_price": 68.57,
+          "shares": 122
+        },
+        {
+          "date": "2025-10-20",
+          "entry_date": "2025-10-15",
+          "symbol": "PFE",
+          "pl": 27.6,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 24.48,
+          "exit_price": 24.56,
+          "shares": 343
+        },
+        {
+          "date": "2025-10-21",
+          "entry_date": "2025-10-20",
+          "symbol": "AMZN",
+          "pl": 173.31,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 213.85,
+          "exit_price": 218.3,
+          "shares": 39
+        },
+        {
+          "date": "2025-10-28",
+          "entry_date": "2025-10-24",
+          "symbol": "SMCI",
+          "pl": 462.82,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 48.99,
+          "exit_price": 51.64,
+          "shares": 175
+        },
+        {
+          "date": "2025-11-03",
+          "entry_date": "2025-10-29",
+          "symbol": "CCL",
+          "pl": 328.81,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 27.77,
+          "exit_price": 28.79,
+          "shares": 325
+        },
+        {
+          "date": "2025-11-10",
+          "entry_date": "2025-11-05",
+          "symbol": "INTC",
+          "pl": 362.75,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 37.44,
+          "exit_price": 38.9,
+          "shares": 249
+        },
+        {
+          "date": "2025-11-11",
+          "entry_date": "2025-11-10",
+          "symbol": "NVDA",
+          "pl": -5.4,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 195.21,
+          "exit_price": 195.1,
+          "shares": 49
+        },
+        {
+          "date": "2025-11-24",
+          "entry_date": "2025-11-14",
+          "symbol": "INTC",
+          "pl": -20.71,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 35.06,
+          "exit_price": 34.98,
+          "shares": 276
+        },
+        {
+          "date": "2025-11-25",
+          "entry_date": "2025-11-24",
+          "symbol": "PLTR",
+          "pl": 148.61,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 157.55,
+          "exit_price": 159.99,
+          "shares": 61
+        },
+        {
+          "date": "2025-12-11",
+          "entry_date": "2025-12-09",
+          "symbol": "AMZN",
+          "pl": 167.96,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 226.92,
+          "exit_price": 230.82,
+          "shares": 43
+        },
+        {
+          "date": "2025-12-22",
+          "entry_date": "2025-12-15",
+          "symbol": "NVDA",
+          "pl": 326.99,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 177.99,
+          "exit_price": 183.83,
+          "shares": 56
+        },
+        {
+          "date": "2026-01-05",
+          "entry_date": "2025-12-30",
+          "symbol": "PLTR",
+          "pl": -512.29,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 184.06,
+          "exit_price": 174.75,
+          "shares": 55
+        },
+        {
+          "date": "2026-01-06",
+          "entry_date": "2026-01-05",
+          "symbol": "AMZN",
+          "pl": 134.37,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 229.01,
+          "exit_price": 232.21,
+          "shares": 42
+        },
+        {
+          "date": "2026-01-13",
+          "entry_date": "2026-01-06",
+          "symbol": "AAPL",
+          "pl": -316.82,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 267.1,
+          "exit_price": 258.54,
+          "shares": 37
+        },
+        {
+          "date": "2026-01-28",
+          "entry_date": "2026-01-14",
+          "symbol": "BAC",
+          "pl": -173.33,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 52.86,
+          "exit_price": 51.9,
+          "shares": 182
+        },
+        {
+          "date": "2026-02-03",
+          "entry_date": "2026-01-28",
+          "symbol": "AAL",
+          "pl": 125.23,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 13.68,
+          "exit_price": 13.86,
+          "shares": 691
+        },
+        {
+          "date": "2026-02-09",
+          "entry_date": "2026-02-03",
+          "symbol": "WBD",
+          "pl": -82.39,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 27.56,
+          "exit_price": 27.33,
+          "shares": 347
+        },
+        {
+          "date": "2026-02-19",
+          "entry_date": "2026-02-12",
+          "symbol": "HBAN",
+          "pl": -201.02,
+          "win": false,
+          "exit_reason": "signal",
+          "entry_price": 18.09,
+          "exit_price": 17.71,
+          "shares": 525
+        },
+        {
+          "date": "2026-02-25",
+          "entry_date": "2026-02-20",
+          "symbol": "INTC",
+          "pl": 448.39,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 43.89,
+          "exit_price": 46.01,
+          "shares": 212
+        },
+        {
+          "date": "2026-02-27",
+          "entry_date": "2026-02-25",
+          "symbol": "BAC",
+          "pl": 177.4,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 50.36,
+          "exit_price": 51.27,
+          "shares": 193
+        },
+        {
+          "date": "2026-03-03",
+          "entry_date": "2026-02-27",
+          "symbol": "T",
+          "pl": 56.31,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 27.62,
+          "exit_price": 27.78,
+          "shares": 358
+        },
+        {
+          "date": "2026-03-09",
+          "entry_date": "2026-03-03",
+          "symbol": "F",
+          "pl": -855.34,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 13.06,
+          "exit_price": 11.93,
+          "shares": 762
+        },
+        {
+          "date": "2026-03-11",
+          "entry_date": "2026-03-09",
+          "symbol": "AAPL",
+          "pl": 179.96,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 255.82,
+          "exit_price": 260.96,
+          "shares": 35
+        },
+        {
+          "date": "2026-03-17",
+          "entry_date": "2026-03-13",
+          "symbol": "PCG",
+          "pl": 209.46,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 18.27,
+          "exit_price": 18.69,
+          "shares": 509
+        },
+        {
+          "date": "2026-03-24",
+          "entry_date": "2026-03-19",
+          "symbol": "VZ",
+          "pl": 113.01,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 49.92,
+          "exit_price": 50.52,
+          "shares": 190
+        },
+        {
+          "date": "2026-04-01",
+          "entry_date": "2026-03-27",
+          "symbol": "WBD",
+          "pl": 66.48,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 27.11,
+          "exit_price": 27.3,
+          "shares": 354
+        },
+        {
+          "date": "2026-04-13",
+          "entry_date": "2026-04-02",
+          "symbol": "VZ",
+          "pl": -774.61,
+          "win": false,
+          "exit_reason": "stop_loss",
+          "entry_price": 49.84,
+          "exit_price": 45.85,
+          "shares": 194
+        },
+        {
+          "date": "2026-04-17",
+          "entry_date": "2026-04-14",
+          "symbol": "VZ",
+          "pl": 280.49,
+          "win": true,
+          "exit_reason": "signal",
+          "entry_price": 44.82,
+          "exit_price": 46.23,
+          "shares": 199
+        },
+        {
+          "date": "2026-04-27",
+          "entry_date": "2026-04-17",
+          "symbol": "PCG",
+          "pl": -310.19,
+          "win": false,
+          "exit_reason": "final_liquidation",
+          "entry_price": 17.26,
+          "exit_price": 16.68,
+          "shares": 533
+        }
+      ],
       "equity_curve": [
         {
           "date": "start",
           "value": 10000.0
+        },
+        {
+          "date": "2025-06-02",
+          "value": 10046.23
+        },
+        {
+          "date": "2025-06-16",
+          "value": 9820.67
+        },
+        {
+          "date": "2025-06-20",
+          "value": 9965.22
+        },
+        {
+          "date": "2025-06-24",
+          "value": 10135.23
+        },
+        {
+          "date": "2025-06-25",
+          "value": 10231.61
+        },
+        {
+          "date": "2025-07-07",
+          "value": 9981.63
+        },
+        {
+          "date": "2025-07-15",
+          "value": 9976.21
+        },
+        {
+          "date": "2025-07-18",
+          "value": 9922.37
+        },
+        {
+          "date": "2025-07-22",
+          "value": 9963.45
+        },
+        {
+          "date": "2025-07-23",
+          "value": 10345.68
+        },
+        {
+          "date": "2025-07-25",
+          "value": 10569.32
+        },
+        {
+          "date": "2025-08-06",
+          "value": 10689.64
+        },
+        {
+          "date": "2025-08-08",
+          "value": 9952.13
+        },
+        {
+          "date": "2025-08-11",
+          "value": 10129.66
+        },
+        {
+          "date": "2025-08-13",
+          "value": 10658.56
+        },
+        {
+          "date": "2025-08-20",
+          "value": 9380.5
+        },
+        {
+          "date": "2025-08-25",
+          "value": 9536.31
+        },
+        {
+          "date": "2025-09-03",
+          "value": 8877.61
+        },
+        {
+          "date": "2025-09-10",
+          "value": 9145.21
+        },
+        {
+          "date": "2025-09-12",
+          "value": 9355.95
+        },
+        {
+          "date": "2025-09-25",
+          "value": 8873.07
+        },
+        {
+          "date": "2025-10-03",
+          "value": 8675.53
+        },
+        {
+          "date": "2025-10-08",
+          "value": 8895.32
+        },
+        {
+          "date": "2025-10-15",
+          "value": 8851.56
+        },
+        {
+          "date": "2025-10-20",
+          "value": 8879.16
+        },
+        {
+          "date": "2025-10-21",
+          "value": 9052.47
+        },
+        {
+          "date": "2025-10-28",
+          "value": 9515.29
+        },
+        {
+          "date": "2025-11-03",
+          "value": 9844.1
+        },
+        {
+          "date": "2025-11-10",
+          "value": 10206.85
+        },
+        {
+          "date": "2025-11-11",
+          "value": 10201.45
+        },
+        {
+          "date": "2025-11-24",
+          "value": 10180.75
+        },
+        {
+          "date": "2025-11-25",
+          "value": 10329.36
+        },
+        {
+          "date": "2025-12-11",
+          "value": 10497.32
+        },
+        {
+          "date": "2025-12-22",
+          "value": 10824.31
+        },
+        {
+          "date": "2026-01-05",
+          "value": 10312.02
+        },
+        {
+          "date": "2026-01-06",
+          "value": 10446.39
+        },
+        {
+          "date": "2026-01-13",
+          "value": 10129.57
+        },
+        {
+          "date": "2026-01-28",
+          "value": 9956.24
+        },
+        {
+          "date": "2026-02-03",
+          "value": 10081.47
+        },
+        {
+          "date": "2026-02-09",
+          "value": 9999.07
+        },
+        {
+          "date": "2026-02-19",
+          "value": 9798.05
+        },
+        {
+          "date": "2026-02-25",
+          "value": 10246.44
+        },
+        {
+          "date": "2026-02-27",
+          "value": 10423.85
+        },
+        {
+          "date": "2026-03-03",
+          "value": 10480.16
+        },
+        {
+          "date": "2026-03-09",
+          "value": 9624.82
+        },
+        {
+          "date": "2026-03-11",
+          "value": 9804.77
+        },
+        {
+          "date": "2026-03-17",
+          "value": 10014.24
+        },
+        {
+          "date": "2026-03-24",
+          "value": 10127.25
+        },
+        {
+          "date": "2026-04-01",
+          "value": 10193.73
+        },
+        {
+          "date": "2026-04-13",
+          "value": 9419.11
+        },
+        {
+          "date": "2026-04-17",
+          "value": 9699.6
+        },
+        {
+          "date": "2026-04-27",
+          "value": 9389.41
         }
       ],
-      "monthly_returns": [],
-      "run_id": "BT-20260427-182734-connors_rsi2_v1-multi-2190d"
+      "monthly_returns": [
+        {
+          "month": "2025-07",
+          "return": 3.3
+        },
+        {
+          "month": "2025-08",
+          "return": -9.77
+        },
+        {
+          "month": "2025-09",
+          "return": -6.95
+        },
+        {
+          "month": "2025-10",
+          "return": 7.24
+        },
+        {
+          "month": "2025-11",
+          "return": 8.56
+        },
+        {
+          "month": "2025-12",
+          "return": 4.79
+        },
+        {
+          "month": "2026-01",
+          "return": -8.02
+        },
+        {
+          "month": "2026-02",
+          "return": 4.7
+        },
+        {
+          "month": "2026-03",
+          "return": -2.85
+        },
+        {
+          "month": "2026-04",
+          "return": -7.29
+        }
+      ],
+      "run_id": "BT-20260428-071040-connors_rsi2_v1-multi-2190d"
     }
   ],
   "aggregate": {
-    "mean_oos_sharpe": 0.0,
-    "median_oos_sharpe": 0.0,
-    "stdev_oos_sharpe": 0.0,
-    "pct_positive_folds": 0.0,
-    "mean_oos_return_pct": 0.0
+    "mean_oos_sharpe": 0.33,
+    "median_oos_sharpe": 0.18,
+    "stdev_oos_sharpe": 0.962,
+    "pct_positive_folds": 50.0,
+    "mean_oos_return_pct": 9.46
   },
   "run_id": "SEED-P3-connors-walkforward",
-  "run_at": "2026-04-27T18:27:34.503534",
+  "run_at": "2026-04-28T07:10:40.485780",
   "label": "Phase 3: Connors RSI(2) walk-forward (4 folds)",
   "seed_meta": {
     "tag": "P3-connors-walkforward",

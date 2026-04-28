@@ -455,20 +455,20 @@ def _account_panel():
 
         dbc.Row([
             dbc.Col([
-                html.Span("Per-symbol starting cash ($)",
+                html.Span("Starting cash ($)",
                           id="bt-acct-cash-tip",
                           style={"fontSize": "11px", "color": "#888"}),
                 dcc.Input(id="bt-acct-cash", type="number", value=10000,
                           min=100, step=100, style={**NUMBOX, "marginTop": "4px"}),
                 dbc.Tooltip(
-                    "IMPORTANT: this is the starting cash *per symbol*, "
-                    "not the total portfolio.  The engine simulates each "
-                    "symbol with its own fresh account, then aggregates "
-                    "the trade log.  So if you scan 50 symbols at $10K "
-                    "per symbol, total deployed capital is $500K and "
-                    "the equity curve / total-return % use that "
-                    "aggregate base.  For a true single-pool portfolio "
-                    "simulation, use the cross-sectional runner.",
+                    "Total portfolio cash — a single shared pool across "
+                    "every symbol in the run.  Each entry decrements "
+                    "cash; each exit credits it.  When cash isn't "
+                    "sufficient for the requested position size, the "
+                    "entry is skipped (no margin).  Position sizing "
+                    "(below) is applied to the live mark-to-market "
+                    "portfolio value (cash + open positions), so "
+                    "10% means 10% of total equity at the time of entry.",
                     target="bt-acct-cash-tip", placement="top",
                     style={"maxWidth": "360px", "fontSize": "12px"}),
             ], md=12),
@@ -1302,20 +1302,15 @@ def _strategy_explainer(results: dict):
         + f"  ·  Validation: {val_mode.replace('_', '-')}"
     )
 
-    # Per-symbol sim semantics: the engine simulates each symbol with its
-    # own fresh `starting_cash`, then aggregates trades.  Surface the
-    # aggregate so the user sees the true total deployed capital.
+    # Shared-pool sim: a single ``starting_cash`` is the whole portfolio.
+    # Each entry decrements it; each exit credits it.
     metrics       = results.get("metrics") or {}
     n_symbols     = int(metrics.get("symbols_traded", 0) or 0)
-    aggregate     = float(
-        metrics.get("aggregate_starting")
-        or (starting_cash * max(n_symbols, 1))
-    )
-    capital_text = (
-        f"Per-symbol cash: ${starting_cash:,.0f}"
-        + (f"  ·  Total deployed: ${aggregate:,.0f}"
-           f"  ({n_symbols} symbol{'s' if n_symbols != 1 else ''})"
-           if n_symbols > 1 else "")
+    ending_cash   = metrics.get("ending_cash")
+    capital_text  = (
+        f"Starting cash: ${starting_cash:,.0f}  ·  shared pool across all {n_symbols} symbol(s)"
+        + (f"  ·  Ending cash: ${float(ending_cash):,.0f}"
+           if ending_cash is not None else "")
     )
     universe_text = (
         f"Scope: {scope}"

@@ -5,25 +5,25 @@
   "period_days": 2190,
   "conf_threshold": 0,
   "metrics": {
-    "total_return_pct": 432.56,
-    "sharpe": 0.96,
-    "sortino": 0.35,
-    "expectancy": 758.87,
-    "edge_ratio": 1.35,
-    "profit_factor": 2.0,
-    "max_drawdown_pct": -26.42,
-    "win_rate_pct": 59.6,
-    "loss_rate_pct": 40.4,
+    "total_return_pct": 383.11,
+    "sharpe": 0.9,
+    "sortino": 0.36,
+    "expectancy": 672.12,
+    "edge_ratio": 1.23,
+    "profit_factor": 1.95,
+    "max_drawdown_pct": -28.1,
+    "win_rate_pct": 61.4,
+    "loss_rate_pct": 38.6,
     "total_trades": 57,
-    "wins": 34,
-    "losses": 23,
-    "avg_win": 2541.01,
-    "avg_loss": -1875.59,
-    "avg_win_pct": 25.41,
-    "avg_loss_pct": -18.76,
-    "largest_win": 9626.28,
-    "largest_loss": -14457.21,
-    "symbols_traded": 26
+    "wins": 35,
+    "losses": 22,
+    "avg_win": 2241.33,
+    "avg_loss": -1824.34,
+    "avg_win_pct": 22.41,
+    "avg_loss_pct": -18.24,
+    "largest_win": 9878.22,
+    "largest_loss": -11374.8,
+    "symbols_traded": 27
   },
   "equity_curve": [
     {
@@ -32,437 +32,437 @@
     },
     {
       "date": "2021-08-23",
-      "value": 9995.09
+      "value": 9995.03
     },
     {
       "date": "2021-09-22",
-      "value": 9993.87
+      "value": 10106.77
     },
     {
       "date": "2021-10-21",
-      "value": 12459.34
+      "value": 12296.01
     },
     {
       "date": "2021-11-19",
-      "value": 12464.48
+      "value": 12240.29
     },
     {
       "date": "2021-12-21",
-      "value": 11528.8
+      "value": 11428.6
     },
     {
       "date": "2022-01-21",
-      "value": 11309.83
+      "value": 11468.15
     },
     {
       "date": "2022-02-22",
-      "value": 10906.22
+      "value": 11176.76
     },
     {
       "date": "2022-03-23",
-      "value": 11520.2
+      "value": 11730.97
     },
     {
       "date": "2022-04-22",
-      "value": 10761.8
+      "value": 11061.8
     },
     {
       "date": "2022-05-23",
-      "value": 11127.91
+      "value": 10774.38
     },
     {
       "date": "2022-06-23",
-      "value": 9512.91
+      "value": 9426.11
     },
     {
       "date": "2022-07-25",
-      "value": 10202.57
+      "value": 10152.89
     },
     {
       "date": "2022-08-23",
-      "value": 11179.35
+      "value": 11033.8
     },
     {
       "date": "2022-09-22",
-      "value": 10431.23
+      "value": 10274.59
     },
     {
       "date": "2022-10-21",
-      "value": 12162.54
+      "value": 11628.32
     },
     {
       "date": "2022-11-21",
-      "value": 13372.98
+      "value": 12610.37
     },
     {
       "date": "2022-12-21",
-      "value": 13953.52
+      "value": 13091.4
     },
     {
       "date": "2023-01-24",
-      "value": 13931.58
+      "value": 13123.04
     },
     {
       "date": "2023-02-23",
-      "value": 14745.97
+      "value": 13816.65
     },
     {
       "date": "2023-03-24",
-      "value": 14256.17
+      "value": 13479.4
     },
     {
       "date": "2023-04-25",
-      "value": 15048.59
+      "value": 14127.14
     },
     {
       "date": "2023-05-24",
-      "value": 17056.82
+      "value": 16036.76
     },
     {
       "date": "2023-06-26",
-      "value": 18228.46
+      "value": 17880.38
     },
     {
       "date": "2023-07-26",
-      "value": 21112.74
+      "value": 19701.07
     },
     {
       "date": "2023-08-24",
-      "value": 19120.61
+      "value": 18107.86
     },
     {
       "date": "2023-09-25",
-      "value": 18676.49
+      "value": 17226.37
     },
     {
       "date": "2023-10-24",
-      "value": 18859.5
+      "value": 17495.11
     },
     {
       "date": "2023-11-22",
-      "value": 21940.19
+      "value": 19856.91
     },
     {
       "date": "2023-12-22",
-      "value": 28446.73
+      "value": 24450.81
     },
     {
       "date": "2024-01-25",
-      "value": 29239.3
+      "value": 26060.34
     },
     {
       "date": "2024-02-26",
-      "value": 38268.78
+      "value": 35938.56
     },
     {
       "date": "2024-03-26",
-      "value": 37980.85
+      "value": 36558.62
     },
     {
       "date": "2024-04-25",
-      "value": 33462.32
+      "value": 32550.48
     },
     {
       "date": "2024-05-24",
-      "value": 35431.96
+      "value": 35681.73
     },
     {
       "date": "2024-06-26",
-      "value": 37080.34
+      "value": 31690.86
     },
     {
       "date": "2024-07-26",
-      "value": 37773.27
+      "value": 31406.07
     },
     {
       "date": "2024-08-26",
-      "value": 36626.96
+      "value": 30233.86
     },
     {
       "date": "2024-09-25",
-      "value": 37151.46
+      "value": 30720.48
     },
     {
       "date": "2024-10-24",
-      "value": 35808.87
+      "value": 29519.1
     },
     {
       "date": "2024-11-22",
-      "value": 41887.2
+      "value": 34546.28
     },
     {
       "date": "2024-12-24",
-      "value": 45325.82
+      "value": 35394.95
     },
     {
       "date": "2025-01-28",
-      "value": 47978.12
+      "value": 37729.8
     },
     {
       "date": "2025-02-27",
-      "value": 50117.36
+      "value": 38126.27
     },
     {
       "date": "2025-03-28",
-      "value": 44965.3
+      "value": 34320.44
     },
     {
       "date": "2025-04-29",
-      "value": 50166.37
+      "value": 38418.55
     },
     {
       "date": "2025-05-29",
-      "value": 57262.83
+      "value": 43825.36
     },
     {
       "date": "2025-06-30",
-      "value": 59993.53
+      "value": 45886.59
     },
     {
       "date": "2025-07-30",
-      "value": 64623.46
+      "value": 49487.26
     },
     {
       "date": "2025-08-28",
-      "value": 62754.27
+      "value": 48024.52
     },
     {
       "date": "2025-09-29",
-      "value": 72380.55
+      "value": 55575.48
     },
     {
       "date": "2025-10-28",
-      "value": 71541.99
+      "value": 54273.67
     },
     {
       "date": "2025-11-26",
-      "value": 57084.78
+      "value": 42898.87
     },
     {
       "date": "2025-12-29",
-      "value": 58564.08
+      "value": 44011.36
     },
     {
       "date": "2026-01-29",
-      "value": 59147.91
+      "value": 44453.46
     },
     {
       "date": "2026-03-02",
-      "value": 56789.17
+      "value": 42485.69
     },
     {
       "date": "2026-03-31",
-      "value": 53413.98
+      "value": 39960.32
     },
     {
-      "date": "2026-04-24",
-      "value": 53255.61
+      "date": "2026-04-27",
+      "value": 48311.06
     }
   ],
   "monthly_returns": [
     {
       "month": "2021-09",
-      "return": -0.01
+      "return": 1.12
     },
     {
       "month": "2021-10",
-      "return": 24.67
+      "return": 21.66
     },
     {
       "month": "2021-11",
-      "return": 0.04
+      "return": -0.45
     },
     {
       "month": "2021-12",
-      "return": -7.51
+      "return": -6.63
     },
     {
       "month": "2022-01",
-      "return": -1.9
+      "return": 0.35
     },
     {
       "month": "2022-02",
-      "return": -3.57
+      "return": -2.54
     },
     {
       "month": "2022-03",
-      "return": 5.63
+      "return": 4.96
     },
     {
       "month": "2022-04",
-      "return": -6.58
+      "return": -5.7
     },
     {
       "month": "2022-05",
-      "return": 3.4
+      "return": -2.6
     },
     {
       "month": "2022-06",
-      "return": -14.51
+      "return": -12.51
     },
     {
       "month": "2022-07",
-      "return": 7.25
+      "return": 7.71
     },
     {
       "month": "2022-08",
-      "return": 9.57
+      "return": 8.68
     },
     {
       "month": "2022-09",
-      "return": -6.69
+      "return": -6.88
     },
     {
       "month": "2022-10",
-      "return": 16.6
+      "return": 13.18
     },
     {
       "month": "2022-11",
-      "return": 9.95
+      "return": 8.45
     },
     {
       "month": "2022-12",
-      "return": 4.34
+      "return": 3.81
     },
     {
       "month": "2023-01",
-      "return": -0.16
+      "return": 0.24
     },
     {
       "month": "2023-02",
-      "return": 5.85
+      "return": 5.29
     },
     {
       "month": "2023-03",
-      "return": -3.32
+      "return": -2.44
     },
     {
       "month": "2023-04",
-      "return": 5.56
+      "return": 4.81
     },
     {
       "month": "2023-05",
-      "return": 13.34
+      "return": 13.52
     },
     {
       "month": "2023-06",
-      "return": 6.87
+      "return": 11.5
     },
     {
       "month": "2023-07",
-      "return": 15.82
+      "return": 10.18
     },
     {
       "month": "2023-08",
-      "return": -9.44
+      "return": -8.09
     },
     {
       "month": "2023-09",
-      "return": -2.32
+      "return": -4.87
     },
     {
       "month": "2023-10",
-      "return": 0.98
+      "return": 1.56
     },
     {
       "month": "2023-11",
-      "return": 16.33
+      "return": 13.5
     },
     {
       "month": "2023-12",
-      "return": 29.66
+      "return": 23.14
     },
     {
       "month": "2024-01",
-      "return": 2.79
+      "return": 6.58
     },
     {
       "month": "2024-02",
-      "return": 30.88
+      "return": 37.91
     },
     {
       "month": "2024-03",
-      "return": -0.75
+      "return": 1.73
     },
     {
       "month": "2024-04",
-      "return": -11.9
+      "return": -10.96
     },
     {
       "month": "2024-05",
-      "return": 5.89
+      "return": 9.62
     },
     {
       "month": "2024-06",
-      "return": 4.65
+      "return": -11.18
     },
     {
       "month": "2024-07",
-      "return": 1.87
+      "return": -0.9
     },
     {
       "month": "2024-08",
-      "return": -3.03
+      "return": -3.73
     },
     {
       "month": "2024-09",
-      "return": 1.43
+      "return": 1.61
     },
     {
       "month": "2024-10",
-      "return": -3.61
+      "return": -3.91
     },
     {
       "month": "2024-11",
-      "return": 16.97
+      "return": 17.03
     },
     {
       "month": "2024-12",
-      "return": 8.21
+      "return": 2.46
     },
     {
       "month": "2025-01",
-      "return": 5.85
+      "return": 6.6
     },
     {
       "month": "2025-02",
-      "return": 4.46
+      "return": 1.05
     },
     {
       "month": "2025-03",
-      "return": -10.28
+      "return": -9.98
     },
     {
       "month": "2025-04",
-      "return": 11.57
+      "return": 11.94
     },
     {
       "month": "2025-05",
-      "return": 14.15
+      "return": 14.07
     },
     {
       "month": "2025-06",
-      "return": 4.77
+      "return": 4.7
     },
     {
       "month": "2025-07",
-      "return": 7.72
+      "return": 7.85
     },
     {
       "month": "2025-08",
-      "return": -2.89
+      "return": -2.96
     },
     {
       "month": "2025-09",
-      "return": 15.34
+      "return": 15.72
     },
     {
       "month": "2025-10",
-      "return": -1.16
+      "return": -2.34
     },
     {
       "month": "2025-11",
-      "return": -20.21
+      "return": -20.96
     },
     {
       "month": "2025-12",
@@ -474,7 +474,7 @@
     },
     {
       "month": "2026-04",
-      "return": -0.3
+      "return": 20.9
     }
   ],
   "trades": [
@@ -501,716 +501,863 @@
     },
     {
       "date": "2021-09-22",
-      "symbol": "NKE",
-      "pl": -136.99,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2021-09-22",
       "symbol": "SLB",
       "pl": -27.89,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
+      "date": "2021-09-22",
+      "symbol": "WFC",
+      "pl": -24.04,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
       "date": "2021-10-21",
       "symbol": "BAC",
-      "pl": 325.19,
+      "pl": 272.1,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-10-21",
       "symbol": "F",
-      "pl": 499.07,
+      "pl": 419.75,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-10-21",
       "symbol": "MARA",
-      "pl": 849.34,
+      "pl": 712.84,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-10-21",
       "symbol": "HBAN",
-      "pl": 271.19,
+      "pl": 229.62,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-10-21",
       "symbol": "SLB",
-      "pl": 521.9,
+      "pl": 443.25,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-10-21",
+      "symbol": "WFC",
+      "pl": 112.75,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "BAC",
-      "pl": -76.38,
+      "pl": -61.97,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "F",
-      "pl": 424.8,
+      "pl": 348.34,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "CCL",
-      "pl": -208.84,
+      "pl": -171.21,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "MARA",
-      "pl": 176.03,
+      "pl": 146.69,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "SLB",
-      "pl": -310.48,
+      "pl": -254.42,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-11-19",
+      "symbol": "WFC",
+      "pl": -63.18,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "BAC",
-      "pl": -68.57,
+      "pl": -55.87,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "F",
-      "pl": 24.38,
+      "pl": 20.0,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "MARA",
-      "pl": -906.95,
+      "pl": -745.72,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "HAL",
-      "pl": 65.84,
+      "pl": 53.6,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "SLB",
-      "pl": -50.82,
+      "pl": -41.52,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2021-12-21",
+      "symbol": "WFC",
+      "pl": -42.57,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "BAC",
-      "pl": 39.28,
+      "pl": 32.48,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "F",
-      "pl": 118.16,
+      "pl": 97.96,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "SMCI",
-      "pl": -90.82,
+      "pl": -74.0,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "MARA",
-      "pl": -822.91,
+      "pl": -685.76,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "SLB",
-      "pl": 537.19,
+      "pl": 440.77,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-01-21",
+      "symbol": "WFC",
+      "pl": 228.12,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "BAC",
-      "pl": 26.74,
+      "pl": 22.46,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "F",
-      "pl": -366.13,
+      "pl": -309.03,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "PFE",
-      "pl": -225.13,
+      "pl": -192.97,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "MARA",
-      "pl": 48.21,
+      "pl": 40.65,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "HPE",
-      "pl": 112.48,
+      "pl": 94.81,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-02-22",
+      "symbol": "WFC",
+      "pl": 52.52,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-03-23",
-      "symbol": "BAC",
-      "pl": -118.64,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-03-23",
       "symbol": "F",
-      "pl": -81.52,
+      "pl": -69.23,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-03-23",
       "symbol": "PFE",
-      "pl": 207.46,
+      "pl": 179.8,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-03-23",
+      "symbol": "AAPL",
+      "pl": 64.16,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-03-23",
       "symbol": "HAL",
-      "pl": 451.97,
+      "pl": 386.46,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-03-23",
       "symbol": "SLB",
-      "pl": 155.05,
+      "pl": 132.49,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2022-04-22",
-      "symbol": "BAC",
-      "pl": -295.76,
+      "date": "2022-03-23",
+      "symbol": "WFC",
+      "pl": -139.2,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-04-22",
       "symbol": "F",
-      "pl": -214.71,
+      "pl": -182.04,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-04-22",
       "symbol": "PFE",
-      "pl": -179.53,
+      "pl": -150.97,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-04-22",
+      "symbol": "AAPL",
+      "pl": -95.22,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-04-22",
       "symbol": "HAL",
-      "pl": -23.87,
+      "pl": -20.29,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-04-22",
       "symbol": "SLB",
-      "pl": -44.93,
+      "pl": -38.27,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-04-22",
+      "symbol": "WFC",
+      "pl": -182.73,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
       "symbol": "F",
-      "pl": -328.59,
+      "pl": -279.99,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
       "symbol": "PFE",
-      "pl": 205.02,
+      "pl": 177.06,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
-      "symbol": "SMCI",
-      "pl": 347.21,
-      "win": true,
+      "symbol": "AAPL",
+      "pl": -207.05,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
       "symbol": "HAL",
-      "pl": 33.17,
+      "pl": 27.94,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
       "symbol": "SLB",
-      "pl": 109.51,
+      "pl": 94.48,
       "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-05-23",
+      "symbol": "WFC",
+      "pl": -100.04,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-06-23",
       "symbol": "F",
-      "pl": -221.82,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-06-23",
-      "symbol": "PFE",
-      "pl": -118.92,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-06-23",
-      "symbol": "SMCI",
-      "pl": -349.9,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-06-23",
-      "symbol": "HAL",
-      "pl": -482.22,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-06-23",
-      "symbol": "SLB",
-      "pl": -442.97,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-07-25",
-      "symbol": "PFE",
-      "pl": 60.28,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-07-25",
-      "symbol": "PCG",
-      "pl": 186.19,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-07-25",
-      "symbol": "SMCI",
-      "pl": 484.78,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-07-25",
-      "symbol": "HAL",
-      "pl": -103.59,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-07-25",
-      "symbol": "SLB",
-      "pl": 62.34,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-08-23",
-      "symbol": "PFE",
-      "pl": -148.2,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-08-23",
-      "symbol": "PCG",
-      "pl": 178.37,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-08-23",
-      "symbol": "SMCI",
-      "pl": 576.08,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-08-23",
-      "symbol": "HAL",
-      "pl": 195.62,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-08-23",
-      "symbol": "SLB",
-      "pl": 175.41,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-09-22",
-      "symbol": "PFE",
-      "pl": -160.83,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-09-22",
-      "symbol": "PCG",
-      "pl": 235.16,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-09-22",
-      "symbol": "SMCI",
-      "pl": -448.17,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-09-22",
-      "symbol": "HAL",
-      "pl": -308.07,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-09-22",
-      "symbol": "SLB",
-      "pl": -66.57,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-10-21",
-      "symbol": "F",
-      "pl": -94.95,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-10-21",
-      "symbol": "PCG",
-      "pl": 243.4,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-10-21",
-      "symbol": "SMCI",
-      "pl": 392.18,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-10-21",
-      "symbol": "HAL",
-      "pl": 535.12,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-10-21",
-      "symbol": "SLB",
-      "pl": 656.41,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-11-21",
-      "symbol": "PFE",
-      "pl": 170.82,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-11-21",
-      "symbol": "PCG",
-      "pl": 79.37,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-11-21",
-      "symbol": "SMCI",
-      "pl": 716.16,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-11-21",
-      "symbol": "HAL",
-      "pl": 156.91,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-11-21",
-      "symbol": "SLB",
-      "pl": 87.78,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-12-21",
-      "symbol": "PCG",
-      "pl": 168.13,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-12-21",
-      "symbol": "BSX",
-      "pl": 191.3,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-12-21",
-      "symbol": "SMCI",
-      "pl": -10.66,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-12-21",
-      "symbol": "HAL",
-      "pl": 182.23,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2022-12-21",
-      "symbol": "SLB",
-      "pl": 49.84,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-01-24",
-      "symbol": "PCG",
-      "pl": -25.38,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-01-24",
-      "symbol": "BSX",
-      "pl": -15.36,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-01-24",
-      "symbol": "SMCI",
       "pl": -178.23,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
+      "date": "2022-06-23",
+      "symbol": "PFE",
+      "pl": -93.44,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-06-23",
+      "symbol": "SMCI",
+      "pl": -279.92,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-06-23",
+      "symbol": "AAPL",
+      "pl": -60.49,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-06-23",
+      "symbol": "HAL",
+      "pl": -382.45,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-06-23",
+      "symbol": "SLB",
+      "pl": -354.38,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "PFE",
+      "pl": 50.5,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "PCG",
+      "pl": 153.56,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "SMCI",
+      "pl": 398.6,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "AAPL",
+      "pl": 159.22,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "HAL",
+      "pl": -85.5,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-07-25",
+      "symbol": "SLB",
+      "pl": 50.79,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "PFE",
+      "pl": -121.6,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "PCG",
+      "pl": 148.17,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "SMCI",
+      "pl": 485.12,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "HPE",
+      "pl": 62.94,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "HAL",
+      "pl": 162.56,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-08-23",
+      "symbol": "SLB",
+      "pl": 144.08,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "PFE",
+      "pl": -132.86,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "PCG",
+      "pl": 193.07,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "SMCI",
+      "pl": -366.68,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "AAPL",
+      "pl": -146.7,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "HAL",
+      "pl": -251.67,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-09-22",
+      "symbol": "SLB",
+      "pl": -54.68,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "F",
+      "pl": -78.05,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "PCG",
+      "pl": 200.81,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "SMCI",
+      "pl": 319.94,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "AAPL",
+      "pl": -60.94,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "HAL",
+      "pl": 437.83,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-10-21",
+      "symbol": "SLB",
+      "pl": 534.85,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "PFE",
+      "pl": 136.03,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "PCG",
+      "pl": 63.21,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "SMCI",
+      "pl": 580.67,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "AAPL",
+      "pl": 7.18,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "HAL",
+      "pl": 125.97,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-11-21",
+      "symbol": "SLB",
+      "pl": 69.49,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "PCG",
+      "pl": 132.23,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "BSX",
+      "pl": 148.1,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "SMCI",
+      "pl": -8.6,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "HPE",
+      "pl": 27.58,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "HAL",
+      "pl": 142.83,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2022-12-21",
+      "symbol": "SLB",
+      "pl": 39.09,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-01-24",
+      "symbol": "PCG",
+      "pl": -19.84,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-01-24",
+      "symbol": "BSX",
+      "pl": -12.03,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-01-24",
+      "symbol": "SMCI",
+      "pl": -140.43,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-01-24",
+      "symbol": "HPE",
+      "pl": 51.62,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
       "date": "2023-01-24",
       "symbol": "HAL",
-      "pl": 87.53,
+      "pl": 68.08,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-01-24",
       "symbol": "SLB",
-      "pl": 109.49,
+      "pl": 84.22,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
       "symbol": "PCG",
-      "pl": -96.9,
+      "pl": -75.98,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
+      "symbol": "BSX",
+      "pl": 60.09,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-02-23",
       "symbol": "SMCI",
-      "pl": 551.73,
+      "pl": 425.62,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
       "symbol": "HAL",
-      "pl": -255.17,
+      "pl": -199.69,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
       "symbol": "HIMS",
-      "pl": 724.85,
+      "pl": 569.53,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
       "symbol": "SLB",
-      "pl": -109.72,
+      "pl": -85.58,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "PCG",
-      "pl": 66.15,
+      "pl": 51.68,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-03-24",
+      "symbol": "BSX",
+      "pl": 47.39,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "SMCI",
-      "pl": 504.6,
+      "pl": 390.66,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "HAL",
-      "pl": -538.89,
+      "pl": -419.13,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "HIMS",
-      "pl": -38.0,
+      "pl": -29.65,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "SLB",
-      "pl": -483.94,
+      "pl": -378.36,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
       "symbol": "PCG",
-      "pl": 292.75,
+      "pl": 230.02,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
       "symbol": "BSX",
-      "pl": 169.35,
+      "pl": 132.03,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
       "symbol": "SMCI",
-      "pl": -435.55,
+      "pl": -348.44,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
+      "symbol": "HBAN",
+      "pl": 29.98,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-04-25",
       "symbol": "HIMS",
-      "pl": 493.24,
+      "pl": 387.67,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
       "symbol": "SLB",
-      "pl": 272.99,
+      "pl": 216.66,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-05-24",
+      "symbol": "NVDA",
+      "pl": 343.25,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "NFLX",
-      "pl": 374.19,
+      "pl": 291.03,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "PCG",
-      "pl": -142.14,
+      "pl": -111.09,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "BSX",
-      "pl": 42.83,
+      "pl": 33.97,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "SMCI",
-      "pl": 2374.7,
+      "pl": 1855.24,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "HIMS",
-      "pl": -640.52,
+      "pl": -501.9,
       "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-06-26",
+      "symbol": "NVDA",
+      "pl": 804.43,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
@@ -1223,36 +1370,36 @@
     {
       "date": "2023-06-26",
       "symbol": "PCG",
-      "pl": 65.07,
+      "pl": 61.29,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-06-26",
       "symbol": "BSX",
-      "pl": 82.2,
+      "pl": 77.64,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-06-26",
       "symbol": "SMCI",
-      "pl": 777.57,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-06-26",
-      "symbol": "NKE",
-      "pl": 86.84,
+      "pl": 728.97,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-06-26",
       "symbol": "HIMS",
-      "pl": -195.94,
+      "pl": -184.38,
       "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-07-26",
+      "symbol": "NVDA",
+      "pl": 333.97,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
@@ -1265,77 +1412,77 @@
     {
       "date": "2023-07-26",
       "symbol": "PCG",
-      "pl": 184.07,
+      "pl": 179.98,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-07-26",
       "symbol": "BSX",
-      "pl": -65.41,
+      "pl": -64.24,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-07-26",
       "symbol": "SMCI",
-      "pl": 1409.14,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-07-26",
-      "symbol": "MARA",
-      "pl": 1294.17,
+      "pl": 1308.49,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-07-26",
       "symbol": "HIMS",
-      "pl": 19.15,
+      "pl": 18.74,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-08-24",
+      "symbol": "NVDA",
+      "pl": 116.53,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
       "symbol": "NFLX",
-      "pl": -131.4,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-08-24",
-      "symbol": "CCL",
-      "pl": -388.38,
+      "pl": -114.97,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
       "symbol": "PCG",
-      "pl": -238.59,
+      "pl": -222.77,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
-      "symbol": "BSX",
-      "pl": -135.43,
+      "symbol": "CCL",
+      "pl": -363.01,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
       "symbol": "SMCI",
-      "pl": -606.1,
+      "pl": -551.0,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
       "symbol": "PLTR",
-      "pl": -493.33,
+      "pl": -458.75,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-09-25",
+      "symbol": "NVDA",
+      "pl": -298.84,
       "win": false,
       "exit_reason": "rebalance"
     },
@@ -1348,99 +1495,92 @@
     },
     {
       "date": "2023-09-25",
-      "symbol": "CCL",
-      "pl": -370.63,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-09-25",
       "symbol": "PCG",
-      "pl": 68.99,
+      "pl": 65.36,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-09-25",
+      "symbol": "CCL",
+      "pl": -352.28,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-09-25",
       "symbol": "SMCI",
-      "pl": -166.63,
+      "pl": -152.74,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-09-25",
       "symbol": "PLTR",
-      "pl": 13.68,
+      "pl": 12.95,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2023-09-25",
-      "symbol": "SLB",
-      "pl": 166.69,
+      "date": "2023-10-24",
+      "symbol": "NVDA",
+      "pl": 82.92,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
       "symbol": "NFLX",
-      "pl": 227.77,
+      "pl": 199.3,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
       "symbol": "CCL",
-      "pl": -551.64,
+      "pl": -507.31,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
       "symbol": "SMCI",
-      "pl": 162.29,
+      "pl": 148.77,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
-      "symbol": "NOW",
-      "pl": -26.96,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-10-24",
       "symbol": "PLTR",
-      "pl": 522.02,
+      "pl": 481.31,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
       "symbol": "SLB",
-      "pl": -150.46,
+      "pl": -135.99,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-11-22",
+      "symbol": "NVDA",
+      "pl": 300.53,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-11-22",
       "symbol": "CMCSA",
-      "pl": -72.93,
+      "pl": -67.87,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-11-22",
       "symbol": "CCL",
-      "pl": 826.67,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-11-22",
-      "symbol": "SMCI",
-      "pl": 261.31,
+      "pl": 766.33,
       "win": true,
       "exit_reason": "rebalance"
     },
@@ -1453,148 +1593,155 @@
     },
     {
       "date": "2023-11-22",
-      "symbol": "PLTR",
-      "pl": 572.07,
+      "symbol": "SMCI",
+      "pl": 261.31,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-11-22",
-      "symbol": "HIMS",
-      "pl": 922.59,
+      "symbol": "PLTR",
+      "pl": 529.7,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-12-22",
+      "symbol": "NVDA",
+      "pl": 4.45,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-12-22",
       "symbol": "NFLX",
-      "pl": 59.97,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2023-12-22",
-      "symbol": "SMCI",
-      "pl": 32.84,
+      "pl": 51.41,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-12-22",
       "symbol": "NOW",
-      "pl": 136.93,
+      "pl": 109.54,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2023-12-22",
+      "symbol": "SMCI",
+      "pl": 30.1,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-12-22",
       "symbol": "MARA",
-      "pl": 5290.05,
+      "pl": 4784.73,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-12-22",
       "symbol": "PLTR",
-      "pl": -422.46,
+      "pl": -383.64,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2023-12-22",
-      "symbol": "PATH",
-      "pl": 1412.53,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
       "date": "2024-01-25",
-      "symbol": "INTC",
-      "pl": 150.55,
+      "symbol": "NVDA",
+      "pl": 1022.06,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-01-25",
       "symbol": "CCL",
-      "pl": -619.42,
+      "pl": -532.71,
       "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-01-25",
-      "symbol": "SMCI",
-      "pl": 2969.0,
-      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-01-25",
       "symbol": "NOW",
-      "pl": 407.0,
+      "pl": 339.16,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-01-25",
+      "symbol": "SMCI",
+      "pl": 2597.87,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-01-25",
       "symbol": "MARA",
-      "pl": -1848.15,
+      "pl": -1587.11,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-01-25",
       "symbol": "PLTR",
-      "pl": -265.72,
+      "pl": -228.6,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
-      "symbol": "INTC",
-      "pl": -655.26,
-      "win": false,
+      "symbol": "NVDA",
+      "pl": 1217.24,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "CCL",
-      "pl": -500.21,
+      "pl": -445.95,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "SMCI",
-      "pl": 3994.84,
+      "pl": 3595.36,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "MARA",
-      "pl": 3850.3,
+      "pl": 3425.35,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "PLTR",
-      "pl": 2098.64,
+      "pl": 1871.76,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "PATH",
-      "pl": 245.29,
+      "pl": 218.8,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-03-26",
+      "symbol": "NVDA",
+      "pl": 939.58,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-03-26",
       "symbol": "INTC",
-      "pl": -149.85,
+      "pl": -140.74,
       "win": false,
       "exit_reason": "rebalance"
     },
@@ -1608,71 +1755,71 @@
     {
       "date": "2024-03-26",
       "symbol": "SMCI",
-      "pl": 1041.04,
+      "pl": 892.32,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-03-26",
-      "symbol": "NOW",
-      "pl": -13.27,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-03-26",
       "symbol": "MARA",
-      "pl": -1928.16,
+      "pl": -1813.18,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-03-26",
       "symbol": "PLTR",
-      "pl": 349.86,
+      "pl": 329.13,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
-      "symbol": "NFLX",
-      "pl": -652.47,
+      "symbol": "NVDA",
+      "pl": -602.14,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
-      "symbol": "CCL",
-      "pl": -699.75,
+      "symbol": "NFLX",
+      "pl": -587.22,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-04-25",
+      "symbol": "NOW",
+      "pl": -442.17,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
       "symbol": "SMCI",
-      "pl": -1432.3,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-04-25",
-      "symbol": "NOW",
-      "pl": -505.34,
+      "pl": -1193.58,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
       "symbol": "MARA",
-      "pl": -421.51,
+      "pl": -406.55,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
       "symbol": "PLTR",
-      "pl": -809.83,
+      "pl": -777.94,
       "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-05-24",
+      "symbol": "NVDA",
+      "pl": 1421.79,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
@@ -1685,35 +1832,35 @@
     {
       "date": "2024-05-24",
       "symbol": "CCL",
-      "pl": -23.91,
+      "pl": -23.26,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-05-24",
       "symbol": "SMCI",
-      "pl": 665.7,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-05-24",
-      "symbol": "NOW",
-      "pl": 152.9,
+      "pl": 570.6,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-05-24",
       "symbol": "MARA",
-      "pl": 629.92,
+      "pl": 612.72,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-05-24",
       "symbol": "PLTR",
-      "pl": -185.95,
+      "pl": -180.86,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-06-26",
+      "symbol": "NVDA",
+      "pl": -4694.58,
       "win": false,
       "exit_reason": "rebalance"
     },
@@ -1726,8 +1873,8 @@
     },
     {
       "date": "2024-06-26",
-      "symbol": "CCL",
-      "pl": 1255.12,
+      "symbol": "AMZN",
+      "pl": 404.89,
       "win": true,
       "exit_reason": "rebalance"
     },
@@ -1740,939 +1887,939 @@
     },
     {
       "date": "2024-06-26",
-      "symbol": "NOW",
-      "pl": 99.85,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-06-26",
       "symbol": "MARA",
-      "pl": -514.38,
+      "pl": -518.08,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-06-26",
       "symbol": "PLTR",
-      "pl": 859.14,
+      "pl": 865.26,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-07-26",
-      "symbol": "NFLX",
-      "pl": -421.2,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-07-26",
-      "symbol": "BAC",
-      "pl": 416.28,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-07-26",
-      "symbol": "SMCI",
-      "pl": -833.36,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-07-26",
-      "symbol": "MARA",
-      "pl": 695.27,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-07-26",
-      "symbol": "PLTR",
-      "pl": 783.2,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-07-26",
-      "symbol": "HIMS",
-      "pl": 52.44,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "NFLX",
-      "pl": 511.11,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "BSX",
-      "pl": 372.07,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "SMCI",
-      "pl": -1209.26,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "NOW",
-      "pl": -7.19,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "PLTR",
-      "pl": 842.22,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-08-26",
-      "symbol": "HIMS",
-      "pl": -1655.65,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "NFLX",
-      "pl": 254.56,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "SMCI",
-      "pl": -1043.7,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "NOW",
-      "pl": 428.06,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "MARA",
-      "pl": -796.18,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "PLTR",
-      "pl": 1228.49,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-09-25",
-      "symbol": "HIMS",
-      "pl": 453.47,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "NFLX",
-      "pl": 259.34,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "SMCI",
-      "pl": -5358.5,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "NOW",
-      "pl": 396.88,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "MARA",
-      "pl": 782.4,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "PLTR",
-      "pl": 1060.68,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-10-24",
-      "symbol": "HIMS",
-      "pl": 1516.35,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "NFLX",
-      "pl": 998.3,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "BSX",
-      "pl": 335.47,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "SMCI",
-      "pl": -1688.57,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "MARA",
-      "pl": 2545.0,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "PLTR",
-      "pl": 2838.1,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-11-22",
-      "symbol": "HIMS",
-      "pl": 1053.04,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "NFLX",
-      "pl": 226.42,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "JBLU",
-      "pl": 2012.94,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "BSX",
-      "pl": 73.88,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "MARA",
-      "pl": -1578.01,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "PLTR",
-      "pl": 1943.64,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2024-12-24",
-      "symbol": "HIMS",
-      "pl": 761.27,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "NFLX",
-      "pl": 313.27,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "BSX",
-      "pl": 918.67,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "NOW",
-      "pl": 391.7,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "HBAN",
-      "pl": 331.21,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "PLTR",
-      "pl": -205.32,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-01-28",
-      "symbol": "HIMS",
-      "pl": 904.54,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "NFLX",
-      "pl": -73.1,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "CCL",
-      "pl": -1232.82,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "JBLU",
-      "pl": 664.33,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "BSX",
-      "pl": -127.26,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "PLTR",
-      "pl": 443.77,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-02-27",
-      "symbol": "HIMS",
-      "pl": 2465.12,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "NFLX",
-      "pl": -243.75,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "CCL",
-      "pl": -1301.67,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "BSX",
-      "pl": -127.93,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "NOW",
-      "pl": -1110.01,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "PLTR",
-      "pl": 94.54,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-03-28",
-      "symbol": "HIMS",
-      "pl": -2465.46,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "T",
-      "pl": -251.16,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "NFLX",
-      "pl": 1526.48,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "CCL",
-      "pl": -444.59,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "BSX",
-      "pl": 245.17,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "PLTR",
-      "pl": 2619.49,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-04-29",
-      "symbol": "HIMS",
-      "pl": 1508.05,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "T",
-      "pl": 16.11,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "NFLX",
-      "pl": 402.82,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "CCL",
-      "pl": 1984.26,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "BSX",
-      "pl": 135.79,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "PLTR",
-      "pl": 442.14,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-05-29",
-      "symbol": "HIMS",
-      "pl": 4118.89,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "T",
-      "pl": 526.12,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "NFLX",
-      "pl": 1230.39,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "BSX",
-      "pl": 253.35,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "NOW",
-      "pl": 103.98,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "PLTR",
-      "pl": 1084.25,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-06-30",
-      "symbol": "HIMS",
-      "pl": -466.13,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "T",
-      "pl": -496.18,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "NFLX",
-      "pl": -1096.42,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "BSX",
-      "pl": -67.62,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "WBD",
-      "pl": 1548.32,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "PLTR",
-      "pl": 1617.86,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-07-30",
-      "symbol": "HIMS",
-      "pl": 3126.45,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "T",
-      "pl": 555.91,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "NFLX",
-      "pl": 421.76,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "CCL",
-      "pl": 831.34,
-      "win": true,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "BSX",
-      "pl": -112.62,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "PLTR",
-      "pl": -44.78,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-08-28",
-      "symbol": "HIMS",
-      "pl": -3521.88,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2025-09-29",
       "symbol": "NVDA",
-      "pl": 86.36,
+      "pl": -550.62,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "NFLX",
+      "pl": -327.6,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "SMCI",
+      "pl": -714.31,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "MARA",
+      "pl": 592.83,
       "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "PLTR",
+      "pl": 670.0,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-07-26",
+      "symbol": "HIMS",
+      "pl": 44.92,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "NFLX",
+      "pl": 454.32,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "AMZN",
+      "pl": -203.53,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "BSX",
+      "pl": 309.31,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "SMCI",
+      "pl": -1058.1,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "PLTR",
+      "pl": 700.03,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-08-26",
+      "symbol": "HIMS",
+      "pl": -1374.94,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "NFLX",
+      "pl": 222.74,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "NOW",
+      "pl": 366.91,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "SMCI",
+      "pl": -834.96,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "MARA",
+      "pl": -657.82,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "PLTR",
+      "pl": 1016.47,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-09-25",
+      "symbol": "HIMS",
+      "pl": 373.52,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "NFLX",
+      "pl": 226.92,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "NOW",
+      "pl": 330.73,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "SMCI",
+      "pl": -4534.11,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "MARA",
+      "pl": 645.53,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "PLTR",
+      "pl": 875.38,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-10-24",
+      "symbol": "HIMS",
+      "pl": 1253.74,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "NFLX",
+      "pl": 855.68,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "BSX",
+      "pl": 273.17,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "SMCI",
+      "pl": -1387.51,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "MARA",
+      "pl": 2101.38,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "PLTR",
+      "pl": 2320.2,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-11-22",
+      "symbol": "HIMS",
+      "pl": 866.76,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "NFLX",
+      "pl": 194.07,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "BSX",
+      "pl": 60.45,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "MARA",
+      "pl": -1301.27,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "PLTR",
+      "pl": 1601.7,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "HIMS",
+      "pl": 628.4,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2024-12-24",
+      "symbol": "WFC",
+      "pl": -334.41,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "NFLX",
+      "pl": 234.95,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "BSX",
+      "pl": 717.01,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "NOW",
+      "pl": 326.42,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "PLTR",
+      "pl": -160.2,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "HIMS",
+      "pl": 705.41,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-01-28",
+      "symbol": "WFC",
+      "pl": 512.52,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "NFLX",
+      "pl": -54.82,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "AMZN",
+      "pl": -770.6,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "CCL",
+      "pl": -967.42,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "BSX",
+      "pl": -99.53,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "PLTR",
+      "pl": 349.64,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-02-27",
+      "symbol": "HIMS",
+      "pl": 1938.97,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "NFLX",
+      "pl": -182.81,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "CCL",
+      "pl": -990.0,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "BSX",
+      "pl": -98.28,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "NOW",
+      "pl": -740.0,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "PLTR",
+      "pl": 71.39,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-03-28",
+      "symbol": "HIMS",
+      "pl": -1867.4,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "T",
+      "pl": -191.45,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "NFLX",
+      "pl": 1144.86,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "BSX",
+      "pl": 186.33,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "AAPL",
+      "pl": -177.18,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "PLTR",
+      "pl": 1987.2,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-04-29",
+      "symbol": "HIMS",
+      "pl": 1150.11,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "T",
+      "pl": 12.32,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "NFLX",
+      "pl": 287.73,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "CCL",
+      "pl": 1518.16,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "BSX",
+      "pl": 103.94,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "PLTR",
+      "pl": 337.75,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-05-29",
+      "symbol": "HIMS",
+      "pl": 3149.74,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "T",
+      "pl": 402.15,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "NFLX",
+      "pl": 922.79,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "BSX",
+      "pl": 192.1,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "NOW",
+      "pl": 80.88,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "PLTR",
+      "pl": 820.14,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-06-30",
+      "symbol": "HIMS",
+      "pl": -356.0,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "T",
+      "pl": -379.69,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "NFLX",
+      "pl": -783.16,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "BSX",
+      "pl": -51.62,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "WBD",
+      "pl": 1183.9,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "PLTR",
+      "pl": 1241.1,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-07-30",
+      "symbol": "HIMS",
+      "pl": 2391.74,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "T",
+      "pl": 425.11,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "NFLX",
+      "pl": 281.17,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "CCL",
+      "pl": 635.73,
+      "win": true,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "BSX",
+      "pl": -86.72,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "PLTR",
+      "pl": -34.09,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-08-28",
+      "symbol": "HIMS",
+      "pl": -2684.36,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "NFLX",
-      "pl": -214.95,
+      "pl": -161.21,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "CCL",
-      "pl": -998.61,
+      "pl": -765.29,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "WBD",
-      "pl": 5890.87,
+      "pl": 4504.78,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "PLTR",
-      "pl": 1356.4,
+      "pl": 1027.58,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "HIMS",
-      "pl": 3511.3,
+      "pl": 2692.99,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2025-10-28",
-      "symbol": "NVDA",
-      "pl": 1255.88,
+      "date": "2025-09-29",
+      "symbol": "WFC",
+      "pl": 255.76,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "NFLX",
-      "pl": -1049.44,
+      "pl": -734.61,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "CCL",
-      "pl": -651.34,
+      "pl": -498.83,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "WBD",
-      "pl": 1345.14,
+      "pl": 1031.49,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "PLTR",
-      "pl": 706.9,
+      "pl": 538.09,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "HIMS",
-      "pl": -2446.6,
+      "pl": -1870.93,
       "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2025-10-28",
+      "symbol": "WFC",
+      "pl": 232.63,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "INTC",
-      "pl": -1368.74,
+      "pl": -1034.9,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "NFLX",
-      "pl": -9969.84,
+      "pl": -7975.87,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "CCL",
-      "pl": -1047.16,
+      "pl": -792.71,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "WBD",
-      "pl": 1623.1,
+      "pl": 1228.76,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "PLTR",
-      "pl": -1490.64,
+      "pl": -1130.0,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "HIMS",
-      "pl": -2210.74,
+      "pl": -1675.6,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "NVDA",
-      "pl": 409.02,
+      "pl": 306.77,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "INTC",
-      "pl": -39.14,
+      "pl": -29.43,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "SMCI",
-      "pl": -795.17,
+      "pl": -597.06,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "WBD",
-      "pl": 1947.68,
+      "pl": 1463.21,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "PLTR",
-      "pl": 1042.25,
+      "pl": 786.26,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "HIMS",
-      "pl": -1084.64,
+      "pl": -816.77,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "NVDA",
-      "pl": 207.55,
+      "pl": 154.65,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "INTC",
-      "pl": 3181.98,
+      "pl": 2392.47,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "F",
-      "pl": 511.13,
+      "pl": 384.39,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "WBD",
-      "pl": -423.13,
+      "pl": -317.04,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "PLTR",
-      "pl": -1687.3,
+      "pl": -1265.47,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "HIMS",
-      "pl": -1206.05,
+      "pl": -906.65,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "NVDA",
-      "pl": -524.15,
+      "pl": -390.54,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "INTC",
-      "pl": -653.89,
-      "win": false,
-      "exit_reason": "rebalance"
-    },
-    {
-      "date": "2026-03-02",
-      "symbol": "BAC",
-      "pl": -610.76,
+      "pl": -492.04,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "F",
-      "pl": -446.11,
+      "pl": -335.22,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "WBD",
-      "pl": 318.43,
+      "pl": 239.05,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "PLTR",
-      "pl": -443.42,
+      "pl": -332.57,
+      "win": false,
+      "exit_reason": "rebalance"
+    },
+    {
+      "date": "2026-03-02",
+      "symbol": "WFC",
+      "pl": -657.44,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "NVDA",
-      "pl": -416.59,
+      "pl": -310.4,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "INTC",
-      "pl": -290.12,
+      "pl": -216.19,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "F",
-      "pl": -1323.82,
+      "pl": -990.52,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "CCL",
-      "pl": -1057.06,
+      "pl": -792.79,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "WBD",
-      "pl": -354.57,
+      "pl": -264.86,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "PLTR",
-      "pl": 65.28,
+      "pl": 48.21,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
+      "symbol": "NVDA",
+      "pl": 1593.51,
+      "win": true,
+      "exit_reason": "final_liquidation"
+    },
+    {
+      "date": "2026-04-27",
       "symbol": "INTC",
-      "pl": 7705.67,
+      "pl": 6119.32,
       "win": true,
       "exit_reason": "final_liquidation"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "symbol": "CCL",
-      "pl": 423.08,
+      "pl": 216.82,
       "win": true,
       "exit_reason": "final_liquidation"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "symbol": "WBD",
-      "pl": -138.43,
+      "pl": -156.61,
       "win": false,
       "exit_reason": "final_liquidation"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "symbol": "PLTR",
-      "pl": -201.88,
+      "pl": -149.61,
       "win": false,
       "exit_reason": "final_liquidation"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "symbol": "CSX",
-      "pl": 925.95,
+      "pl": 707.41,
       "win": true,
       "exit_reason": "final_liquidation"
     }
@@ -2681,404 +2828,404 @@
     {
       "date": "2021-08-23",
       "symbol": "\u2014",
-      "pl": -4.91,
+      "pl": -4.97,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-09-22",
       "symbol": "\u2014",
-      "pl": -1.22,
-      "win": false,
+      "pl": 111.74,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-10-21",
       "symbol": "\u2014",
-      "pl": 2465.47,
+      "pl": 2189.24,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-11-19",
       "symbol": "\u2014",
-      "pl": 5.14,
-      "win": true,
+      "pl": -55.72,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2021-12-21",
       "symbol": "\u2014",
-      "pl": -935.68,
+      "pl": -811.69,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-01-21",
       "symbol": "\u2014",
-      "pl": -218.97,
-      "win": false,
+      "pl": 39.55,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-02-22",
       "symbol": "\u2014",
-      "pl": -403.61,
+      "pl": -291.39,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-03-23",
       "symbol": "\u2014",
-      "pl": 613.98,
+      "pl": 554.21,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-04-22",
       "symbol": "\u2014",
-      "pl": -758.4,
+      "pl": -669.17,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-05-23",
       "symbol": "\u2014",
-      "pl": 366.11,
-      "win": true,
+      "pl": -287.42,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-06-23",
       "symbol": "\u2014",
-      "pl": -1615.0,
+      "pl": -1348.27,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-07-25",
       "symbol": "\u2014",
-      "pl": 689.66,
+      "pl": 726.78,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-08-23",
       "symbol": "\u2014",
-      "pl": 976.78,
+      "pl": 880.91,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-09-22",
       "symbol": "\u2014",
-      "pl": -748.12,
+      "pl": -759.21,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-10-21",
       "symbol": "\u2014",
-      "pl": 1731.31,
+      "pl": 1353.73,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-11-21",
       "symbol": "\u2014",
-      "pl": 1210.44,
+      "pl": 982.05,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2022-12-21",
       "symbol": "\u2014",
-      "pl": 580.54,
+      "pl": 481.03,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-01-24",
       "symbol": "\u2014",
-      "pl": -21.94,
-      "win": false,
+      "pl": 31.64,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-02-23",
       "symbol": "\u2014",
-      "pl": 814.39,
+      "pl": 693.61,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-03-24",
       "symbol": "\u2014",
-      "pl": -489.8,
+      "pl": -337.25,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-04-25",
       "symbol": "\u2014",
-      "pl": 792.42,
+      "pl": 647.74,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-05-24",
       "symbol": "\u2014",
-      "pl": 2008.23,
+      "pl": 1909.62,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-06-26",
       "symbol": "\u2014",
-      "pl": 1171.64,
+      "pl": 1843.62,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-07-26",
       "symbol": "\u2014",
-      "pl": 2884.28,
+      "pl": 1820.69,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-08-24",
       "symbol": "\u2014",
-      "pl": -1992.13,
+      "pl": -1593.21,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-09-25",
       "symbol": "\u2014",
-      "pl": -444.12,
+      "pl": -881.49,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-10-24",
       "symbol": "\u2014",
-      "pl": 183.01,
+      "pl": 268.74,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-11-22",
       "symbol": "\u2014",
-      "pl": 3080.69,
+      "pl": 2361.8,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2023-12-22",
       "symbol": "\u2014",
-      "pl": 6506.54,
+      "pl": 4593.9,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-01-25",
       "symbol": "\u2014",
-      "pl": 792.57,
+      "pl": 1609.53,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-02-26",
       "symbol": "\u2014",
-      "pl": 9029.48,
+      "pl": 9878.22,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-03-26",
       "symbol": "\u2014",
-      "pl": -287.93,
-      "win": false,
+      "pl": 620.06,
+      "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-04-25",
       "symbol": "\u2014",
-      "pl": -4518.53,
+      "pl": -4008.14,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-05-24",
       "symbol": "\u2014",
-      "pl": 1969.64,
+      "pl": 3131.25,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-06-26",
       "symbol": "\u2014",
-      "pl": 1648.38,
-      "win": true,
+      "pl": -3990.87,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-07-26",
       "symbol": "\u2014",
-      "pl": 692.93,
-      "win": true,
+      "pl": -284.79,
+      "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-08-26",
       "symbol": "\u2014",
-      "pl": -1146.31,
+      "pl": -1172.21,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-09-25",
       "symbol": "\u2014",
-      "pl": 524.5,
+      "pl": 486.62,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-10-24",
       "symbol": "\u2014",
-      "pl": -1342.59,
+      "pl": -1201.38,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-11-22",
       "symbol": "\u2014",
-      "pl": 6078.33,
+      "pl": 5027.18,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2024-12-24",
       "symbol": "\u2014",
-      "pl": 3438.62,
+      "pl": 848.67,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-01-28",
       "symbol": "\u2014",
-      "pl": 2652.3,
+      "pl": 2334.85,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-02-27",
       "symbol": "\u2014",
-      "pl": 2139.24,
+      "pl": 396.47,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-03-28",
       "symbol": "\u2014",
-      "pl": -5152.06,
+      "pl": -3805.83,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-04-29",
       "symbol": "\u2014",
-      "pl": 5201.07,
+      "pl": 4098.11,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-05-29",
       "symbol": "\u2014",
-      "pl": 7096.46,
+      "pl": 5406.81,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-06-30",
       "symbol": "\u2014",
-      "pl": 2730.7,
+      "pl": 2061.23,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-07-30",
       "symbol": "\u2014",
-      "pl": 4629.93,
+      "pl": 3600.67,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-08-28",
       "symbol": "\u2014",
-      "pl": -1869.19,
+      "pl": -1462.74,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-09-29",
       "symbol": "\u2014",
-      "pl": 9626.28,
+      "pl": 7550.96,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-10-28",
       "symbol": "\u2014",
-      "pl": -838.56,
+      "pl": -1301.81,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-11-26",
       "symbol": "\u2014",
-      "pl": -14457.21,
+      "pl": -11374.8,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2025-12-29",
       "symbol": "\u2014",
-      "pl": 1479.3,
+      "pl": 1112.49,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-01-29",
       "symbol": "\u2014",
-      "pl": 583.83,
+      "pl": 442.1,
       "win": true,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-02",
       "symbol": "\u2014",
-      "pl": -2358.74,
+      "pl": -1967.77,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
       "date": "2026-03-31",
       "symbol": "\u2014",
-      "pl": -3375.19,
+      "pl": -2525.37,
       "win": false,
       "exit_reason": "rebalance"
     },
     {
-      "date": "2026-04-24",
+      "date": "2026-04-27",
       "symbol": "\u2014",
-      "pl": -158.37,
-      "win": false,
+      "pl": 8350.74,
+      "win": true,
       "exit_reason": "rebalance"
     }
   ],
-  "run_at": "2026-04-27T18:27:08.027407",
+  "run_at": "2026-04-28T07:10:18.391666",
   "label": "JT 12-1 momentum  \u00b7  Sharpe 0.90, +800% (cross-sectional)",
   "seed_meta": {
     "tag": "TOP1-jt-momentum",

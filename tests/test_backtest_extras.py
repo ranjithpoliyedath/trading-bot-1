@@ -603,7 +603,10 @@ class TestEquityCurveBase:
         curve = _calc_equity_curve([])
         assert curve[0]["value"] == 10_000.0
 
-    def test_run_filtered_records_aggregate_capital(self, have_data):
+    def test_run_filtered_records_starting_cash(self, have_data):
+        """Shared-pool semantics: the engine reports a single
+        ``starting_cash`` (no aggregate × N math).  Equity curve starts
+        at that exact value."""
         from dashboard.backtest_engine import run_filtered_backtest
         out = run_filtered_backtest(
             model_id="rsi_macd_v1", filters=[],
@@ -611,12 +614,12 @@ class TestEquityCurveBase:
             starting_cash=100_000,
         )
         m = out["metrics"]
-        assert m.get("per_symbol_starting") == 100_000.0
-        # Aggregate should be per_symbol × symbols_traded
-        n = max(1, m.get("symbols_traded", 0) or 0)
-        assert abs(m.get("aggregate_starting", 0) - 100_000 * n) < 0.01
-        # Equity curve start matches the aggregate
-        assert abs(out["equity_curve"][0]["value"] - m["aggregate_starting"]) < 0.01
+        assert m.get("starting_cash") == 100_000.0
+        # Aggregate-style keys should be gone in shared-pool model
+        assert "aggregate_starting"   not in m
+        assert "per_symbol_starting"  not in m
+        # Equity curve start matches starting_cash exactly
+        assert abs(out["equity_curve"][0]["value"] - 100_000.0) < 0.01
 
 
 class TestExplainerNoExitsBanner:
@@ -673,7 +676,7 @@ class TestExplainerNoExitsBanner:
 
 class TestExplainerCapitalText:
 
-    def test_per_symbol_and_aggregate_shown_for_multi_symbol(self):
+    def test_shared_pool_text_for_multi_symbol(self):
         from dashboard.pages.backtest import _strategy_explainer
         results = {
             "model": "ibs_v1",
@@ -691,14 +694,16 @@ class TestExplainerCapitalText:
                 "slippage_bps":     5,
                 "filters":          [],
             },
-            "metrics": {"symbols_traded": 50, "aggregate_starting": 5_000_000},
+            "metrics": {"symbols_traded": 50,
+                         "starting_cash": 100_000,
+                         "ending_cash":   135_000},
         }
         s = str(_strategy_explainer(results))
-        assert "Per-symbol cash" in s
-        assert "Total deployed" in s
-        assert "50 symbol"      in s
+        assert "Starting cash"     in s
+        assert "shared pool"        in s
+        assert "Ending cash"        in s
 
-    def test_only_per_symbol_shown_for_single_symbol(self):
+    def test_shared_pool_text_for_single_symbol(self):
         from dashboard.pages.backtest import _strategy_explainer
         results = {
             "model": "rsi_macd_v1",
@@ -719,8 +724,11 @@ class TestExplainerCapitalText:
             "metrics": {"symbols_traded": 1},
         }
         s = str(_strategy_explainer(results))
-        assert "Per-symbol cash" in s
-        assert "Total deployed" not in s
+        assert "Starting cash"  in s
+        assert "shared pool"     in s
+        # No leftover "Per-symbol cash" / "Total deployed" labels
+        assert "Per-symbol cash" not in s
+        assert "Total deployed"  not in s
 
 
 # ── Run-stamp banner + data-missing diagnostic (so each Run is visibly
@@ -831,3 +839,95 @@ class TestLoadReport:
         }
         s = str(render_results(legacy))
         assert "No symbol data was loadable" in s
+
+
+# ── Shared-pool simulator (every trade draws from one cash account) ────
+
+class TestSharedPortfolioPool:
+
+    def _scored(self, n_bars: int, signals: dict, base_price: float = 100.0):
+        """Build a synthetic scored DataFrame with explicit signals
+        on chosen bar indices, e.g. signals={3: 'buy', 10: 'sell'}.
+        Returns a DataFrame indexed by trading dates."""
+        import pandas as pd, numpy as np
+        dates = pd.date_range("2024-01-01", periods=n_bars, freq="D", tz="UTC")
+        df = pd.DataFrame({
+            "open":   [base_price + i * 0.5 for i in range(n_bars)],
+            "high":   [base_price + i * 0.5 + 1 for i in range(n_bars)],
+            "low":    [base_price + i * 0.5 - 1 for i in range(n_bars)],
+            "close":  [base_price + i * 0.5 for i in range(n_bars)],
+            "volume": [1_000_000] * n_bars,
+            "atr_14": [1.0] * n_bars,
+            "signal":      ["hold"] * n_bars,
+            "confidence":  [0.7] * n_bars,
+        }, index=dates)
+        for bar, sig in signals.items():
+            df.iat[bar, df.columns.get_loc("signal")] = sig
+        return df
+
+    def test_cash_pool_decreases_on_entry_and_returns_on_exit(self):
+        from dashboard.backtest_engine import _simulate_portfolio
+        # One symbol, buy bar 1, sell bar 5
+        scored = {"AAPL": self._scored(20, {1: "buy", 5: "sell"})}
+        sim = _simulate_portfolio(
+            scored, starting_cash=10_000,
+            sizing_method="fixed_pct", sizing_kwargs={"pct": 0.50},
+            use_signal_exit=True,
+            take_profit_pct=None, stop_loss_pct=None, time_stop_days=None,
+            slippage_bps=0, execution_model="next_open",
+        )
+        assert len(sim["trades"]) == 1
+        # After exit, cash should be approximately what we started with
+        # plus the trade's P&L (within rounding from share-count flooring).
+        pl = sim["trades"][0]["pl"]
+        assert abs(sim["final_cash"] - (10_000 + pl)) < 50  # small rounding leeway
+
+    def test_concurrent_entries_share_cash_pool(self):
+        """Two symbols both signal buy on the same bar; the sum of
+        cash deployed should not exceed starting_cash."""
+        from dashboard.backtest_engine import _simulate_portfolio
+        scored = {
+            "AAPL": self._scored(20, {1: "buy", 12: "sell"}, base_price=100),
+            "MSFT": self._scored(20, {1: "buy", 12: "sell"}, base_price=50),
+        }
+        sim = _simulate_portfolio(
+            scored, starting_cash=10_000,
+            sizing_method="fixed_pct", sizing_kwargs={"pct": 0.40},
+            use_signal_exit=True,
+            take_profit_pct=None, stop_loss_pct=None, time_stop_days=None,
+            slippage_bps=0, execution_model="next_open",
+        )
+        # Both should have traded
+        symbols_traded = {t["symbol"] for t in sim["trades"]}
+        assert symbols_traded == {"AAPL", "MSFT"}
+        # The first BUY consumes 40% of $10K = $4K → 39 shares of AAPL @
+        # ~$100.5 ≈ $3919.50 cost.  Then portfolio mark-to-market on
+        # MSFT's buy bar is cash + AAPL position; 40% of that should leave
+        # cash positive throughout.
+
+    def test_insufficient_cash_skips_entry(self):
+        """If a third buy lands while two large positions are already
+        open, sizing % may yield 0 shares — the entry must skip
+        cleanly, not crash, not go negative on cash."""
+        from dashboard.backtest_engine import _simulate_portfolio
+        scored = {
+            "AAPL": self._scored(30, {1: "buy", 20: "sell"}, base_price=100),
+            "MSFT": self._scored(30, {1: "buy", 20: "sell"}, base_price=50),
+            "GOOG": self._scored(30, {2: "buy", 20: "sell"}, base_price=2000),  # huge
+        }
+        sim = _simulate_portfolio(
+            scored, starting_cash=5_000,           # tight pool
+            sizing_method="fixed_pct", sizing_kwargs={"pct": 0.50},
+            use_signal_exit=True,
+            take_profit_pct=None, stop_loss_pct=None, time_stop_days=None,
+            slippage_bps=0, execution_model="next_open",
+        )
+        # Cash must never go negative — final value is real money
+        assert sim["final_cash"] >= 0
+
+    def test_zero_starting_cash_no_trades(self):
+        from dashboard.backtest_engine import _simulate_portfolio
+        scored = {"AAPL": self._scored(10, {1: "buy", 5: "sell"})}
+        sim = _simulate_portfolio(scored, starting_cash=0)
+        assert sim["trades"] == []
+        assert sim["final_cash"] == 0

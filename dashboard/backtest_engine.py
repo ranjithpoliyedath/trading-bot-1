@@ -296,8 +296,6 @@ def run_filtered_backtest(
         logger.error("Cannot load model %r: %s", model_id, exc)
         return _empty_results()
 
-    all_trades: list[dict] = []
-    metric_per_symbol: list[dict] = []
     initial_cash = float(starting_cash)
 
     # Per-symbol load diagnostics — surfaced in the result envelope so
@@ -306,6 +304,12 @@ def run_filtered_backtest(
     load_report = {"requested": len(symbols), "loaded": 0,
                    "missing_features": [], "empty_after_window": []}
 
+    # ── Pre-score every symbol; queue scored DataFrames for the shared-pool
+    # simulator below.  Each symbol gets its model signals + filter mask
+    # applied; the simulator then walks them on a chronologically-merged
+    # timeline so cash deployed on AAPL today reduces the cash available
+    # for an AMZN entry the same bar.
+    scored_per_symbol: dict[str, pd.DataFrame] = {}
     for symbol in symbols:
         df = _load_features(symbol, period_days)
         if df.empty:
@@ -343,59 +347,32 @@ def run_filtered_backtest(
                 mask &= opfn(col, val).fillna(False)
             scored.loc[~mask & (scored["signal"] == "buy"), "signal"] = "hold"
 
-        scored = _simulate_trades(
-            scored,
-            initial_cash         = initial_cash,
-            use_signal_exit      = use_signal_exit,
-            take_profit_pct      = take_profit_pct,
-            stop_loss_pct        = stop_loss_pct,
-            time_stop_days       = time_stop_days,
-            atr_stop_mult        = atr_stop_mult,
-            sizing_method        = sizing_method,
-            sizing_kwargs        = sizing_kwargs,
-            execution_model      = execution_model,
-            execution_delay_bars = execution_delay_bars,
-            slippage_bps         = slippage_bps,
-        )
-        sym_trades = []
-        for idx, row in scored.iterrows():
-            if row["trade_pl"] != 0:
-                sym_trades.append({
-                    "date":         str(idx.date()) if hasattr(idx, "date") else str(idx),
-                    "entry_date":   str(row.get("entry_date", "") or ""),
-                    "symbol":       symbol,
-                    "pl":           round(float(row["trade_pl"]), 2),
-                    "win":          bool(row["trade_pl"] > 0),
-                    "exit_reason":  str(row.get("exit_reason", "")),
-                    "entry_price":  round(float(row.get("entry_price", 0) or 0), 2),
-                    "exit_price":   round(float(row.get("exit_price",  0) or 0), 2),
-                    "shares":       int(row.get("trade_shares", 0) or 0),
-                })
-        all_trades.extend(sym_trades)
+        scored_per_symbol[symbol] = scored
 
-        if sym_trades:
-            metric_per_symbol.append({
-                "symbol":  symbol,
-                "trades":  len(sym_trades),
-                "pl":      round(sum(t["pl"] for t in sym_trades), 2),
-                "win_rate": round(
-                    sum(1 for t in sym_trades if t["win"]) / len(sym_trades) * 100, 1),
-            })
+    # Run the shared-pool simulator over every symbol's scored bars
+    sim = _simulate_portfolio(
+        scored_per_symbol,
+        starting_cash        = initial_cash,
+        use_signal_exit      = use_signal_exit,
+        take_profit_pct      = take_profit_pct,
+        stop_loss_pct        = stop_loss_pct,
+        time_stop_days       = time_stop_days,
+        atr_stop_mult        = atr_stop_mult,
+        sizing_method        = sizing_method,
+        sizing_kwargs        = sizing_kwargs,
+        execution_model      = execution_model,
+        execution_delay_bars = execution_delay_bars,
+        slippage_bps         = slippage_bps,
+    )
+    all_trades   = sim["trades"]
+    equity_curve = sim["equity_curve"]
+    metric_per_symbol = _build_per_symbol_summary(all_trades)
 
-    all_trades.sort(key=lambda t: t["date"])
-    # Equity-curve base = starting_cash × symbols actually traded.  Each
-    # symbol simulation runs with its own per-symbol cash account; the
-    # aggregate "total deployed capital" is therefore the sum of those
-    # accounts, which is what % return should be measured against.
-    n_traded = max(1, len(metric_per_symbol))
-    aggregate_starting = float(initial_cash) * n_traded
-    equity_curve = _calc_equity_curve(all_trades,
-                                       starting_cash=aggregate_starting)
-    monthly      = _calc_monthly_returns(equity_curve)
-    metrics      = _calc_metrics(all_trades, equity_curve)
-    metrics["symbols_traded"]      = len(metric_per_symbol)
-    metrics["aggregate_starting"]  = aggregate_starting
-    metrics["per_symbol_starting"] = float(initial_cash)
+    monthly = _calc_monthly_returns(equity_curve)
+    metrics = _calc_metrics(all_trades, equity_curve)
+    metrics["symbols_traded"] = len(metric_per_symbol)
+    metrics["starting_cash"]  = float(initial_cash)
+    metrics["ending_cash"]    = float(sim.get("final_cash", initial_cash))
 
     run_id = f"BT-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-multi-{period_days}d"
 
@@ -694,6 +671,251 @@ def _simulate_trades(
         df.at[idx, "portfolio"] = cash + position * price
 
     return df
+
+
+def _simulate_portfolio(
+    scored_per_symbol:    dict,            # symbol -> scored DataFrame
+    starting_cash:        float            = 10_000.0,
+    use_signal_exit:      bool             = True,
+    take_profit_pct:      Optional[float]  = 0.15,
+    stop_loss_pct:        Optional[float]  = 0.07,
+    time_stop_days:       Optional[int]    = 30,
+    atr_stop_mult:        Optional[float]  = None,
+    sizing_method:        str              = "fixed_pct",
+    sizing_kwargs:        Optional[dict]   = None,
+    execution_model:      str              = "next_open",
+    execution_delay_bars: int              = 0,
+    slippage_bps:         float            = 5.0,
+) -> dict:
+    """
+    Walk every symbol's scored bars on a chronologically merged
+    timeline, using a SINGLE shared cash pool for the whole portfolio.
+
+    Differs from ``_simulate_trades`` (single-symbol):
+      * one ``cash`` value spans the whole run; entries decrement,
+        exits credit it
+      * exits are processed before entries within the same bar so
+        freed cash is available for that bar's new positions
+      * if available cash can't fund the requested position size, the
+        entry is skipped — no margin
+      * sizing % refers to the live mark-to-market portfolio value
+        (cash + open positions), so 10% means 10% of total equity, not
+        10% of cash alone
+
+    Returns:
+      {"trades": [...], "equity_curve": [...], "final_cash": float}
+    """
+    sizing_kwargs = sizing_kwargs or {}
+
+    if (not use_signal_exit and take_profit_pct is None
+            and stop_loss_pct is None and time_stop_days is None
+            and atr_stop_mult is None):
+        # Defensive: nothing would ever close.  Force a default.
+        time_stop_days = 30
+
+    execution_model = (execution_model or "next_open").lower()
+    if execution_model not in ("next_open", "same_close"):
+        execution_model = "next_open"
+    required_wait = (1 if execution_model == "next_open" else 0) + max(0, int(execution_delay_bars or 0))
+    fill_col       = "open" if execution_model == "next_open" else "close"
+    bps            = float(slippage_bps or 0) / 10_000.0
+
+    cash         = float(starting_cash)
+    positions:    dict[str, dict] = {}     # symbol -> entry state
+    pending:      dict[str, dict] = {}     # symbol -> queued action
+    sym_bar_idx:  dict[str, int]  = {}     # per-symbol bar counter
+    trades        = []
+    equity_curve  = [{"date": "start", "value": cash}]
+
+    if not scored_per_symbol:
+        return {"trades": [], "equity_curve": equity_curve, "final_cash": cash}
+
+    # Collect every (symbol, timestamp) event into a chronological iter.
+    all_dates = sorted({ts for sd in scored_per_symbol.values() for ts in sd.index})
+
+    def _mark_to_market(ts) -> float:
+        """Cash + Σ shares × close at ts for every open position."""
+        v = cash
+        for s, pos in positions.items():
+            sdf = scored_per_symbol.get(s)
+            if sdf is None or ts not in sdf.index:
+                continue
+            close = sdf.at[ts, "close"]
+            if pd.isna(close):
+                continue
+            v += pos["shares"] * float(close)
+        return v
+
+    for ts in all_dates:
+        # Bucket events on this timestamp
+        events = []
+        for sym, sdf in scored_per_symbol.items():
+            if ts in sdf.index:
+                sym_bar_idx[sym] = sym_bar_idx.get(sym, -1) + 1
+                events.append((sym, sdf.loc[ts]))
+        if not events:
+            continue
+
+        # ── Step 1: execute any pending EXIT actions that are due ──
+        # Process exits before entries so freed cash is available below.
+        for sym, row in events:
+            p = pending.get(sym)
+            if p is None or p["type"] != "exit" or sym not in positions:
+                continue
+            if (sym_bar_idx[sym] - p["queued_bar"]) < required_wait:
+                continue
+            if fill_col not in row or pd.isna(row[fill_col]):
+                continue
+            raw_fill = float(row[fill_col])
+            fill     = raw_fill * (1 - bps)
+            pos      = positions[sym]
+            pl       = (fill - pos["entry_price"]) * pos["shares"]
+            cash    += pos["shares"] * fill
+            trades.append({
+                "date":         str(ts.date()) if hasattr(ts, "date") else str(ts),
+                "entry_date":   pos["entry_date"],
+                "symbol":       sym,
+                "pl":           round(pl, 2),
+                "win":          pl > 0,
+                "exit_reason":  p["reason"],
+                "entry_price":  round(pos["entry_price"], 2),
+                "exit_price":   round(fill, 2),
+                "shares":       int(pos["shares"]),
+            })
+            del positions[sym]
+            del pending[sym]
+            equity_curve.append({
+                "date":  str(ts.date()) if hasattr(ts, "date") else str(ts),
+                "value": round(_mark_to_market(ts), 2),
+            })
+
+        # ── Step 2: execute any pending BUY actions that are due ──
+        portfolio_value = _mark_to_market(ts)
+        for sym, row in events:
+            p = pending.get(sym)
+            if p is None or p["type"] != "buy" or sym in positions:
+                continue
+            if (sym_bar_idx[sym] - p["queued_bar"]) < required_wait:
+                continue
+            if fill_col not in row or pd.isna(row[fill_col]):
+                continue
+            raw_fill = float(row[fill_col])
+            fill     = raw_fill * (1 + bps)
+            if cash < fill:
+                # Not enough cash for even one share — drop the queued buy.
+                del pending[sym]
+                continue
+            atr_now = float(row.get("atr_14", 0) or 0)
+            shares = _position_size_shares(
+                method        = sizing_method,
+                cash          = cash,
+                portfolio     = portfolio_value,
+                price         = fill,
+                atr           = atr_now,
+                sizing_kwargs = sizing_kwargs,
+            )
+            cost = shares * fill
+            if shares <= 0 or cost > cash:
+                del pending[sym]
+                continue
+            cash -= cost
+            positions[sym] = {
+                "shares":      int(shares),
+                "entry_price": fill,
+                "entry_atr":   atr_now,
+                "entry_date":  str(ts.date()) if hasattr(ts, "date") else str(ts),
+                "entry_idx":   sym_bar_idx[sym],
+            }
+            del pending[sym]
+
+        # ── Step 3: detect new signals / exits this bar and queue them ──
+        for sym, row in events:
+            if sym in pending:
+                continue
+            sig    = row.get("signal", "hold")
+            close  = row["close"]
+            if pd.isna(close):
+                continue
+            price = float(close)
+
+            if sym not in positions:
+                if sig == "buy":
+                    pending[sym] = {"type": "buy", "queued_bar": sym_bar_idx[sym]}
+                continue
+
+            pos          = positions[sym]
+            pl_per_share = price - pos["entry_price"]
+            ret_pct      = pl_per_share / pos["entry_price"] if pos["entry_price"] else 0.0
+            held_days    = sym_bar_idx[sym] - pos["entry_idx"]
+            atr_floor    = (pos["entry_price"] - atr_stop_mult * pos["entry_atr"]
+                             if (atr_stop_mult is not None and pos["entry_atr"] > 0)
+                             else None)
+            exit_reason = ""
+            if   use_signal_exit and sig == "sell":                                exit_reason = "signal"
+            elif take_profit_pct is not None and ret_pct >=  take_profit_pct:       exit_reason = "take_profit"
+            elif stop_loss_pct  is not None and ret_pct <= -stop_loss_pct:          exit_reason = "stop_loss"
+            elif atr_floor is not None and price <= atr_floor:                      exit_reason = "atr_stop"
+            elif time_stop_days is not None and held_days >= time_stop_days:        exit_reason = "time_stop"
+            if exit_reason:
+                pending[sym] = {"type": "exit", "queued_bar": sym_bar_idx[sym], "reason": exit_reason}
+
+    # Final liquidation at the last available bar so equity is realised.
+    last_ts = all_dates[-1] if all_dates else None
+    if last_ts is not None:
+        for sym, pos in list(positions.items()):
+            sdf = scored_per_symbol.get(sym)
+            if sdf is None or last_ts not in sdf.index:
+                continue
+            row = sdf.loc[last_ts]
+            if fill_col not in row or pd.isna(row[fill_col]):
+                continue
+            raw_fill = float(row[fill_col])
+            fill     = raw_fill * (1 - bps)
+            pl       = (fill - pos["entry_price"]) * pos["shares"]
+            cash    += pos["shares"] * fill
+            trades.append({
+                "date":         str(last_ts.date()) if hasattr(last_ts, "date") else str(last_ts),
+                "entry_date":   pos["entry_date"],
+                "symbol":       sym,
+                "pl":           round(pl, 2),
+                "win":          pl > 0,
+                "exit_reason":  "final_liquidation",
+                "entry_price":  round(pos["entry_price"], 2),
+                "exit_price":   round(fill, 2),
+                "shares":       int(pos["shares"]),
+            })
+            del positions[sym]
+
+    equity_curve.append({
+        "date":  str(last_ts.date()) if last_ts is not None and hasattr(last_ts, "date")
+                  else (str(last_ts) if last_ts is not None else "end"),
+        "value": round(cash, 2),
+    })
+
+    # Trades may already be roughly in date order via the timeline, but
+    # within a bar exits append before entries.  Sort defensively for the
+    # equity-curve-by-date renderer downstream.
+    trades.sort(key=lambda t: (t["date"], t["symbol"]))
+    return {"trades": trades, "equity_curve": equity_curve, "final_cash": cash}
+
+
+def _build_per_symbol_summary(trades: list[dict]) -> list[dict]:
+    """Aggregate the trade log into one row per traded symbol."""
+    by_sym: dict[str, list[dict]] = {}
+    for t in trades:
+        by_sym.setdefault(t.get("symbol", "—"), []).append(t)
+    rows = []
+    for sym, syms_trades in by_sym.items():
+        wins = sum(1 for t in syms_trades if t.get("win"))
+        pl   = sum(float(t.get("pl", 0) or 0) for t in syms_trades)
+        rows.append({
+            "symbol":   sym,
+            "trades":   len(syms_trades),
+            "pl":       round(pl, 2),
+            "win_rate": round(wins / len(syms_trades) * 100, 1) if syms_trades else 0.0,
+        })
+    rows.sort(key=lambda r: r["pl"], reverse=True)
+    return rows
 
 
 def _extract_trades(df: pd.DataFrame) -> list[dict]:
