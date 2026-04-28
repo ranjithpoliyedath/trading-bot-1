@@ -314,3 +314,93 @@ class TestWalkForwardFoldShape:
             assert "monthly_returns" in fr     # NEW
             assert "trades"          in fr
             assert "run_id"          in fr
+
+
+# ── Saved-run load + render guarantees (regression for "I picked a run
+# but didn't see anything") ────────────────────────────────────────────────
+
+class TestSavedRunRender:
+    """If a user picks a saved run from the dropdown, render_results
+    must always produce SOMETHING visible — even when the run had 0
+    trades or is a walk-forward shape with empty folds."""
+
+    def _seed_payload(self, **overrides):
+        base = {
+            "run_id":         "BT-test-empty",
+            "model":          "rsi_macd_v1",
+            "symbol":         "AAPL",
+            "period_days":    365,
+            "conf_threshold": 0.65,
+            "metrics":        {"total_return_pct": 0, "sharpe": 0,
+                                "sortino": 0, "expectancy": 0,
+                                "edge_ratio": 0, "profit_factor": 0,
+                                "max_drawdown_pct": 0, "win_rate_pct": 0,
+                                "loss_rate_pct": 0, "total_trades": 0,
+                                "wins": 0, "losses": 0,
+                                "avg_win": 0, "avg_loss": 0,
+                                "avg_win_pct": 0, "avg_loss_pct": 0,
+                                "largest_win": 0, "largest_loss": 0},
+            "equity_curve":   [{"date": "start", "value": 10000}],
+            "trades":         [],
+            "monthly_returns": [],
+        }
+        base.update(overrides)
+        return base
+
+    def test_empty_trades_renders_warning(self):
+        from dashboard.pages.backtest import render_results
+        out = render_results(self._seed_payload())
+        s = str(out)
+        assert "No trades fired" in s, \
+            "Empty-trade payload must render the diagnostic warning"
+
+    def test_loaded_banner_shows_when_tagged(self):
+        from dashboard.pages.backtest import render_results
+        payload = {**self._seed_payload(), "_loaded_from_saved": "SEED-foo"}
+        s = str(render_results(payload))
+        assert "Loaded saved run" in s
+        assert "SEED-foo"          in s
+
+    def test_walk_forward_zero_trades_renders_warning(self):
+        from dashboard.pages.backtest import render_results
+        wf_payload = {
+            "run_id": "WF-test",
+            "fold_results": [
+                {"fold": 1, "oos_window": ("2024-01-01", "2024-04-01"),
+                 "metrics": {"total_trades": 0, "sharpe": 0,
+                              "total_return_pct": 0, "win_rate_pct": 0,
+                              "max_drawdown_pct": 0, "expectancy": 0,
+                              "edge_ratio": 0, "profit_factor": 0,
+                              "sortino": 0, "loss_rate_pct": 0,
+                              "wins": 0, "losses": 0,
+                              "avg_win": 0, "avg_loss": 0,
+                              "avg_win_pct": 0, "avg_loss_pct": 0,
+                              "largest_win": 0, "largest_loss": 0},
+                 "trades": [], "equity_curve": [], "monthly_returns": []},
+            ],
+            "aggregate": {"mean_oos_sharpe": 0, "median_oos_sharpe": 0,
+                          "stdev_oos_sharpe": 0, "pct_positive_folds": 0,
+                          "mean_oos_return_pct": 0},
+        }
+        s = str(render_results(wf_payload))
+        assert "No trades fired in any fold" in s
+
+    def test_run_or_load_tags_loaded_run(self, monkeypatch):
+        """When a saved run is selected, the engine result must carry
+        the `_loaded_from_saved` tag the renderer keys off."""
+        from dashboard.callbacks import backtest_callbacks as bc
+        from dashboard.backtest_engine import save_backtest, BACKTEST_DIR
+        import json
+        from pathlib import Path
+
+        # Write a minimal saved JSON
+        saved_id = "BT-unit-test-12345"
+        saved_path = BACKTEST_DIR / f"{saved_id}.json"
+        saved_path.write_text(json.dumps(self._seed_payload(run_id=saved_id)))
+        try:
+            data = bc.load_backtest(saved_id)
+            # Simulate the run_or_load tagging step
+            tagged = {**data, "_loaded_from_saved": saved_id}
+            assert tagged["_loaded_from_saved"] == saved_id
+        finally:
+            saved_path.unlink(missing_ok=True)

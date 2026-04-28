@@ -115,7 +115,11 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 exec_model, exec_delay, slip_bps, val_mode):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
-        return load_backtest(saved_id)
+        data = load_backtest(saved_id)
+        if data:
+            # Tag so the renderer can show a "loaded from saved" banner
+            data = {**data, "_loaded_from_saved": saved_id}
+        return data or {}
     if "bt-btn-run" not in ctx or not n_run:
         return {}
 

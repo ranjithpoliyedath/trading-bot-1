@@ -96,21 +96,24 @@ def layout(account: str, model: str, symbol: str):
     ], className="g-3", style={"minHeight": "calc(100vh - 80px)"})
 
 
-# Independent-scroll columns.  Sticky to viewport so the right pane keeps
-# rolling while the left pane (controls) stays in place.
+# Column styling — natural page-flow scroll.
+#
+# We deliberately avoid `position: sticky + overflow: auto` per-column
+# because Dash's dcc.Dropdown renders its menu inside the parent
+# scroll-container — and the menu items get clipped by the column's
+# `overflow: auto` whenever they're wider than the column itself
+# (they always are: long saved-run labels exceed the 25%-width column).
+# Page-level scroll instead keeps the dropdown menu free to extend
+# beyond the column without clipping, at the cost of losing the
+# "config stays put while results scroll" affordance.
 _LEFT_COLUMN_STYLE = {
-    "position":    "sticky",
-    "top":         "0",
-    "height":      "calc(100vh - 80px)",
-    "overflowY":   "auto",
     "paddingRight": "8px",
 }
 _RIGHT_COLUMN_STYLE = {
-    "position":    "sticky",
-    "top":         "0",
-    "height":      "calc(100vh - 80px)",
-    "overflowY":   "auto",
     "paddingLeft": "8px",
+    # Slightly taller minimum so the right pane is always visible even
+    # when the result is just a "no trades fired" diagnostic.
+    "minHeight":   "60vh",
 }
 
 
@@ -538,47 +541,70 @@ def _account_panel():
 
 
 def _exit_conditions_panel():
-    """The four exit-rule toggles + numeric values."""
-    row = lambda label, tip, toggle_id, val_id, default_val, suffix, **inp_props: html.Div([
-        dcc.Checklist(
-            id=toggle_id,
-            options=[{"label": html.Span(label, style={
-                "fontSize": "12px", "fontWeight": "500", "marginLeft": "4px",
-            }), "value": "on"}],
-            value=["on"],
-            style={"flex": "0 0 220px"},
-        ),
-        dcc.Input(
-            id=val_id, type="number", value=default_val,
-            style={**NUMBOX, "flex": "0 0 110px", "marginLeft": "8px"},
-            **inp_props,
-        ),
-        html.Span(suffix, style={"fontSize": "12px", "color": "#888",
-                                  "marginLeft": "8px"}),
-        html.Span(tip, style={"fontSize": "11px", "color": "#aaa",
-                                "marginLeft": "16px", "flex": "1"}),
-    ], style={"display": "flex", "alignItems": "center", "marginBottom": "8px"})
+    """Compact exit-rule rows — toggle + value input + tiny unit hint.
+    The longer per-rule explanation is moved to a hover tooltip so the
+    panel stays readable at narrow widths.
+    """
+    def row(label, tip, toggle_id, val_id, default_val, unit_hint,
+            disabled=False, **inp_props):
+        # Tooltip target on the row's label so hover anywhere on it works
+        lbl_id = f"bt-tip-row-{toggle_id}"
+        return html.Div([
+            html.Div([
+                dcc.Checklist(
+                    id=toggle_id,
+                    options=[{"label": html.Span(label, id=lbl_id, style={
+                        "fontSize": "13px", "fontWeight": "500",
+                        "marginLeft": "6px", "cursor": "help",
+                    }), "value": "on"}],
+                    value=[] if disabled else ["on"],
+                    style={"flex": "1"},
+                ),
+                dbc.Tooltip(tip, target=lbl_id, placement="top",
+                            style={"maxWidth": "320px", "fontSize": "12px"}),
+                dcc.Input(
+                    id=val_id, type="number", value=default_val,
+                    disabled=disabled,
+                    style={**NUMBOX, "flex": "0 0 90px", "marginLeft": "8px",
+                            "textAlign": "right"},
+                    **inp_props,
+                ),
+                html.Span(unit_hint, style={
+                    "fontSize": "11px", "color": "#888",
+                    "marginLeft": "8px", "flex": "0 0 50px",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+        ], style={"padding": "8px 0", "borderBottom": "1px solid #f5f5f5"})
 
     return html.Div([
         html.P("Exit conditions", id="bt-lbl-exits",
                style={"fontSize": "12px", "fontWeight": "500",
-                       "margin": "10px 0 8px", "cursor": "help"}),
+                       "margin": "0 0 8px", "cursor": "help"}),
         dbc.Tooltip(
-            "Whichever rule fires first closes the trade.  Disable any "
-            "rule (uncheck) to ignore it.  At least one must stay "
-            "enabled or the engine forces a default time-stop.",
+            "Whichever rule fires first closes the trade.  Hover any row "
+            "label to see what that rule does.  Uncheck a rule to ignore "
+            "it; at least one must stay enabled or the engine forces a "
+            "default time-stop.",
             target="bt-lbl-exits", placement="top",
             style={"maxWidth": "320px", "fontSize": "12px"}),
-        row("Model sell signal", "Close when the model emits its own sell.",
-            "bt-exit-signal-on", "bt-exit-signal-val", 0,
-            "(no value)", min=0, max=0, step=1, disabled=True),
-        row("Take-profit", "Close when price rises this much above entry.",
-            "bt-exit-tp-on", "bt-exit-tp-val", 0.15, "× entry (e.g. 0.15 = +15%)",
+
+        row("Model sell signal",
+            "Close the trade when the strategy itself emits a sell signal.",
+            "bt-exit-signal-on", "bt-exit-signal-val", 0, "—",
+            disabled=True, min=0, max=0, step=1),
+        row("Take-profit",
+            "Close when the price rises this fraction above the entry "
+            "fill — e.g. 0.15 means +15%.  Range 0.005 to 2.",
+            "bt-exit-tp-on", "bt-exit-tp-val", 0.15, "× entry",
             min=0.005, max=2, step=0.01),
-        row("Stop-loss", "Close when price drops this much below entry.",
-            "bt-exit-sl-on", "bt-exit-sl-val", 0.07, "× entry (e.g. 0.07 = -7%)",
+        row("Stop-loss",
+            "Close when the price drops this fraction below the entry "
+            "fill — e.g. 0.07 means −7%.  Range 0.005 to 1.",
+            "bt-exit-sl-on", "bt-exit-sl-val", 0.07, "× entry",
             min=0.005, max=1, step=0.01),
-        row("Time stop", "Close after holding this many trading days.",
+        row("Time stop",
+            "Close after holding the position for this many trading "
+            "days regardless of price action.",
             "bt-exit-ts-on", "bt-exit-ts-val", 30, "days",
             min=1, max=500, step=1),
     ], style={**CARD, "marginTop": "12px"})
@@ -601,19 +627,37 @@ def render_walk_forward(results: dict):
         return html.Div([
             _section_label(f"Walk-forward results — {results.get('run_id', '')}"),
             html.Div([
-                html.P("⚠ No trades fired in any fold.",
-                       style={"fontSize": "14px", "fontWeight": "500",
-                              "color": "#A32D2D", "margin": "0 0 10px"}),
-                html.P("The strategy / filter combination didn't trigger a single buy across the chosen universe and period.  Common causes:",
-                       style={"fontSize": "13px", "color": "#444", "margin": "0 0 8px"}),
+                html.Div("⚠", style={
+                    "fontSize": "44px", "color": "#D97706",
+                    "textAlign": "center", "lineHeight": "1",
+                    "marginBottom": "8px",
+                }),
+                html.P("No trades fired in any fold.",
+                       style={"fontSize": "16px", "fontWeight": "600",
+                              "color": "#A32D2D", "margin": "0 0 12px",
+                              "textAlign": "center"}),
+                html.P("Walk-forward ran successfully on all folds, but "
+                       "the strategy / filter combination didn't trigger "
+                       "a single buy on any window.  Common causes:",
+                       style={"fontSize": "13px", "color": "#444",
+                              "margin": "0 auto 10px",
+                              "maxWidth": "520px",
+                              "textAlign": "center"}),
                 html.Ul([
-                    html.Li("Confidence threshold too tight — try lowering it (e.g. 0.55)."),
-                    html.Li("Filters too restrictive — for custom rule models, AND-only conditions multiply quickly."),
-                    html.Li("Period too short for warm-up — strategies that need SMA(200) or 90-day lookback need ≥ 1y per fold."),
-                    html.Li("Sentiment data sparse — strategies gating on sentiment > 0 fire only when news data is present (currently ~10% of bars)."),
+                    html.Li("Confidence threshold too tight — try 0.55."),
+                    html.Li("Filters too restrictive — AND-only conditions multiply quickly."),
+                    html.Li("Period too short for warm-up — strategies needing SMA(200) need ≥ 1y per fold."),
+                    html.Li("Sentiment data sparse — strategies gating on sentiment > 0 fire only when news data is present."),
                     html.Li("Universe too small — try a broader scope or higher symbol limit."),
-                ], style={"fontSize": "13px", "color": "#444", "marginBottom": "0"}),
-            ], style=CARD),
+                ], style={"fontSize": "13px", "color": "#444",
+                          "maxWidth": "560px", "margin": "0 auto"}),
+            ], style={
+                **CARD,
+                "border":      "2px dashed #D97706",
+                "background":  "#FFFBF0",
+                "padding":     "32px",
+                "marginTop":   "8px",
+            }),
         ])
 
     # Aggregate tiles up top
@@ -717,6 +761,26 @@ def _td(weight: str = "400"):
     }
 
 
+def _loaded_banner(results: dict):
+    """Visible banner whenever the result was just loaded from a saved
+    JSON (set by run_or_load when a saved run is picked).  Helps users
+    distinguish 'I clicked a saved run' from 'fresh backtest' in the
+    output."""
+    rid = (results or {}).get("_loaded_from_saved")
+    if not rid:
+        return None
+    return html.Div(
+        f"📂 Loaded saved run: {rid}",
+        style={"fontSize": "12px", "fontWeight": "500",
+               "color": "#3C3489",
+               "background": "#EEEDFE",
+               "padding": "8px 12px",
+               "borderRadius": "8px",
+               "marginBottom": "12px",
+               "border": "1px solid #D7D2F2"},
+    )
+
+
 def render_results(results: dict, ns: str = "", section_label: Optional[str] = None):
     """Render a single-period results envelope.
 
@@ -727,7 +791,10 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
     """
     # Walk-forward results have a different shape
     if results and "fold_results" in results:
-        return render_walk_forward(results)
+        return html.Div([
+            _loaded_banner(results) or html.Div(),
+            render_walk_forward(results),
+        ])
 
     if not results or not results.get("metrics"):
         return html.P("Run a backtest to see results.", style={"color": "#aaa", "fontSize": "13px"})
@@ -738,26 +805,48 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
 
     label = section_label or f"Results — {results.get('run_id', '')}"
 
-    # Empty-trade case — show clear diagnostic instead of zero-everything tiles
+    # Empty-trade case — render a prominent, hard-to-miss diagnostic so
+    # the user can tell "loaded but no trades" apart from "callback never
+    # fired".  Centered banner with a thick coloured border.
     if int(m.get("total_trades", 0) or 0) == 0:
         return html.Div([
+            _loaded_banner(results) or html.Div(),
             _section_label(label),
             html.Div([
-                html.P("⚠ No trades fired with these parameters.",
-                       style={"fontSize": "14px", "fontWeight": "500",
-                              "color": "#A32D2D", "margin": "0 0 10px"}),
-                html.P("Common causes:", style={"fontSize": "13px",
-                                                  "color": "#444", "margin": "0 0 8px"}),
+                html.Div("⚠", style={
+                    "fontSize": "44px", "color": "#D97706",
+                    "textAlign": "center", "lineHeight": "1",
+                    "marginBottom": "8px",
+                }),
+                html.P("No trades fired with these parameters.",
+                       style={"fontSize": "16px", "fontWeight": "600",
+                              "color": "#A32D2D", "margin": "0 0 12px",
+                              "textAlign": "center"}),
+                html.P("This is not a dashboard error — the engine ran "
+                       "successfully and the strategy/filter combo just "
+                       "didn't trigger any buys.  Most common causes:",
+                       style={"fontSize": "13px", "color": "#444",
+                              "margin": "0 auto 10px",
+                              "maxWidth": "480px",
+                              "textAlign": "center"}),
                 html.Ul([
                     html.Li("Confidence threshold too tight — try 0.55 to start."),
                     html.Li("Filter combination too restrictive — AND-only filters multiply quickly."),
                     html.Li("Strategy needs sentiment / sma_200 / etc. that may be sparse on the chosen universe."),
                     html.Li("Universe too small or period too short."),
-                ], style={"fontSize": "13px", "color": "#444", "marginBottom": "0"}),
-            ], style=CARD),
+                ], style={"fontSize": "13px", "color": "#444",
+                          "maxWidth": "520px", "margin": "0 auto"}),
+            ], style={
+                **CARD,
+                "border":         "2px dashed #D97706",
+                "background":     "#FFFBF0",
+                "padding":        "32px",
+                "marginTop":      "8px",
+            }),
         ])
 
     return html.Div([
+        _loaded_banner(results) or html.Div(),
         _section_label(label),
         _metrics_row(m, ns=ns),
         dbc.Row([
