@@ -5,7 +5,35 @@ Central configuration for the trading bot.
 Edit this file to change universe size, lookback, and other settings.
 """
 
+import logging
+import os
 from pathlib import Path
+
+
+# ── .env health-check ─────────────────────────────────────────────────────────
+#
+# Fail fast with a useful message when ``.env`` is missing, a broken
+# symlink, or unreadable.  Otherwise the user only sees cryptic
+# "must supply auth" errors from the Alpaca / Anthropic SDKs.
+
+_ENV_FILE = Path(__file__).parent.parent / ".env"
+_log = logging.getLogger(__name__)
+
+if _ENV_FILE.is_symlink() and not _ENV_FILE.exists():
+    _log.warning(
+        ".env is a broken symlink — target %r doesn't exist.  "
+        "Recreate it: cd %s && rm .env && cp .env.example .env  "
+        "then fill in your real Alpaca / Anthropic keys.",
+        os.readlink(_ENV_FILE), _ENV_FILE.parent,
+    )
+elif not _ENV_FILE.exists():
+    _log.warning(
+        ".env not found at %s — copy .env.example to .env and fill in "
+        "your Alpaca / Anthropic keys.  Without it, Alpaca-dependent "
+        "scripts (bot.pipeline, bot.universe, sentiment fetchers) will "
+        "fail with auth errors.",
+        _ENV_FILE,
+    )
 
 
 # ── Universe ──────────────────────────────────────────────────────────────────
