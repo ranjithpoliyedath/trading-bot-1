@@ -1105,22 +1105,33 @@ def _signal_quality(m: dict, ns: str = ""):
 # ── Strategy explainer (description card above the metrics) ────────────────
 
 def _strategy_explainer(results: dict):
-    """Pull metadata.description / metadata.name for the result's model
-    and render a one-card "What is this strategy?" explainer above the
-    metrics row.  Falls back to a generic message if the model id can't
-    be resolved (e.g. missing custom model spec)."""
+    """Comprehensive setup-summary card above the metrics row.
+
+    Pulls model metadata + the `preset` payload that `run_or_load`
+    persists on every result envelope and renders four subsections so
+    the user always sees, in one place, *exactly* what generated the
+    numbers below:
+
+      1. Strategy — name, type badge, one-line description
+      2. Entry signals — model's own buy rule + any active filters
+      3. Exit signals — only the rules that fired (model sell / TP /
+         SL / ATR / time-stop) with their numeric values
+      4. Position sizing & realism — sizing method + arguments,
+         starting cash, execution model, slippage, walk-forward folds
+    """
     if not results:
         return html.Div()
-    model_id = (results.get("preset") or {}).get("model_id") or results.get("model")
+
+    preset   = results.get("preset") or {}
+    model_id = preset.get("model_id") or results.get("model")
     if not model_id:
         return html.Div()
 
+    # ── Model metadata ──────────────────────────────────────────────
     try:
         from bot.models.registry import get_model
         m = get_model(model_id)
-        name = m.metadata.name
-        desc = m.metadata.description
-        kind = m.metadata.type
+        name, desc, kind = m.metadata.name, m.metadata.description, m.metadata.type
     except Exception:
         name, desc, kind = model_id, "Strategy details unavailable.", "rule"
 
@@ -1131,7 +1142,97 @@ def _strategy_explainer(results: dict):
         "cross_sectional": "#0E7490",
     }.get(kind, "#666")
 
-    return html.Div([
+    # ── Entry signals ──────────────────────────────────────────────
+    filters = preset.get("filters", []) or results.get("filters", []) or []
+    entry_lines = [
+        html.Span("Strategy emits a buy signal per its own rules", style={
+            "fontSize": "12px", "color": "#444",
+        })
+    ]
+    if filters:
+        entry_lines.append(html.Span(
+            f" + {len(filters)} extra filter(s) must match the same bar:",
+            style={"fontSize": "12px", "color": "#444"}))
+        entry_lines.append(html.Ul([
+            html.Li(f"{f.get('field')} {f.get('op')} {f.get('value')}",
+                    style={"fontSize": "12px", "color": "#666"})
+            for f in filters
+        ], style={"margin": "4px 0 0 0", "paddingLeft": "20px"}))
+
+    # ── Exit signals ──────────────────────────────────────────────
+    exit_rows: list = []
+    if preset.get("use_signal_exit", True):
+        exit_rows.append(("Model sell signal",
+                           "Close when the strategy emits its own sell."))
+    tp = preset.get("take_profit_pct")
+    if tp is not None:
+        exit_rows.append((f"Take-profit  +{float(tp)*100:.1f}%",
+                           "Close when price ≥ entry × (1 + tp)."))
+    sl = preset.get("stop_loss_pct")
+    if sl is not None:
+        exit_rows.append((f"Stop-loss   −{float(sl)*100:.1f}%",
+                           "Close when price ≤ entry × (1 − sl)."))
+    atr = preset.get("atr_stop_mult") or 0
+    if atr and float(atr) > 0:
+        exit_rows.append((f"ATR stop  {float(atr):.1f}× ATR",
+                           "Volatility-adjusted stop using ATR(14) at entry."))
+    ts = preset.get("time_stop_days")
+    if ts is not None:
+        exit_rows.append((f"Time stop  {int(ts)} days",
+                           "Close after this many trading days regardless."))
+
+    # ── Position sizing & realism ─────────────────────────────────
+    sm = (preset.get("sizing_method") or "fixed_pct").lower()
+    sk = preset.get("sizing_kwargs") or {}
+    if sm == "fixed_pct":
+        sizing_text = f"Fixed % of portfolio  ·  {float(sk.get('pct', 0.95)) * 100:.0f}%"
+    elif sm in ("kelly", "half_kelly"):
+        wr   = float(sk.get("win_rate", 0.5))
+        wl   = float(sk.get("win_loss_ratio", 1.5))
+        kind_label = "Half-Kelly" if sm == "half_kelly" else "Full Kelly"
+        sizing_text = (f"{kind_label}  ·  win-rate assumption {wr * 100:.0f}%, "
+                       f"win/loss ratio {wl:.2f}")
+    elif sm == "atr_risk":
+        rp = float(sk.get("risk_pct", 0.01))
+        am = float(sk.get("atr_mult", 2.0))
+        sizing_text = (f"ATR-risk (volatility-normalised)  ·  "
+                       f"{rp * 100:.2f}% capital risked per trade, "
+                       f"{am:.1f}× ATR stop distance")
+    else:
+        sizing_text = sm
+
+    starting_cash = float(preset.get("starting_cash", 10_000) or 10_000)
+    exec_model    = preset.get("execution_model", "next_open")
+    delay         = int(preset.get("execution_delay", 0) or 0)
+    slip_bps      = float(preset.get("slippage_bps", 5) or 5)
+    val_mode      = preset.get("val_mode") or ("walk_forward"
+                                                if "fold_results" in results
+                                                else "full")
+    period_days   = preset.get("period_days") or results.get("period_days")
+    scope         = preset.get("scope") or "—"
+
+    realism_text = (
+        f"Execution: {exec_model.replace('_', ' ')}"
+        + (f" + {delay} bar delay" if delay else "")
+        + f"  ·  Slippage: {slip_bps:.0f} bps per leg"
+        + f"  ·  Validation: {val_mode.replace('_', '-')}"
+    )
+    universe_text = (
+        f"Scope: {scope}"
+        + (f"  ·  Period: {period_days} days" if period_days else "")
+        + f"  ·  Starting cash: ${starting_cash:,.0f}"
+    )
+
+    # ── Layout ─────────────────────────────────────────────────────
+    SECTION_TITLE = {
+        "fontSize": "10px", "fontWeight": "500", "color": "#aaa",
+        "letterSpacing": "0.07em", "textTransform": "uppercase",
+        "margin": "0 0 6px",
+    }
+    SECTION = {"marginBottom": "12px"}
+
+    # Type badge + name
+    header = html.Div([
         html.Div([
             html.Span("Strategy", style={
                 "fontSize": "10px", "fontWeight": "500", "color": "#aaa",
@@ -1144,12 +1245,57 @@ def _strategy_explainer(results: dict):
                 "padding": "1px 8px", "borderRadius": "10px",
                 "letterSpacing": "0.04em", "textTransform": "uppercase",
             }),
-        ], style={"display": "flex", "alignItems": "center",
-                  "marginBottom": "6px"}),
-        html.P(name, style={"fontSize": "14px", "fontWeight": "600",
+        ], style={"display": "flex", "alignItems": "center", "marginBottom": "6px"}),
+        html.P(name, style={"fontSize": "15px", "fontWeight": "600",
                               "margin": "0 0 4px"}),
         html.P(desc, style={"fontSize": "12px", "color": "#555",
                               "margin": "0", "lineHeight": "1.45"}),
+    ], style={**SECTION, "marginBottom": "16px"})
+
+    entry_section = html.Div([
+        html.P("Entry signals", style=SECTION_TITLE),
+        html.Div(entry_lines, style={"lineHeight": "1.6"}),
+    ], style=SECTION)
+
+    exit_section = html.Div([
+        html.P("Exit signals (whichever fires first closes the trade)", style=SECTION_TITLE),
+        html.Ul([
+            html.Li([html.Strong(label, style={"fontWeight": "600"}),
+                     html.Span(f"  — {explainer}", style={"color": "#777"})],
+                    style={"fontSize": "12px", "color": "#444",
+                           "marginBottom": "2px"})
+            for label, explainer in exit_rows
+        ] if exit_rows else [
+            html.Li("No exit rules enabled — engine forces a default "
+                    "30-day time stop so positions can't run forever.",
+                    style={"fontSize": "12px", "color": "#A32D2D"})
+        ], style={"margin": "0", "paddingLeft": "20px"}),
+    ], style=SECTION)
+
+    sizing_section = html.Div([
+        html.P("Position sizing", style=SECTION_TITLE),
+        html.P(sizing_text,
+               style={"fontSize": "12px", "color": "#444", "margin": "0"}),
+    ], style=SECTION)
+
+    realism_section = html.Div([
+        html.P("Realism + universe", style=SECTION_TITLE),
+        html.P(realism_text,
+               style={"fontSize": "12px", "color": "#444", "margin": "0 0 2px"}),
+        html.P(universe_text,
+               style={"fontSize": "12px", "color": "#666", "margin": "0"}),
+    ], style=SECTION)
+
+    return html.Div([
+        header,
+        dbc.Row([
+            dbc.Col(entry_section, md=6),
+            dbc.Col(exit_section,  md=6),
+        ], className="g-3 mb-2"),
+        dbc.Row([
+            dbc.Col(sizing_section,  md=6),
+            dbc.Col(realism_section, md=6),
+        ], className="g-3"),
     ], style={**CARD, "marginBottom": "12px"})
 
 

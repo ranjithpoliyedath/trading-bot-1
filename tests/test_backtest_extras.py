@@ -488,3 +488,93 @@ class TestPresetHydratesScopeAndIndicators:
         }
         p = _synthesize_preset_if_missing(old)
         assert p["model_id"] == "rsi_macd_v1"
+
+
+# ── Iteration: expanded strategy explainer (entry/exit/sizing/realism) ─────
+
+class TestStrategyExplainerExpanded:
+
+    def _full_preset_results(self):
+        return {
+            "model": "connors_rsi2_v1",
+            "preset": {
+                "model_id":         "connors_rsi2_v1",
+                "period_days":      730,
+                "min_confidence":   0.55,
+                "use_signal_exit":  True,
+                "take_profit_pct":  0.15,
+                "stop_loss_pct":    0.07,
+                "time_stop_days":   30,
+                "atr_stop_mult":    2.0,
+                "sizing_method":    "atr_risk",
+                "sizing_kwargs":    {"risk_pct": 0.01, "atr_mult": 2.0},
+                "starting_cash":    10_000,
+                "execution_model":  "next_open",
+                "execution_delay":  0,
+                "slippage_bps":     5,
+                "val_mode":         "wf4",
+                "scope":            "top_100",
+                "filters":          [{"field": "rsi_14", "op": "<", "value": 35}],
+            },
+            "metrics": {"total_trades": 10},
+        }
+
+    def test_explainer_shows_all_four_sections(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        s = str(_strategy_explainer(self._full_preset_results()))
+        assert "Entry signals"     in s
+        assert "Exit signals"      in s
+        assert "Position sizing"   in s
+        assert "Realism + universe" in s
+
+    def test_explainer_lists_active_exit_rules_only(self):
+        """Disabled exits (None values) must NOT appear in the list."""
+        from dashboard.pages.backtest import _strategy_explainer
+        results = self._full_preset_results()
+        # Disable take-profit + stop-loss
+        results["preset"]["take_profit_pct"] = None
+        results["preset"]["stop_loss_pct"]   = None
+        s = str(_strategy_explainer(results))
+        assert "Take-profit" not in s
+        assert "Stop-loss"   not in s
+        # Time-stop + signal exit should still show
+        assert "Time stop"          in s
+        assert "Model sell signal"  in s
+
+    def test_explainer_describes_sizing_method(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        # ATR-risk sizing
+        s = str(_strategy_explainer(self._full_preset_results()))
+        assert "ATR-risk" in s
+        assert "1.00% capital risked" in s
+
+        # Fixed-pct sizing
+        results = self._full_preset_results()
+        results["preset"]["sizing_method"] = "fixed_pct"
+        results["preset"]["sizing_kwargs"] = {"pct": 0.95}
+        s = str(_strategy_explainer(results))
+        assert "Fixed % of portfolio" in s
+        assert "95%" in s
+
+        # Half-Kelly sizing
+        results["preset"]["sizing_method"] = "half_kelly"
+        results["preset"]["sizing_kwargs"] = {"win_rate": 0.6, "win_loss_ratio": 2.0}
+        s = str(_strategy_explainer(results))
+        assert "Half-Kelly" in s
+
+    def test_explainer_lists_extra_filters(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        s = str(_strategy_explainer(self._full_preset_results()))
+        assert "rsi_14"  in s
+        assert "<"       in s
+
+    def test_explainer_warns_when_no_exits_enabled(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        results = self._full_preset_results()
+        results["preset"]["use_signal_exit"]  = False
+        results["preset"]["take_profit_pct"]  = None
+        results["preset"]["stop_loss_pct"]    = None
+        results["preset"]["atr_stop_mult"]    = 0
+        results["preset"]["time_stop_days"]   = None
+        s = str(_strategy_explainer(results))
+        assert "default" in s.lower() and "time stop" in s.lower()
