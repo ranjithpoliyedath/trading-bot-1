@@ -852,15 +852,48 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
     # the user can tell "loaded but no trades" apart from "callback never
     # fired".  Centered banner with a thick coloured border.
     if int(m.get("total_trades", 0) or 0) == 0:
-        # Distinguish two failure modes:
-        #   - 0 symbols traded → almost certainly missing parquet data
-        #   - >0 symbols, 0 trades → strategy/filter just didn't trigger
-        n_symbols = int(m.get("symbols_traded", 0) or 0)
-        if n_symbols == 0:
+        # Distinguish three failure modes:
+        #   - 0 symbols requested  → universe scope didn't resolve
+        #   - 0 symbols loaded     → parquet data missing for the picks
+        #   - >0 loaded, 0 traded  → strategy/filter just didn't trigger
+        n_symbols   = int(m.get("symbols_traded", 0) or 0)
+        load_report = (results.get("load_report") or {}) if isinstance(results, dict) else {}
+        requested   = int(load_report.get("requested", 0) or 0)
+        loaded      = int(load_report.get("loaded",    0) or 0)
+        missing     = list(load_report.get("missing_features") or [])
+
+        if n_symbols == 0 and requested > 0 and loaded == 0:
+            # Symbols WERE requested but none had loadable parquet
+            headline = (f"No symbol data was loadable "
+                        f"({len(missing)}/{requested} symbols missing features).")
+            sample = ", ".join(missing[:8]) + (" …" if len(missing) > 8 else "")
+            details  = (f"Universe scope picked {requested} symbols but none "
+                        f"had a *_features.parquet file on disk.  Missing: "
+                        f"{sample}.  Run the OHLCV pipeline first:")
+            bullets  = [
+                "python -m bot.universe              # refresh S&P universe + prices",
+                "python -m bot.pipeline              # fetch top 100 symbols, ~5 min",
+                "python scripts/refetch_shallow.py --apply --min-rows 1   # repair shallow",
+                "# If you JUST ran the pipeline and the dashboard was already running,",
+                "#   restart it (Ctrl-C and `python -m dashboard.app` again).",
+            ]
+            bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
+                             "color": "#1f2937", "lineHeight": "1.7"}
+        elif n_symbols == 0 and "load_report" in (results or {}) and requested == 0:
+            # New-shape result with explicit empty load_report — universe
+            # scope returned nothing.
+            headline = "Universe scope returned no symbols."
+            details  = ("The selected scope didn't match any rows in "
+                        "data/universe.parquet.  Refresh the universe first:")
+            bullets  = ["python -m bot.universe"]
+            bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
+                             "color": "#1f2937", "lineHeight": "1.7"}
+        elif n_symbols == 0:
+            # Fallback for older runs without load_report (or runs where
+            # load_report is missing for any other reason)
             headline = "No symbol data was loadable for this run."
             details  = ("The engine couldn't find any *_features.parquet files "
-                        "for the requested universe scope.  This is a data "
-                        "problem, not a strategy problem.  Run the OHLCV "
+                        "for the requested universe scope.  Run the OHLCV "
                         "pipeline first:")
             bullets  = [
                 "python -m bot.universe              # refresh S&P universe + prices",

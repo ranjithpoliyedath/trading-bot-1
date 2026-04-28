@@ -781,3 +781,53 @@ class TestDataMissingDiagnostic:
         s = str(render_results(self._payload(n_symbols=12)))
         assert "No trades fired" in s
         assert "didn't trigger any buys" in s
+
+
+# ── Per-symbol load report (precise diagnostic for "0 symbols traded") ────
+
+class TestLoadReport:
+
+    def _payload_with_report(self, *, requested, loaded, missing, n_traded):
+        return {
+            "run_id": "BT-load-report-test",
+            "run_at": "2026-04-27T22:00:00",
+            "metrics":      {"total_trades": 0, "symbols_traded": n_traded},
+            "trades":       [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+            "load_report":  {"requested": requested, "loaded": loaded,
+                              "missing_features": missing,
+                              "empty_after_window": []},
+        }
+
+    def test_diagnostic_lists_missing_symbols(self):
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload_with_report(
+            requested=5, loaded=0,
+            missing=["NVDA", "INTC", "AAL", "T", "NFLX"],
+            n_traded=0,
+        )))
+        # New diagnostic mentions counts AND lists the missing symbols
+        assert "5/5 symbols missing"  in s
+        assert "NVDA"                  in s
+        assert "INTC"                  in s
+
+    def test_diagnostic_for_empty_universe_scope(self):
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload_with_report(
+            requested=0, loaded=0, missing=[], n_traded=0,
+        )))
+        assert "Universe scope returned no symbols" in s
+
+    def test_diagnostic_falls_back_for_legacy_payload(self):
+        """Older saved runs lack load_report — render the legacy
+        'No symbol data was loadable' message."""
+        from dashboard.pages.backtest import render_results
+        legacy = {
+            "run_id": "BT-legacy",
+            "run_at": "2026-04-27T22:00:00",
+            "metrics": {"total_trades": 0, "symbols_traded": 0},
+            "trades": [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+        }
+        s = str(render_results(legacy))
+        assert "No symbol data was loadable" in s

@@ -300,9 +300,16 @@ def run_filtered_backtest(
     metric_per_symbol: list[dict] = []
     initial_cash = float(starting_cash)
 
+    # Per-symbol load diagnostics — surfaced in the result envelope so
+    # the dashboard can show exactly *why* a run produced 0 symbols
+    # instead of the generic "data missing" panel.
+    load_report = {"requested": len(symbols), "loaded": 0,
+                   "missing_features": [], "empty_after_window": []}
+
     for symbol in symbols:
         df = _load_features(symbol, period_days)
         if df.empty:
+            load_report["missing_features"].append(symbol)
             continue
 
         if date_window is not None:
@@ -312,7 +319,9 @@ def run_filtered_backtest(
             except Exception:
                 pass
             if df.empty:
+                load_report["empty_after_window"].append(symbol)
                 continue
+        load_report["loaded"] += 1
 
         scored = model.predict_batch(df.copy())
         scored["signal"]     = scored.get("signal", "hold").fillna("hold")
@@ -423,6 +432,7 @@ def run_filtered_backtest(
         "monthly_returns": monthly,
         "trades":          all_trades,
         "per_symbol":      metric_per_symbol,
+        "load_report":     load_report,
         "preset":          preset,
         "run_at":          datetime.now().isoformat(),
     }
