@@ -257,26 +257,19 @@ def _controls_panel(model: str, symbol: str, saved: list):
     return html.Div([
         # Saved-run / preset picker — separate row so it stands out.
         _labeled("Saved run / preset",
-                 "Pick a checked-in SEED or any user-saved run.  Selecting "
-                 "loads its results into the right pane; click Apply "
-                 "preset to also fill the form below from its saved "
-                 "configuration so you can tweak and re-run.",
+                 "Pick a checked-in SEED or any user-saved run.  "
+                 "Selecting one immediately (1) loads its results into "
+                 "the right pane and (2) hydrates every form field "
+                 "below from the run's saved configuration — so you "
+                 "can tweak and re-run without retyping anything.",
                  "bt-lbl-saved"),
         dcc.Dropdown(id="bt-dd-saved", options=saved,
                      placeholder="Select a saved backtest...",
                      style=DD, clearable=True),
-        html.Div([
-            html.Button("⤴ Apply preset", id="bt-btn-apply-preset", n_clicks=0,
-                        style={
-                "fontSize": "12px", "padding": "5px 12px",
-                "border": "1px solid #3C3489", "borderRadius": "6px",
-                "background": "white", "color": "#3C3489",
-                "cursor": "pointer", "marginRight": "8px",
-            }),
-            html.Span(id="bt-preset-status", style={
-                "fontSize": "11px", "color": "#666",
-            }),
-        ], style={"display": "flex", "alignItems": "center", "marginTop": "6px"}),
+        html.Div(id="bt-preset-status", style={
+            "fontSize": "11px", "color": "#666", "marginTop": "6px",
+            "minHeight": "14px",
+        }),
         html.Div(style={"height": "10px"}),
 
         _labeled("Model",
@@ -544,27 +537,32 @@ def _exit_conditions_panel():
     """Compact exit-rule rows — toggle + value input + tiny unit hint.
     The longer per-rule explanation is moved to a hover tooltip so the
     panel stays readable at narrow widths.
+
+    The Model-sell-signal row has no numeric value (the model decides
+    when to emit a sell on its own), so we render the value input
+    invisibly to satisfy the callback's State binding.
     """
     def row(label, tip, toggle_id, val_id, default_val, unit_hint,
-            disabled=False, **inp_props):
+            value_input=True, default_on=True, **inp_props):
         # Tooltip target on the row's label so hover anywhere on it works
         lbl_id = f"bt-tip-row-{toggle_id}"
-        return html.Div([
-            html.Div([
-                dcc.Checklist(
-                    id=toggle_id,
-                    options=[{"label": html.Span(label, id=lbl_id, style={
-                        "fontSize": "13px", "fontWeight": "500",
-                        "marginLeft": "6px", "cursor": "help",
-                    }), "value": "on"}],
-                    value=[] if disabled else ["on"],
-                    style={"flex": "1"},
-                ),
-                dbc.Tooltip(tip, target=lbl_id, placement="top",
-                            style={"maxWidth": "320px", "fontSize": "12px"}),
+        children = [
+            dcc.Checklist(
+                id=toggle_id,
+                options=[{"label": html.Span(label, id=lbl_id, style={
+                    "fontSize": "13px", "fontWeight": "500",
+                    "marginLeft": "6px", "cursor": "help",
+                }), "value": "on"}],
+                value=["on"] if default_on else [],
+                style={"flex": "1"},
+            ),
+            dbc.Tooltip(tip, target=lbl_id, placement="top",
+                        style={"maxWidth": "320px", "fontSize": "12px"}),
+        ]
+        if value_input:
+            children.extend([
                 dcc.Input(
                     id=val_id, type="number", value=default_val,
-                    disabled=disabled,
                     style={**NUMBOX, "flex": "0 0 90px", "marginLeft": "8px",
                             "textAlign": "right"},
                     **inp_props,
@@ -573,8 +571,17 @@ def _exit_conditions_panel():
                     "fontSize": "11px", "color": "#888",
                     "marginLeft": "8px", "flex": "0 0 50px",
                 }),
-            ], style={"display": "flex", "alignItems": "center"}),
-        ], style={"padding": "8px 0", "borderBottom": "1px solid #f5f5f5"})
+            ])
+        else:
+            # Hidden Input keeps the callback's State binding stable.
+            children.append(dcc.Input(
+                id=val_id, type="number", value=default_val,
+                style={"display": "none"}))
+        return html.Div(
+            html.Div(children,
+                     style={"display": "flex", "alignItems": "center"}),
+            style={"padding": "8px 0", "borderBottom": "1px solid #f5f5f5"},
+        )
 
     return html.Div([
         html.P("Exit conditions", id="bt-lbl-exits",
@@ -589,9 +596,16 @@ def _exit_conditions_panel():
             style={"maxWidth": "320px", "fontSize": "12px"}),
 
         row("Model sell signal",
-            "Close the trade when the strategy itself emits a sell signal.",
-            "bt-exit-signal-on", "bt-exit-signal-val", 0, "—",
-            disabled=True, min=0, max=0, step=1),
+            "Close the trade as soon as the strategy itself emits a "
+            "'sell' signal — most rule-based models do this when their "
+            "exit condition is met (e.g. RSI(2) above 70 for "
+            "Connors, EMA cross-down for trend models).  Toggle off if "
+            "you want to override the model's exit and let the "
+            "take-profit / stop-loss / time-stop rules below decide "
+            "alone.  No value field — the model decides the timing, "
+            "you only choose to honour it or not.",
+            "bt-exit-signal-on", "bt-exit-signal-val", 0, "",
+            value_input=False, default_on=True),
         row("Take-profit",
             "Close when the price rises this fraction above the entry "
             "fill — e.g. 0.15 means +15%.  Range 0.005 to 2.",
@@ -848,6 +862,7 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
     return html.Div([
         _loaded_banner(results) or html.Div(),
         _section_label(label),
+        _strategy_explainer(results),
         _metrics_row(m, ns=ns),
         dbc.Row([
             dbc.Col(_equity_chart(ec, title=f"Equity curve — {ns}" if ns else "Equity curve"),  md=7),
@@ -857,7 +872,8 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
             dbc.Col(_trade_dist(m, ns=ns),    md=4),
             dbc.Col(_risk_card(m, ns=ns),     md=4),
             dbc.Col(_signal_quality(m, ns=ns), md=4),
-        ], className="g-3"),
+        ], className="g-3 mb-3"),
+        _trade_log(results, ns=ns),
     ])
 
 
@@ -1084,3 +1100,168 @@ def _signal_quality(m: dict, ns: str = ""):
         _stat_row("Edge ratio",     f"{m['edge_ratio']:.2f}x",                          ns=ns),
         _stat_row("Max drawdown",   f"{m['max_drawdown_pct']:.1f}%",      "#A32D2D",   ns=ns),
     ], style=CARD)
+
+
+# ── Strategy explainer (description card above the metrics) ────────────────
+
+def _strategy_explainer(results: dict):
+    """Pull metadata.description / metadata.name for the result's model
+    and render a one-card "What is this strategy?" explainer above the
+    metrics row.  Falls back to a generic message if the model id can't
+    be resolved (e.g. missing custom model spec)."""
+    if not results:
+        return html.Div()
+    model_id = (results.get("preset") or {}).get("model_id") or results.get("model")
+    if not model_id:
+        return html.Div()
+
+    try:
+        from bot.models.registry import get_model
+        m = get_model(model_id)
+        name = m.metadata.name
+        desc = m.metadata.description
+        kind = m.metadata.type
+    except Exception:
+        name, desc, kind = model_id, "Strategy details unavailable.", "rule"
+
+    badge_colour = {
+        "rule":            "#3C3489",
+        "ml":              "#1D9E75",
+        "custom":          "#92400E",
+        "cross_sectional": "#0E7490",
+    }.get(kind, "#666")
+
+    return html.Div([
+        html.Div([
+            html.Span("Strategy", style={
+                "fontSize": "10px", "fontWeight": "500", "color": "#aaa",
+                "letterSpacing": "0.07em", "textTransform": "uppercase",
+                "marginRight": "8px",
+            }),
+            html.Span(kind.replace("_", "-"), style={
+                "fontSize": "10px", "fontWeight": "500",
+                "color": "white", "background": badge_colour,
+                "padding": "1px 8px", "borderRadius": "10px",
+                "letterSpacing": "0.04em", "textTransform": "uppercase",
+            }),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "6px"}),
+        html.P(name, style={"fontSize": "14px", "fontWeight": "600",
+                              "margin": "0 0 4px"}),
+        html.P(desc, style={"fontSize": "12px", "color": "#555",
+                              "margin": "0", "lineHeight": "1.45"}),
+    ], style={**CARD, "marginBottom": "12px"})
+
+
+# ── Trade log (collapsible per-trade table) ────────────────────────────────
+
+def _trade_log(results: dict, ns: str = ""):
+    """Collapsible per-trade table.  Shown collapsed by default so the
+    main metrics aren't drowned by a long list; click the header to
+    expand.  Rows include entry/exit dates, hold time, P&L, % return,
+    % of starting portfolio, and the exit reason."""
+    trades = (results or {}).get("trades", []) or []
+    if not trades:
+        return html.Div()
+
+    starting_cash = (
+        (results.get("preset") or {}).get("starting_cash")
+        or 10_000.0
+    )
+    starting_cash = float(starting_cash) if starting_cash else 10_000.0
+
+    header_id = f"bt-trade-log-toggle-{ns}" if ns else "bt-trade-log-toggle"
+    body_id   = f"bt-trade-log-body-{ns}"   if ns else "bt-trade-log-body"
+
+    rows = []
+    for t in trades:
+        pl     = float(t.get("pl", 0) or 0)
+        win    = bool(t.get("win", pl > 0))
+        ret_pct = (pl / starting_cash) * 100 if starting_cash else 0.0
+        port_pct = abs(pl) / starting_cash * 100 if starting_cash else 0.0
+        exit_reason = t.get("exit_reason", "")
+
+        rows.append(html.Tr([
+            html.Td(t.get("symbol", "—"),                            style=_td(weight="500")),
+            html.Td(t.get("entry_date", "—"),                        style=_td()),
+            html.Td(t.get("date", "—"),                              style=_td()),
+            html.Td(_fmt_held(t),                                     style=_td()),
+            html.Td(f"${pl:+,.2f}",
+                    style={**_td(), "color": "#27500A" if win else "#A32D2D",
+                            "fontWeight": "500"}),
+            html.Td(f"{ret_pct:+.2f}%",
+                    style={**_td(), "color": "#27500A" if win else "#A32D2D"}),
+            html.Td(f"{port_pct:.2f}%",                              style=_td()),
+            html.Td(_exit_reason_badge(exit_reason),                  style=_td()),
+        ]))
+
+    table = html.Table([
+        html.Thead(html.Tr([
+            html.Th("Symbol",        style=_th()),
+            html.Th("Entry date",    style=_th()),
+            html.Th("Exit date",     style=_th()),
+            html.Th("Held",          style=_th()),
+            html.Th("P&L ($)",       style=_th()),
+            html.Th("Return %",      style=_th()),
+            html.Th("% of portfolio",style=_th()),
+            html.Th("Exit reason",   style=_th()),
+        ])),
+        html.Tbody(rows),
+    ], style={"width": "100%", "borderCollapse": "collapse",
+              "marginTop": "8px"})
+
+    summary = (
+        f"Trade log — {len(trades)} trade{'s' if len(trades) != 1 else ''}.  "
+        f"Click to expand."
+    )
+    return html.Details([
+        html.Summary(summary, style={
+            "cursor": "pointer", "fontSize": "13px", "fontWeight": "500",
+            "padding": "10px 14px", "background": "#FAFAFA",
+            "borderRadius": "8px", "border": "1px solid #eee",
+            "userSelect": "none", "color": "#333",
+        }),
+        html.Div(table, style={
+            "padding": "0 14px 14px", "background": "#FAFAFA",
+            "borderRadius": "0 0 8px 8px",
+            "border": "1px solid #eee", "borderTop": "none",
+            "marginTop": "-4px", "overflowX": "auto",
+        }),
+    ], id=header_id, style={"marginTop": "16px"})
+
+
+def _fmt_held(t: dict) -> str:
+    """Bars held — best-effort from entry_date / exit_date if both present."""
+    try:
+        entry = t.get("entry_date")
+        exit_ = t.get("date")
+        if not entry or not exit_:
+            return "—"
+        from datetime import date
+        e = date.fromisoformat(entry[:10]) if isinstance(entry, str) else entry
+        x = date.fromisoformat(exit_[:10]) if isinstance(exit_,  str) else exit_
+        return f"{(x - e).days}d"
+    except Exception:
+        return "—"
+
+
+def _exit_reason_badge(reason: str):
+    """Colour-coded pill for the exit reason."""
+    if not reason:
+        return html.Span("—", style={"color": "#bbb", "fontSize": "12px"})
+    palette = {
+        "signal":              ("#3C3489", "#EEEDFE"),
+        "take_profit":         ("#27500A", "#EAF3DE"),
+        "stop_loss":           ("#A32D2D", "#FCEBEB"),
+        "atr_stop":            ("#A32D2D", "#FFEDD5"),
+        "time_stop":           ("#92400E", "#FFF3E6"),
+        "rebalance":           ("#0E7490", "#E0F2FE"),
+        "final_liquidation":   ("#666",    "#F1EFE8"),
+    }
+    fg, bg = palette.get(reason, ("#666", "#F1EFE8"))
+    return html.Span(reason.replace("_", " "), style={
+        "fontSize": "10px", "fontWeight": "500",
+        "color": fg, "background": bg,
+        "padding": "1px 8px", "borderRadius": "10px",
+        "textTransform": "uppercase", "letterSpacing": "0.04em",
+    })

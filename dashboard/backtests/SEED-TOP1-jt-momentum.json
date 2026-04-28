@@ -3078,7 +3078,7 @@
       "exit_reason": "rebalance"
     }
   ],
-  "run_at": "2026-04-27T16:48:59.355060",
+  "run_at": "2026-04-27T18:27:08.027407",
   "label": "JT 12-1 momentum  \u00b7  Sharpe 0.90, +800% (cross-sectional)",
   "seed_meta": {
     "tag": "TOP1-jt-momentum",

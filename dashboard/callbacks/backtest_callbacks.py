@@ -178,22 +178,35 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
             n_folds = int((val_mode or "wf4")[2:])
         except ValueError:
             n_folds = 4
-        return run_walk_forward(
+        out = run_walk_forward(
             model_id    = model or "rsi_macd_v1",
             n_folds     = n_folds,
             symbols     = syms,
             period_days = int(period or 365),
             **engine_kwargs,
         )
+    else:
+        # Single-sample branch (default "full")
+        out = run_filtered_backtest(
+            model_id    = model or "rsi_macd_v1",
+            filters     = filters,
+            symbols     = syms,
+            period_days = int(period or 365),
+            **engine_kwargs,
+        )
 
-    # Single-sample branch (default "full")
-    return run_filtered_backtest(
-        model_id    = model or "rsi_macd_v1",
-        filters     = filters,
-        symbols     = syms,
-        period_days = int(period or 365),
-        **engine_kwargs,
-    )
+    # Persist scope + indicators + val_mode in the preset payload so a
+    # later "selecting this saved run" can hydrate every form field.
+    if isinstance(out, dict):
+        preset = out.get("preset") or {}
+        preset.update({
+            "scope":      scope or "top_100",
+            "indicators": list(indicators or []),
+            "val_mode":   val_mode or "full",
+            "filters":    filters,
+        })
+        out["preset"] = preset
+    return out
 
 
 # ── Render results ──────────────────────────────────────────────────────────
@@ -260,24 +273,35 @@ def _synthesize_preset_if_missing(data: dict) -> dict:
     Output("bt-real-em",        "value",    allow_duplicate=True),
     Output("bt-real-delay",     "value",    allow_duplicate=True),
     Output("bt-real-slip",      "value",    allow_duplicate=True),
+    Output("bt-exit-signal-on", "value",    allow_duplicate=True),
     Output("bt-exit-tp-on",     "value",    allow_duplicate=True),
     Output("bt-exit-tp-val",    "value",    allow_duplicate=True),
     Output("bt-exit-sl-on",     "value",    allow_duplicate=True),
     Output("bt-exit-sl-val",    "value",    allow_duplicate=True),
     Output("bt-exit-ts-on",     "value",    allow_duplicate=True),
     Output("bt-exit-ts-val",    "value",    allow_duplicate=True),
+    Output("bt-real-val",       "value",    allow_duplicate=True),
+    Output("bt-dd-tf",          "value",    allow_duplicate=True),
+    Output("bt-indicators",     "value",    allow_duplicate=True),
+    Output("bt-dd-scope",       "value",    allow_duplicate=True),
     Output("bt-filter-rows",    "children", allow_duplicate=True),
     Output("bt-preset-status",  "children"),
-    Input("bt-btn-apply-preset", "n_clicks"),
-    State("bt-dd-saved",         "value"),
+    Input("bt-dd-saved",         "value"),
     prevent_initial_call=True,
 )
-def apply_preset(n_clicks, run_id):
-    """Hydrate every form field from a saved-run's preset payload."""
-    n_outputs = 20
-    if not n_clicks or not run_id:
-        return (*([no_update] * (n_outputs - 1)),
-                "Pick a saved run, then click Apply preset.")
+def apply_preset(run_id):
+    """Hydrate every form field from a saved-run's preset payload.
+
+    Fires the moment the user picks a saved run from the dropdown — no
+    confirmation button needed.  The result envelope itself is loaded
+    by `run_or_load` (also keyed off `bt-dd-saved.value`); the two
+    callbacks run in parallel so the right pane updates simultaneously.
+    """
+    # 25 outputs total — keep this in sync with the @callback decorator.
+    n_outputs = 25
+    if not run_id:
+        # Cleared the dropdown — leave the form alone, just clear status
+        return (*([no_update] * (n_outputs - 1)), "")
 
     data = load_backtest(run_id)
     if not data:
@@ -314,6 +338,19 @@ def apply_preset(n_clicks, run_id):
         for i, f in enumerate(filters)
     ]
 
+    # Validation mode comes from the preset payload first; fall back to
+    # inferring from the result shape (walk-forward runs have fold_results).
+    val_mode = p.get("val_mode")
+    if not val_mode:
+        if "fold_results" in data:
+            n_folds = data.get("n_folds") or len(data.get("fold_results") or [])
+            val_mode = f"wf{n_folds}" if n_folds in (2, 3, 4) else "full"
+        else:
+            val_mode = "full"
+
+    scope_val      = p.get("scope") or "top_100"
+    indicators_val = p.get("indicators") or no_update
+
     status = (
         f"✅ Loaded preset from {run_id}: model={p.get('model_id')}, "
         f"period={p.get('period_days')}d, {len(filters)} filter(s)."
@@ -332,12 +369,17 @@ def apply_preset(n_clicks, run_id):
         p.get("execution_model", "next_open"),                     # bt-real-em
         int(p.get("execution_delay", 0) or 0),                     # bt-real-delay
         float(p.get("slippage_bps", 5) or 5),                      # bt-real-slip
+        on if p.get("use_signal_exit", True) else off,             # bt-exit-signal-on
         on if tp is not None else off,                             # bt-exit-tp-on
         float(tp) if tp is not None else 0.15,                     # bt-exit-tp-val
         on if sl is not None else off,                             # bt-exit-sl-on
         float(sl) if sl is not None else 0.07,                     # bt-exit-sl-val
         on if ts is not None else off,                             # bt-exit-ts-on
         int(ts) if ts is not None else 30,                         # bt-exit-ts-val
+        val_mode,                                                  # bt-real-val
+        "1d",                                                      # bt-dd-tf (only daily for now)
+        indicators_val,                                            # bt-indicators
+        scope_val,                                                 # bt-dd-scope
         filter_rows,                                               # bt-filter-rows
         status,                                                    # bt-preset-status
     )

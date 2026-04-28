@@ -352,11 +352,15 @@ def run_filtered_backtest(
         for idx, row in scored.iterrows():
             if row["trade_pl"] != 0:
                 sym_trades.append({
-                    "date":        str(idx.date()) if hasattr(idx, "date") else str(idx),
-                    "symbol":      symbol,
-                    "pl":          round(float(row["trade_pl"]), 2),
-                    "win":         bool(row["trade_pl"] > 0),
-                    "exit_reason": str(row.get("exit_reason", "")),
+                    "date":         str(idx.date()) if hasattr(idx, "date") else str(idx),
+                    "entry_date":   str(row.get("entry_date", "") or ""),
+                    "symbol":       symbol,
+                    "pl":           round(float(row["trade_pl"]), 2),
+                    "win":          bool(row["trade_pl"] > 0),
+                    "exit_reason":  str(row.get("exit_reason", "")),
+                    "entry_price":  round(float(row.get("entry_price", 0) or 0), 2),
+                    "exit_price":   round(float(row.get("exit_price",  0) or 0), 2),
+                    "shares":       int(row.get("trade_shares", 0) or 0),
                 })
         all_trades.extend(sym_trades)
 
@@ -569,18 +573,26 @@ def _simulate_trades(
 
     bps  = float(slippage_bps or 0) / 10_000.0
     df = df.copy()
-    df["position"]    = 0.0
-    df["cash"]        = initial_cash
-    df["portfolio"]   = initial_cash
-    df["trade_pl"]    = 0.0
-    df["exit_reason"] = ""
-    df["in_trade"]    = False
+    df["position"]     = 0.0
+    df["cash"]         = initial_cash
+    df["portfolio"]    = initial_cash
+    df["trade_pl"]     = 0.0
+    df["exit_reason"]  = ""
+    df["in_trade"]     = False
+    # Per-trade attribution columns — populated only on exit bars; the
+    # trade-log table reads these to show entry/exit dates, prices, shares.
+    df["entry_date"]   = ""
+    df["entry_price"]  = 0.0
+    df["exit_price"]   = 0.0
+    df["trade_shares"] = 0
 
     position      = 0.0
     cash          = initial_cash
     entry_price   = 0.0
     entry_idx     = None
     entry_atr     = 0.0
+    entry_date    = ""
+    entry_shares  = 0
 
     # Queue a single pending action.  Each is a dict:
     #   {"type": "buy",  "queued_bar": i}
@@ -628,11 +640,14 @@ def _simulate_trades(
                     sizing_kwargs = sizing_kwargs,
                 )
                 if shares > 0:
-                    position    = shares
-                    cash       -= shares * fill
-                    entry_price = fill
-                    entry_idx   = i
-                    entry_atr   = atr_now
+                    position      = shares
+                    cash         -= shares * fill
+                    entry_price   = fill
+                    entry_idx     = i
+                    entry_atr     = atr_now
+                    entry_date    = (str(idx.date())
+                                     if hasattr(idx, "date") else str(idx))
+                    entry_shares  = shares
                     df.at[idx, "in_trade"] = True
 
             elif pending["type"] == "exit" and position > 0:
@@ -640,12 +655,18 @@ def _simulate_trades(
                 fill = raw_fill * (1 - bps)
                 pl   = (fill - entry_price) * position
                 cash += position * fill
-                df.at[idx, "trade_pl"]    = pl
-                df.at[idx, "exit_reason"] = pending["reason"]
+                df.at[idx, "trade_pl"]      = pl
+                df.at[idx, "exit_reason"]   = pending["reason"]
+                df.at[idx, "entry_date"]    = entry_date
+                df.at[idx, "entry_price"]   = entry_price
+                df.at[idx, "exit_price"]    = fill
+                df.at[idx, "trade_shares"]  = entry_shares
                 position    = 0
                 entry_price = 0.0
                 entry_idx   = None
                 entry_atr   = 0.0
+                entry_date  = ""
+                entry_shares = 0
 
             pending = None
 

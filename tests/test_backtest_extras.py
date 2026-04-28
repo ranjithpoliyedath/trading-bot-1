@@ -404,3 +404,87 @@ class TestSavedRunRender:
             assert tagged["_loaded_from_saved"] == saved_id
         finally:
             saved_path.unlink(missing_ok=True)
+
+
+# ── Iteration: trade log + strategy explainer + signal-toggle hydration ────
+
+class TestTradeLogFields:
+    """Trades dict in run_filtered_backtest now carries entry_date,
+    entry_price, exit_price, and shares so the dashboard's trade-log
+    table can render rich rows."""
+
+    def test_trades_have_entry_attribution(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        out = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=730, conf_threshold=0.50,
+        )
+        for t in out["trades"]:
+            for k in ("entry_date", "entry_price", "exit_price", "shares"):
+                assert k in t, f"trade dict missing {k}"
+            # Entry must precede exit when both are set
+            if t["entry_date"] and t["date"]:
+                assert t["entry_date"] <= t["date"]
+
+
+class TestStrategyExplainer:
+
+    def test_explainer_renders_for_known_model(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        out = _strategy_explainer({"model": "rsi_macd_v1"})
+        s = str(out)
+        assert "RSI + MACD" in s
+
+    def test_explainer_handles_unknown_model_gracefully(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        # Must not raise
+        out = _strategy_explainer({"model": "nonexistent_model"})
+        assert out is not None
+
+
+class TestTradeLogRender:
+
+    def test_collapsible_log_renders_when_trades_present(self):
+        from dashboard.pages.backtest import _trade_log
+        results = {
+            "trades": [{
+                "symbol":      "AAPL",
+                "entry_date":  "2024-01-05",
+                "date":        "2024-01-19",
+                "pl":          150.0,
+                "win":         True,
+                "exit_reason": "take_profit",
+                "entry_price": 100.0,
+                "exit_price":  115.0,
+                "shares":      10,
+            }],
+            "preset": {"starting_cash": 10_000},
+        }
+        out = _trade_log(results)
+        s = str(out)
+        # Both dates appear in the table, plus exit-reason badge text
+        assert "2024-01-05" in s
+        assert "2024-01-19" in s
+        assert "take profit" in s
+
+    def test_trade_log_empty_when_no_trades(self):
+        from dashboard.pages.backtest import _trade_log
+        out = _trade_log({"trades": []})
+        # Empty Div has no children; quick way to check is repr length
+        assert "Trade log" not in str(out)
+
+
+class TestPresetHydratesScopeAndIndicators:
+
+    def test_preset_payload_carries_scope_and_indicators(self, have_data):
+        from dashboard.callbacks import backtest_callbacks  # noqa: F401  (registers)
+        # Direct test of run_filtered_backtest preset doesn't include
+        # scope/indicators (those are added by run_or_load), so check
+        # the synthesized fallback works for older runs.
+        from dashboard.callbacks.backtest_callbacks import _synthesize_preset_if_missing
+        old = {
+            "model": "rsi_macd_v1", "period_days": 365,
+            "conf_threshold": 0.55, "filters": [],
+        }
+        p = _synthesize_preset_if_missing(old)
+        assert p["model_id"] == "rsi_macd_v1"
