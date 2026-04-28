@@ -578,3 +578,142 @@ class TestStrategyExplainerExpanded:
         results["preset"]["time_stop_days"]   = None
         s = str(_strategy_explainer(results))
         assert "default" in s.lower() and "time stop" in s.lower()
+
+
+# ── Iteration: equity-curve respects starting_cash + per-symbol semantics ──
+
+class TestEquityCurveBase:
+    """The equity curve must use starting_cash as its base — previously
+    it was hardcoded to $10,000 regardless of the user's setting,
+    making percent-return numbers misleading by orders of magnitude."""
+
+    def test_curve_starts_at_starting_cash(self):
+        from dashboard.backtest_engine import _calc_equity_curve
+        trades = [{"date": "2024-01-01", "pl": 100.0}]
+        curve  = _calc_equity_curve(trades, starting_cash=50_000)
+        assert curve[0]["value"] == 50_000.0
+        assert curve[1]["value"] == 50_100.0
+
+    def test_default_still_10k_for_back_compat(self):
+        from dashboard.backtest_engine import _calc_equity_curve
+        curve = _calc_equity_curve([])
+        assert curve[0]["value"] == 10_000.0
+
+    def test_run_filtered_records_aggregate_capital(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        out = run_filtered_backtest(
+            model_id="rsi_macd_v1", filters=[],
+            symbols=have_data, period_days=730, conf_threshold=0.50,
+            starting_cash=100_000,
+        )
+        m = out["metrics"]
+        assert m.get("per_symbol_starting") == 100_000.0
+        # Aggregate should be per_symbol × symbols_traded
+        n = max(1, m.get("symbols_traded", 0) or 0)
+        assert abs(m.get("aggregate_starting", 0) - 100_000 * n) < 0.01
+        # Equity curve start matches the aggregate
+        assert abs(out["equity_curve"][0]["value"] - m["aggregate_starting"]) < 0.01
+
+
+class TestExplainerNoExitsBanner:
+    """When every exit is disabled, the explainer must show a loud
+    warning so the user immediately understands the engine fell back
+    to the 30-day default."""
+
+    def test_no_exits_banner_appears(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        results = {
+            "model": "rsi_macd_v1",
+            "preset": {
+                "model_id":         "rsi_macd_v1",
+                "use_signal_exit":  False,
+                "take_profit_pct":  None,
+                "stop_loss_pct":    None,
+                "atr_stop_mult":    0,
+                "time_stop_days":   None,
+                "sizing_method":    "fixed_pct",
+                "sizing_kwargs":    {"pct": 0.95},
+                "starting_cash":    10_000,
+                "execution_model":  "next_open",
+                "execution_delay":  0,
+                "slippage_bps":     5,
+                "filters":          [],
+            },
+        }
+        s = str(_strategy_explainer(results))
+        assert "⚠ No exit rules" in s
+        assert "30-day default"  in s
+
+    def test_no_exits_banner_absent_when_any_exit_enabled(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        results = {
+            "model": "rsi_macd_v1",
+            "preset": {
+                "model_id":         "rsi_macd_v1",
+                "use_signal_exit":  True,
+                "take_profit_pct":  None,
+                "stop_loss_pct":    None,
+                "time_stop_days":   None,
+                "sizing_method":    "fixed_pct",
+                "sizing_kwargs":    {"pct": 0.95},
+                "starting_cash":    10_000,
+                "execution_model":  "next_open",
+                "execution_delay":  0,
+                "slippage_bps":     5,
+                "filters":          [],
+            },
+        }
+        s = str(_strategy_explainer(results))
+        assert "⚠ No exit rules" not in s
+
+
+class TestExplainerCapitalText:
+
+    def test_per_symbol_and_aggregate_shown_for_multi_symbol(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        results = {
+            "model": "ibs_v1",
+            "preset": {
+                "model_id":         "ibs_v1",
+                "use_signal_exit":  True,
+                "take_profit_pct":  0.15,
+                "stop_loss_pct":    0.07,
+                "time_stop_days":   30,
+                "sizing_method":    "fixed_pct",
+                "sizing_kwargs":    {"pct": 0.10},
+                "starting_cash":    100_000,
+                "execution_model":  "next_open",
+                "execution_delay":  0,
+                "slippage_bps":     5,
+                "filters":          [],
+            },
+            "metrics": {"symbols_traded": 50, "aggregate_starting": 5_000_000},
+        }
+        s = str(_strategy_explainer(results))
+        assert "Per-symbol cash" in s
+        assert "Total deployed" in s
+        assert "50 symbol"      in s
+
+    def test_only_per_symbol_shown_for_single_symbol(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        results = {
+            "model": "rsi_macd_v1",
+            "preset": {
+                "model_id":         "rsi_macd_v1",
+                "use_signal_exit":  True,
+                "take_profit_pct":  0.15,
+                "stop_loss_pct":    0.07,
+                "time_stop_days":   30,
+                "sizing_method":    "fixed_pct",
+                "sizing_kwargs":    {"pct": 0.95},
+                "starting_cash":    10_000,
+                "execution_model":  "next_open",
+                "execution_delay":  0,
+                "slippage_bps":     5,
+                "filters":          [],
+            },
+            "metrics": {"symbols_traded": 1},
+        }
+        s = str(_strategy_explainer(results))
+        assert "Per-symbol cash" in s
+        assert "Total deployed" not in s

@@ -455,16 +455,22 @@ def _account_panel():
 
         dbc.Row([
             dbc.Col([
-                html.Span("Starting cash ($)",
+                html.Span("Per-symbol starting cash ($)",
                           id="bt-acct-cash-tip",
                           style={"fontSize": "11px", "color": "#888"}),
                 dcc.Input(id="bt-acct-cash", type="number", value=10000,
                           min=100, step=100, style={**NUMBOX, "marginTop": "4px"}),
                 dbc.Tooltip(
-                    "Initial portfolio value used for position sizing. All P&L "
-                    "and equity-curve metrics are computed against this base.",
+                    "IMPORTANT: this is the starting cash *per symbol*, "
+                    "not the total portfolio.  The engine simulates each "
+                    "symbol with its own fresh account, then aggregates "
+                    "the trade log.  So if you scan 50 symbols at $10K "
+                    "per symbol, total deployed capital is $500K and "
+                    "the equity curve / total-return % use that "
+                    "aggregate base.  For a true single-pool portfolio "
+                    "simulation, use the cross-sectional runner.",
                     target="bt-acct-cash-tip", placement="top",
-                    style={"maxWidth": "320px", "fontSize": "12px"}),
+                    style={"maxWidth": "360px", "fontSize": "12px"}),
             ], md=12),
             dbc.Col([
                 html.Span("Position sizing",
@@ -1217,10 +1223,25 @@ def _strategy_explainer(results: dict):
         + f"  ·  Slippage: {slip_bps:.0f} bps per leg"
         + f"  ·  Validation: {val_mode.replace('_', '-')}"
     )
+
+    # Per-symbol sim semantics: the engine simulates each symbol with its
+    # own fresh `starting_cash`, then aggregates trades.  Surface the
+    # aggregate so the user sees the true total deployed capital.
+    metrics       = results.get("metrics") or {}
+    n_symbols     = int(metrics.get("symbols_traded", 0) or 0)
+    aggregate     = float(
+        metrics.get("aggregate_starting")
+        or (starting_cash * max(n_symbols, 1))
+    )
+    capital_text = (
+        f"Per-symbol cash: ${starting_cash:,.0f}"
+        + (f"  ·  Total deployed: ${aggregate:,.0f}"
+           f"  ({n_symbols} symbol{'s' if n_symbols != 1 else ''})"
+           if n_symbols > 1 else "")
+    )
     universe_text = (
         f"Scope: {scope}"
         + (f"  ·  Period: {period_days} days" if period_days else "")
-        + f"  ·  Starting cash: ${starting_cash:,.0f}"
     )
 
     # ── Layout ─────────────────────────────────────────────────────
@@ -1283,11 +1304,39 @@ def _strategy_explainer(results: dict):
         html.P(realism_text,
                style={"fontSize": "12px", "color": "#444", "margin": "0 0 2px"}),
         html.P(universe_text,
+               style={"fontSize": "12px", "color": "#666", "margin": "0 0 2px"}),
+        html.P(capital_text,
                style={"fontSize": "12px", "color": "#666", "margin": "0"}),
     ], style=SECTION)
 
+    # Loud banner when no exit rules are enabled — the engine fell back
+    # to a 30-day default time stop, and the user almost certainly
+    # didn't intend that.  This is the most common "why isn't my
+    # backtest doing what I configured?" trap.
+    no_exits_banner = None
+    if not exit_rows:
+        no_exits_banner = html.Div([
+            html.Span("⚠ No exit rules were active for this run.",
+                      style={"fontWeight": "600", "color": "#A32D2D"}),
+            html.Span(
+                "  The engine fell back to a 30-day default time-stop "
+                "so positions could close.  If you set TP / SL / time-"
+                "stop in the form, double-check that their checkboxes "
+                "are TICKED — values alone don't enable a rule.",
+                style={"color": "#444"},
+            ),
+        ], style={
+            "fontSize":      "12px",
+            "padding":       "10px 14px",
+            "background":    "#FFFBF0",
+            "border":        "1px solid #D97706",
+            "borderRadius":  "8px",
+            "marginBottom":  "12px",
+        })
+
     return html.Div([
         header,
+        no_exits_banner or html.Div(),
         dbc.Row([
             dbc.Col(entry_section, md=6),
             dbc.Col(exit_section,  md=6),

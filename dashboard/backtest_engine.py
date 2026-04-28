@@ -143,7 +143,7 @@ def run_backtest(
     )
 
     trades       = _extract_trades(df)
-    equity_curve = _calc_equity_curve(trades)
+    equity_curve = _calc_equity_curve(trades, starting_cash=starting_cash)
     monthly      = _calc_monthly_returns(equity_curve)
     metrics      = _calc_metrics(trades, equity_curve)
 
@@ -374,10 +374,19 @@ def run_filtered_backtest(
             })
 
     all_trades.sort(key=lambda t: t["date"])
-    equity_curve = _calc_equity_curve(all_trades)
+    # Equity-curve base = starting_cash × symbols actually traded.  Each
+    # symbol simulation runs with its own per-symbol cash account; the
+    # aggregate "total deployed capital" is therefore the sum of those
+    # accounts, which is what % return should be measured against.
+    n_traded = max(1, len(metric_per_symbol))
+    aggregate_starting = float(initial_cash) * n_traded
+    equity_curve = _calc_equity_curve(all_trades,
+                                       starting_cash=aggregate_starting)
     monthly      = _calc_monthly_returns(equity_curve)
     metrics      = _calc_metrics(all_trades, equity_curve)
-    metrics["symbols_traded"] = len(metric_per_symbol)
+    metrics["symbols_traded"]      = len(metric_per_symbol)
+    metrics["aggregate_starting"]  = aggregate_starting
+    metrics["per_symbol_starting"] = float(initial_cash)
 
     run_id = f"BT-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-multi-{period_days}d"
 
@@ -691,8 +700,18 @@ def _extract_trades(df: pd.DataFrame) -> list[dict]:
     return trades
 
 
-def _calc_equity_curve(trades: list) -> list[dict]:
-    equity = 10_000.0
+def _calc_equity_curve(trades: list, starting_cash: float = 10_000.0) -> list[dict]:
+    """
+    Build the cumulative equity curve from a trade log.
+
+    For multi-symbol runs the engine simulates each symbol with its
+    own ``starting_cash`` account, then aggregates the trade list.
+    The equity curve here is therefore the *aggregate* across all
+    those independent per-symbol accounts — pass
+    ``starting_cash * n_symbols`` if you want a comparable percentage
+    return against total deployed capital.
+    """
+    equity = float(starting_cash)
     curve  = [{"date": "start", "value": equity}]
     for t in trades:
         equity += t["pl"]
