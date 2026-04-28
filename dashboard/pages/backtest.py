@@ -1226,64 +1226,105 @@ def _strategy_explainer(results: dict):
         "cross_sectional": "#0E7490",
     }.get(kind, "#666")
 
+    # Detect cross-sectional runs: the runner sets model_kind in the
+    # preset and the result envelope carries `rebalance_trades`.  These
+    # strategies use a rank-based monthly rebalance — the per-symbol
+    # exit fields (TP / SL / time-stop / signal-exit) DO NOT apply.
+    is_cross_sectional = (
+        kind == "cross_sectional"
+        or preset.get("model_kind") == "cross_sectional"
+        or "rebalance_trades" in (results or {})
+    )
+
     # ── Entry signals ──────────────────────────────────────────────
     filters = preset.get("filters", []) or results.get("filters", []) or []
-    entry_lines = [
-        html.Span("Strategy emits a buy signal per its own rules", style={
-            "fontSize": "12px", "color": "#444",
-        })
-    ]
-    if filters:
-        entry_lines.append(html.Span(
-            f" + {len(filters)} extra filter(s) must match the same bar:",
-            style={"fontSize": "12px", "color": "#444"}))
-        entry_lines.append(html.Ul([
-            html.Li(f"{f.get('field')} {f.get('op')} {f.get('value')}",
-                    style={"fontSize": "12px", "color": "#666"})
-            for f in filters
-        ], style={"margin": "4px 0 0 0", "paddingLeft": "20px"}))
+    if is_cross_sectional:
+        top_decile     = float(preset.get("top_decile", 0.20) or 0.20)
+        rebalance_days = int(preset.get("rebalance_days", 21) or 21)
+        entry_lines = [
+            html.Span(
+                f"On each rebalance bar (every {rebalance_days} trading days), "
+                f"rank every symbol in the universe by the model's score and "
+                f"buy the top {top_decile * 100:.0f}% — equal-weighted.",
+                style={"fontSize": "12px", "color": "#444"},
+            ),
+        ]
+    else:
+        entry_lines = [
+            html.Span("Strategy emits a buy signal per its own rules", style={
+                "fontSize": "12px", "color": "#444",
+            })
+        ]
+        if filters:
+            entry_lines.append(html.Span(
+                f" + {len(filters)} extra filter(s) must match the same bar:",
+                style={"fontSize": "12px", "color": "#444"}))
+            entry_lines.append(html.Ul([
+                html.Li(f"{f.get('field')} {f.get('op')} {f.get('value')}",
+                        style={"fontSize": "12px", "color": "#666"})
+                for f in filters
+            ], style={"margin": "4px 0 0 0", "paddingLeft": "20px"}))
 
     # ── Exit signals ──────────────────────────────────────────────
     exit_rows: list = []
-    if preset.get("use_signal_exit", True):
-        exit_rows.append(("Model sell signal",
-                           "Close when the strategy emits its own sell."))
-    tp = preset.get("take_profit_pct")
-    if tp is not None:
-        exit_rows.append((f"Take-profit  +{float(tp)*100:.1f}%",
-                           "Close when price ≥ entry × (1 + tp)."))
-    sl = preset.get("stop_loss_pct")
-    if sl is not None:
-        exit_rows.append((f"Stop-loss   −{float(sl)*100:.1f}%",
-                           "Close when price ≤ entry × (1 − sl)."))
-    atr = preset.get("atr_stop_mult") or 0
-    if atr and float(atr) > 0:
-        exit_rows.append((f"ATR stop  {float(atr):.1f}× ATR",
-                           "Volatility-adjusted stop using ATR(14) at entry."))
-    ts = preset.get("time_stop_days")
-    if ts is not None:
-        exit_rows.append((f"Time stop  {int(ts)} days",
-                           "Close after this many trading days regardless."))
+    if is_cross_sectional:
+        rebalance_days = int(preset.get("rebalance_days", 21) or 21)
+        exit_rows.append((
+            f"Rebalance every {rebalance_days} trading days",
+            f"Liquidate the entire portfolio every {rebalance_days} bars and "
+            f"re-buy the new top-{int(float(preset.get('top_decile', 0.20) or 0.20) * 100)}% "
+            f"by rank.  Per-symbol TP / SL / ATR / signal exits are ignored "
+            f"by this strategy class — exits happen *only* at scheduled "
+            f"rebalances.",
+        ))
+    else:
+        if preset.get("use_signal_exit", True):
+            exit_rows.append(("Model sell signal",
+                               "Close when the strategy emits its own sell."))
+        tp = preset.get("take_profit_pct")
+        if tp is not None:
+            exit_rows.append((f"Take-profit  +{float(tp)*100:.1f}%",
+                               "Close when price ≥ entry × (1 + tp)."))
+        sl = preset.get("stop_loss_pct")
+        if sl is not None:
+            exit_rows.append((f"Stop-loss   −{float(sl)*100:.1f}%",
+                               "Close when price ≤ entry × (1 − sl)."))
+        atr = preset.get("atr_stop_mult") or 0
+        if atr and float(atr) > 0:
+            exit_rows.append((f"ATR stop  {float(atr):.1f}× ATR",
+                               "Volatility-adjusted stop using ATR(14) at entry."))
+        ts = preset.get("time_stop_days")
+        if ts is not None:
+            exit_rows.append((f"Time stop  {int(ts)} days",
+                               "Close after this many trading days regardless."))
 
     # ── Position sizing & realism ─────────────────────────────────
-    sm = (preset.get("sizing_method") or "fixed_pct").lower()
-    sk = preset.get("sizing_kwargs") or {}
-    if sm == "fixed_pct":
-        sizing_text = f"Fixed % of portfolio  ·  {float(sk.get('pct', 0.95)) * 100:.0f}%"
-    elif sm in ("kelly", "half_kelly"):
-        wr   = float(sk.get("win_rate", 0.5))
-        wl   = float(sk.get("win_loss_ratio", 1.5))
-        kind_label = "Half-Kelly" if sm == "half_kelly" else "Full Kelly"
-        sizing_text = (f"{kind_label}  ·  win-rate assumption {wr * 100:.0f}%, "
-                       f"win/loss ratio {wl:.2f}")
-    elif sm == "atr_risk":
-        rp = float(sk.get("risk_pct", 0.01))
-        am = float(sk.get("atr_mult", 2.0))
-        sizing_text = (f"ATR-risk (volatility-normalised)  ·  "
-                       f"{rp * 100:.2f}% capital risked per trade, "
-                       f"{am:.1f}× ATR stop distance")
+    if is_cross_sectional:
+        top_decile = float(preset.get("top_decile", 0.20) or 0.20)
+        sizing_text = (f"Equal-weight across the top "
+                        f"{int(top_decile * 100)}% by rank.  Each rebalance "
+                        f"divides available cash equally among the picks; "
+                        f"per-symbol TP/SL/Kelly/ATR sizing options are "
+                        f"ignored for this strategy class.")
     else:
-        sizing_text = sm
+        sm = (preset.get("sizing_method") or "fixed_pct").lower()
+        sk = preset.get("sizing_kwargs") or {}
+        if sm == "fixed_pct":
+            sizing_text = f"Fixed % of portfolio  ·  {float(sk.get('pct', 0.95)) * 100:.0f}%"
+        elif sm in ("kelly", "half_kelly"):
+            wr   = float(sk.get("win_rate", 0.5))
+            wl   = float(sk.get("win_loss_ratio", 1.5))
+            kind_label = "Half-Kelly" if sm == "half_kelly" else "Full Kelly"
+            sizing_text = (f"{kind_label}  ·  win-rate assumption {wr * 100:.0f}%, "
+                           f"win/loss ratio {wl:.2f}")
+        elif sm == "atr_risk":
+            rp = float(sk.get("risk_pct", 0.01))
+            am = float(sk.get("atr_mult", 2.0))
+            sizing_text = (f"ATR-risk (volatility-normalised)  ·  "
+                           f"{rp * 100:.2f}% capital risked per trade, "
+                           f"{am:.1f}× ATR stop distance")
+        else:
+            sizing_text = sm
 
     starting_cash = float(preset.get("starting_cash", 10_000) or 10_000)
     exec_model    = preset.get("execution_model", "next_open")

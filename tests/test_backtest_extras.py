@@ -674,6 +674,73 @@ class TestExplainerNoExitsBanner:
         assert "⚠ No exit rules" not in s
 
 
+class TestExplainerCrossSectional:
+    """Regression: cross-sectional runs (e.g. jt_momentum_v1) must NOT
+    render per-symbol exit rows like 'Model sell signal' or 'Stop-loss',
+    because the strategy class doesn't honour those — it rebalances by
+    rank on a fixed cadence.  Old explainer defaulted use_signal_exit to
+    True when the key was missing → misleading 'Model sell signal' row
+    even on a cross-sectional run.  Also: the runner must persist its
+    rebalance settings into the preset so the dashboard can show them."""
+
+    def _xs_results(self, **preset_overrides):
+        preset = {
+            "model_id":       "jt_momentum_v1",
+            "model_kind":     "cross_sectional",
+            "period_days":    365,
+            "starting_cash":  10_000.0,
+            "slippage_bps":   5.0,
+            "top_decile":     0.20,
+            "rebalance_days": 21,
+        }
+        preset.update(preset_overrides)
+        return {
+            "run_id":           "XS-test-jt_momentum_v1-50syms",
+            "model":            "jt_momentum_v1",
+            "symbol":           "50 symbols (cross-sectional)",
+            "period_days":      365,
+            "metrics":          {"symbols_traded": 50, "total_trades": 60},
+            "equity_curve":     [],
+            "trades":           [],
+            "rebalance_trades": [],
+            "preset":           preset,
+        }
+
+    def test_no_per_symbol_exit_rows_for_cross_sectional(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        s = str(_strategy_explainer(self._xs_results()))
+        # The bug-symptom strings — must NOT appear on a cross-sectional run
+        assert "Model sell signal" not in s
+        assert "Stop-loss"         not in s
+        assert "Take-profit"       not in s
+        assert "ATR stop"          not in s
+        assert "Time stop"         not in s
+
+    def test_rebalance_schedule_appears(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        s = str(_strategy_explainer(self._xs_results(rebalance_days=21)))
+        assert "Rebalance every 21" in s
+
+    def test_top_decile_appears_in_entry_and_sizing(self):
+        from dashboard.pages.backtest import _strategy_explainer
+        s = str(_strategy_explainer(self._xs_results(top_decile=0.30)))
+        assert "top 30%" in s
+        assert "Equal-weight" in s
+
+    def test_runner_persists_xs_preset(self):
+        """run_cross_sectional_backtest must include a preset block with
+        model_kind/top_decile/rebalance_days so the dashboard can render
+        the explainer correctly when this run is re-loaded later."""
+        from dashboard.backtest_engine import run_cross_sectional_backtest
+        out = run_cross_sectional_backtest(
+            model_id="jt_momentum_v1", symbols=[],   # empty — fast path
+        )
+        preset = out.get("preset") or {}
+        assert preset.get("model_kind") == "cross_sectional"
+        assert "top_decile"     in preset
+        assert "rebalance_days" in preset
+
+
 class TestExplainerCapitalText:
 
     def test_shared_pool_text_for_multi_symbol(self):

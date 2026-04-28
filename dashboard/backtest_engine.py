@@ -1122,19 +1122,34 @@ def run_cross_sectional_backtest(
     from bot.models.registry import get_model
     from bot.universe        import select_universe
 
+    # Build the preset block up-front so EVERY return path (including
+    # empty-universe / model-load failures) carries the cross-sectional
+    # marker.  The dashboard explainer uses ``model_kind`` to branch
+    # away from per-symbol exit rules — without it, loading an empty
+    # saved run shows a misleading "Model sell signal" row.
+    xs_preset = {
+        "model_id":       model_id,
+        "model_kind":     "cross_sectional",
+        "period_days":    int(period_days),
+        "starting_cash":  float(starting_cash),
+        "slippage_bps":   float(slippage_bps),
+        "top_decile":     float(top_decile),
+        "rebalance_days": int(rebalance_days),
+    }
+
     # Distinguish None ("use default") from [] ("explicitly nothing")
     if symbols is None:
         syms = select_universe("top_100", limit=50)
     else:
         syms = list(symbols)
     if not syms:
-        return _empty_results()
+        return {**_empty_results(), "preset": xs_preset}
 
     try:
         model = get_model(model_id)
     except Exception as exc:
         logger.error("Cannot load cross-sectional model %r: %s", model_id, exc)
-        return _empty_results()
+        return {**_empty_results(), "preset": xs_preset}
 
     # Build the wide-format close panel from disk
     closes = {}
@@ -1145,7 +1160,7 @@ def run_cross_sectional_backtest(
         closes[s] = df["close"]
     if not closes:
         logger.warning("No symbols had features data for cross-sectional run.")
-        return _empty_results()
+        return {**_empty_results(), "preset": xs_preset}
 
     panel = pd.concat(closes, axis=1).sort_index()
 
@@ -1154,7 +1169,7 @@ def run_cross_sectional_backtest(
         ranks = model.rank_universe(panel.copy())
     except Exception as exc:
         logger.error("rank_universe failed: %s", exc, exc_info=True)
-        return _empty_results()
+        return {**_empty_results(), "preset": xs_preset}
 
     # Walk the rebalance schedule
     bps           = float(slippage_bps or 0) / 10_000.0
@@ -1271,6 +1286,9 @@ def run_cross_sectional_backtest(
     metrics["symbols_traded"] = len({t["symbol"] for t in trades})
 
     run_id = f"XS-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-{len(syms)}syms"
+    # ``xs_preset`` was built up-front (see top of function) so that
+    # every return path — including empty-universe / load-failure early
+    # returns — carries the cross-sectional marker for the dashboard.
     return {
         "run_id":            run_id,
         "model":             model_id,
@@ -1282,6 +1300,7 @@ def run_cross_sectional_backtest(
         "monthly_returns":   monthly,
         "trades":            trades,             # per-symbol buy/sell history
         "rebalance_trades":  rebalance_trades,   # one entry per rebalance period
+        "preset":            xs_preset,
         "run_at":            datetime.now().isoformat(),
     }
 
