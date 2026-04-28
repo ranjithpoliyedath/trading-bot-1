@@ -250,7 +250,13 @@ def _load_features(symbol: str, period_days: int) -> pd.DataFrame:
             cutoff = df.index.max() - pd.Timedelta(days=period_days)
             df = df[df.index >= cutoff].copy()
             return add_breakout_features(df)
-    logger.warning("No features file for %s.", symbol)
+    # Logged at DEBUG, not WARNING — for multi-symbol scans the
+    # eligible universe always has more symbols than `data/processed/`
+    # holds parquet files for, and printing one warning per absent
+    # symbol just spams the console.  The aggregate is captured in
+    # `load_report.missing_features` and surfaced in the UI's empty-
+    # result diagnostic.
+    logger.debug("No features file for %s.", symbol)
     return pd.DataFrame()
 
 
@@ -365,6 +371,24 @@ def run_filtered_backtest(
             scored.loc[~mask & (scored["signal"] == "buy"), "signal"] = "hold"
 
         scored_per_symbol[symbol] = scored
+
+    # Single-line load summary so the user sees a concise view of how
+    # many symbols actually had data, instead of one log line per
+    # missing symbol.
+    miss = load_report["missing_features"]
+    if miss:
+        sample = ", ".join(miss[:8]) + (f", … (+{len(miss) - 8} more)"
+                                          if len(miss) > 8 else "")
+        logger.info(
+            "Loaded %d/%d symbols (%d missing parquet — run "
+            "scripts/refetch_shallow.py --apply to fill them in).  "
+            "Missing sample: %s",
+            load_report["loaded"], load_report["requested"],
+            len(miss), sample,
+        )
+    else:
+        logger.info("Loaded %d/%d symbols.",
+                    load_report["loaded"], load_report["requested"])
 
     # Run the shared-pool simulator over every symbol's scored bars
     sim = _simulate_portfolio(
