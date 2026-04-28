@@ -50,3 +50,11 @@ websockets==10.4
 yarl==1.22.0
 anthropic>=0.39.0
 optuna>=3.4.0
+
+# Sentiment scoring — FinBERT via Hugging Face pipeline, VADER fallback.
+# transformers 4.57.x has a known lazy-import race on Py3.9 (the scorer
+# now imports from transformers.pipelines to dodge it).  Cap below 4.58
+# so future upgrades pull in the fix instead of pinning forever.
+transformers>=4.46,<4.58
+torch>=2.0
+nltk>=3.8

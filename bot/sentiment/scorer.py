@@ -36,7 +36,16 @@ class SentimentScorer:
     def _init_backend(self):
         if self.backend in ("finbert", "auto"):
             try:
-                from transformers import pipeline
+                # Import the pipeline factory from the submodule rather
+                # than the top-level package.  transformers >= 4.57 uses a
+                # lazy ``__getattr__`` resolver on its ``__init__.py`` that
+                # can fail with "cannot import name 'pipeline' from
+                # 'transformers'" when something else has already touched a
+                # transformers submodule (sentiment_pipeline does this when
+                # it pre-imports the news fetcher).  Hitting the submodule
+                # path bypasses the resolver entirely and is the official
+                # workaround.
+                from transformers.pipelines import pipeline
                 self._pipeline = pipeline(
                     "text-classification",
                     model=FINBERT_MODEL,
