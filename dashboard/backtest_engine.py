@@ -283,8 +283,9 @@ def run_filtered_backtest(
 
     Returns the same shape as ``run_backtest`` but aggregated.
     """
-    from bot.screener import _candidate_symbols, OPS
+    from bot.screener        import _candidate_symbols, OPS
     from bot.models.registry import get_model
+    from bot.models.base     import CrossSectionalModel
 
     if symbols is None:
         symbols = _candidate_symbols()
@@ -295,6 +296,22 @@ def run_filtered_backtest(
     except Exception as exc:
         logger.error("Cannot load model %r: %s", model_id, exc)
         return _empty_results()
+
+    # Cross-sectional models can't be run through the per-symbol pipeline
+    # — they emit ranks across the whole universe per bar and need a
+    # different runner.  Route automatically so the dashboard's regular
+    # Run button works whether the user picks a per-symbol or
+    # cross-sectional model.
+    if isinstance(model, CrossSectionalModel):
+        logger.info("Routing %s to run_cross_sectional_backtest "
+                    "(cross-sectional model)", model_id)
+        return run_cross_sectional_backtest(
+            model_id      = model_id,
+            symbols       = symbols,
+            period_days   = period_days,
+            starting_cash = float(starting_cash),
+            slippage_bps  = float(slippage_bps),
+        )
 
     initial_cash = float(starting_cash)
 

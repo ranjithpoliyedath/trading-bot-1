@@ -167,3 +167,23 @@ class TestUiGuards:
         from dashboard.pages.strategy_finder import _strategy_options
         opts = _strategy_options()
         assert all("jt_momentum" not in o["value"] for o in opts)
+
+
+# ── Auto-routing: per-symbol entry point handles cross-sectional models ──
+
+class TestAutoRouting:
+    """run_filtered_backtest should not crash with AttributeError when
+    a cross-sectional model id arrives via the per-symbol path (saved
+    runs, NL queries, etc.).  Auto-route to run_cross_sectional_backtest."""
+
+    def test_cross_sectional_model_via_run_filtered_does_not_crash(self, have_data):
+        from dashboard.backtest_engine import run_filtered_backtest
+        # User picks jt_momentum_v1 in the regular Backtest tab —
+        # historically this raised AttributeError on predict_batch.
+        out = run_filtered_backtest(
+            model_id="jt_momentum_v1", filters=[],
+            symbols=have_data, period_days=365 * 6,
+            conf_threshold=0.55, starting_cash=10_000,
+        )
+        assert "metrics"      in out
+        assert "equity_curve" in out
