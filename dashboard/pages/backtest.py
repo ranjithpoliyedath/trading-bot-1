@@ -782,22 +782,45 @@ def _td(weight: str = "400"):
 
 
 def _loaded_banner(results: dict):
-    """Visible banner whenever the result was just loaded from a saved
-    JSON (set by run_or_load when a saved run is picked).  Helps users
-    distinguish 'I clicked a saved run' from 'fresh backtest' in the
-    output."""
-    rid = (results or {}).get("_loaded_from_saved")
-    if not rid:
+    """Always-visible banner above the result body.  Distinguishes:
+
+      📂 Loaded saved run    — the user picked a saved JSON from the dropdown
+      ✨ Fresh run           — engine produced this result just now
+
+    Either branch shows the run_id and run_at timestamp so the user can
+    always tell when the displayed result was generated.  Critical for
+    spotting "I tweaked an input and re-ran but the result looks the
+    same" — without a timestamp, two consecutive zero-trade runs are
+    visually indistinguishable.
+    """
+    if not results:
         return None
+    rid    = results.get("run_id") or "(unsaved)"
+    run_at = results.get("run_at") or ""
+    # Display HH:MM:SS tail of an ISO timestamp for at-a-glance freshness
+    stamp = run_at[11:19] if isinstance(run_at, str) and len(run_at) >= 19 else run_at
+
+    if results.get("_loaded_from_saved"):
+        text  = f"📂 Loaded saved run: {results['_loaded_from_saved']}"
+        bg    = "#EEEDFE"
+        fg    = "#3C3489"
+        border = "#D7D2F2"
+    else:
+        text  = f"✨ Fresh run · {rid}"
+        if stamp:
+            text += f"  ·  generated {stamp}"
+        bg    = "#EAF3DE"
+        fg    = "#27500A"
+        border = "#C9E2A8"
+
     return html.Div(
-        f"📂 Loaded saved run: {rid}",
+        text,
         style={"fontSize": "12px", "fontWeight": "500",
-               "color": "#3C3489",
-               "background": "#EEEDFE",
+               "color": fg, "background": bg,
                "padding": "8px 12px",
                "borderRadius": "8px",
                "marginBottom": "12px",
-               "border": "1px solid #D7D2F2"},
+               "border": f"1px solid {border}"},
     )
 
 
@@ -829,6 +852,35 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
     # the user can tell "loaded but no trades" apart from "callback never
     # fired".  Centered banner with a thick coloured border.
     if int(m.get("total_trades", 0) or 0) == 0:
+        # Distinguish two failure modes:
+        #   - 0 symbols traded → almost certainly missing parquet data
+        #   - >0 symbols, 0 trades → strategy/filter just didn't trigger
+        n_symbols = int(m.get("symbols_traded", 0) or 0)
+        if n_symbols == 0:
+            headline = "No symbol data was loadable for this run."
+            details  = ("The engine couldn't find any *_features.parquet files "
+                        "for the requested universe scope.  This is a data "
+                        "problem, not a strategy problem.  Run the OHLCV "
+                        "pipeline first:")
+            bullets  = [
+                "python -m bot.universe              # refresh S&P universe + prices",
+                "python -m bot.pipeline              # fetch top 100 symbols, ~5 min",
+                "python scripts/refetch_shallow.py --apply --min-rows 1   # repair shallow",
+            ]
+            bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
+                             "color": "#1f2937", "lineHeight": "1.7"}
+        else:
+            headline = "No trades fired with these parameters."
+            details  = ("This is not a dashboard error — the engine ran "
+                        "successfully and the strategy/filter combo just "
+                        "didn't trigger any buys.  Most common causes:")
+            bullets  = [
+                "Confidence threshold too tight — try 0.55 to start.",
+                "Filter combination too restrictive — AND-only filters multiply quickly.",
+                "Strategy needs sentiment / sma_200 / etc. that may be sparse on the chosen universe.",
+                "Universe too small or period too short.",
+            ]
+            bullet_style = {"fontSize": "13px", "color": "#444"}
         return html.Div([
             _loaded_banner(results) or html.Div(),
             _section_label(label),
@@ -838,24 +890,17 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
                     "textAlign": "center", "lineHeight": "1",
                     "marginBottom": "8px",
                 }),
-                html.P("No trades fired with these parameters.",
+                html.P(headline,
                        style={"fontSize": "16px", "fontWeight": "600",
                               "color": "#A32D2D", "margin": "0 0 12px",
                               "textAlign": "center"}),
-                html.P("This is not a dashboard error — the engine ran "
-                       "successfully and the strategy/filter combo just "
-                       "didn't trigger any buys.  Most common causes:",
+                html.P(details,
                        style={"fontSize": "13px", "color": "#444",
                               "margin": "0 auto 10px",
-                              "maxWidth": "480px",
+                              "maxWidth": "560px",
                               "textAlign": "center"}),
-                html.Ul([
-                    html.Li("Confidence threshold too tight — try 0.55 to start."),
-                    html.Li("Filter combination too restrictive — AND-only filters multiply quickly."),
-                    html.Li("Strategy needs sentiment / sma_200 / etc. that may be sparse on the chosen universe."),
-                    html.Li("Universe too small or period too short."),
-                ], style={"fontSize": "13px", "color": "#444",
-                          "maxWidth": "520px", "margin": "0 auto"}),
+                html.Ul([html.Li(b, style=bullet_style) for b in bullets],
+                        style={"maxWidth": "640px", "margin": "0 auto"}),
             ], style={
                 **CARD,
                 "border":         "2px dashed #D97706",

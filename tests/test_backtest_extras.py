@@ -349,7 +349,11 @@ class TestSavedRunRender:
 
     def test_empty_trades_renders_warning(self):
         from dashboard.pages.backtest import render_results
-        out = render_results(self._seed_payload())
+        # Payload with symbols_traded > 0 → triggers the strategy diagnostic
+        # (the data-missing branch is exercised in TestDataMissingDiagnostic).
+        payload = self._seed_payload()
+        payload["metrics"]["symbols_traded"] = 5
+        out = render_results(payload)
         s = str(out)
         assert "No trades fired" in s, \
             "Empty-trade payload must render the diagnostic warning"
@@ -717,3 +721,63 @@ class TestExplainerCapitalText:
         s = str(_strategy_explainer(results))
         assert "Per-symbol cash" in s
         assert "Total deployed" not in s
+
+
+# ── Run-stamp banner + data-missing diagnostic (so each Run is visibly
+#    distinct and a missing-parquet failure mode is clearly separable) ──
+
+class TestRunStampBanner:
+
+    def test_fresh_run_banner_shows_timestamp_and_run_id(self):
+        from dashboard.pages.backtest import _loaded_banner
+        banner = _loaded_banner({
+            "run_id": "BT-20260427-211536-ibs_v1-multi-2190d",
+            "run_at": "2026-04-27T21:15:36.123456",
+            "metrics": {"total_trades": 0},
+        })
+        s = str(banner)
+        assert "Fresh run"      in s
+        assert "BT-20260427"    in s
+        assert "21:15:36"       in s
+
+    def test_loaded_banner_shows_loaded_marker(self):
+        from dashboard.pages.backtest import _loaded_banner
+        banner = _loaded_banner({
+            "run_id": "x", "run_at": "2026-04-27T21:00:00",
+            "_loaded_from_saved": "SEED-foo",
+        })
+        s = str(banner)
+        assert "Loaded saved run" in s
+        assert "SEED-foo"          in s
+
+    def test_no_banner_for_empty_results(self):
+        from dashboard.pages.backtest import _loaded_banner
+        assert _loaded_banner({}) is None
+        assert _loaded_banner(None) is None
+
+
+class TestDataMissingDiagnostic:
+    """When 0 symbols had loadable features, show an explicit
+    'data is missing — run the pipeline' diagnostic instead of the
+    generic 'no trades fired' panel."""
+
+    def _payload(self, n_symbols: int):
+        return {
+            "run_id": "BT-test",
+            "run_at": "2026-04-27T21:00:00",
+            "metrics": {"total_trades": 0, "symbols_traded": n_symbols},
+            "trades": [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+        }
+
+    def test_zero_symbols_renders_data_missing_diagnostic(self):
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload(n_symbols=0)))
+        assert "No symbol data was loadable" in s
+        assert "bot.pipeline"                in s
+
+    def test_nonzero_symbols_zero_trades_renders_strategy_diagnostic(self):
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload(n_symbols=12)))
+        assert "No trades fired" in s
+        assert "didn't trigger any buys" in s
