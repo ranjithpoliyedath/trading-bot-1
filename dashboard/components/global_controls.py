@@ -105,6 +105,7 @@ def render_topbar():
             html.Button("Trades",    id="btn-trades",    style=NAV_STYLE),
             html.Button("Model",     id="btn-model-tab", style=NAV_STYLE),
             html.Button("Market",    id="btn-market",    style=NAV_STYLE),
+            html.Button("Data",      id="btn-data",      style=NAV_STYLE),
             html.Button("Backtest",  id="btn-backtest",  style=BT_STYLE),
         ], style={"display": "flex", "alignItems": "center"}),
 

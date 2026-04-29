@@ -13,10 +13,12 @@ from dashboard.pages import (
     model_builder as builder_page,
     strategy_finder as finder_page,
     backtest as bt_page,
+    data_status as data_page,
 )
 from dashboard.components.global_controls import render_topbar
 from dashboard.callbacks import backtest_callbacks         # noqa: F401  (registers callbacks)
 from dashboard.callbacks import strategy_finder_callbacks  # noqa: F401  (registers callbacks)
+from dashboard.callbacks import data_status_callbacks      # noqa: F401  (registers callbacks)
 from bot.screener import Filter, run_screener
 
 app = dash.Dash(
@@ -55,6 +57,8 @@ def render_page(view, account, model, symbol):
         return builder_page.layout(account, model, symbol)
     if view == "finder":
         return finder_page.layout(account, model, symbol)
+    if view == "data":
+        return data_page.layout(account, model, symbol)
     return market_overview.layout(account, model, symbol)
 
 
@@ -100,11 +104,12 @@ def set_symbol(value):
     Input("btn-trades",    "n_clicks"),
     Input("btn-model-tab", "n_clicks"),
     Input("btn-market",    "n_clicks"),
+    Input("btn-data",      "n_clicks"),
     Input("btn-backtest",  "n_clicks"),
     State("store-view", "data"),
     prevent_initial_call=True,
 )
-def set_view(ov, sc, bld, fnd, tr, md, mk, bt, current):
+def set_view(ov, sc, bld, fnd, tr, md, mk, da, bt, current):
     ctx = callback_context.triggered[0]["prop_id"]
     mapping = {
         "btn-overview":  "overview",
@@ -114,6 +119,7 @@ def set_view(ov, sc, bld, fnd, tr, md, mk, bt, current):
         "btn-trades":    "trades",
         "btn-model-tab": "model",
         "btn-market":    "market",
+        "btn-data":      "data",
         "btn-backtest":  "backtest",
     }
     for key, val in mapping.items():
