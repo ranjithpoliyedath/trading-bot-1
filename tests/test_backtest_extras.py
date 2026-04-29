@@ -1266,6 +1266,73 @@ class TestFailurePostMortem:
             raw_buy_signals=0, after_confidence_cutoff=0, after_filters=0)))
         assert "Strategy emitted ZERO buy signals" in s
 
+    def test_yfinance_fetcher_normalisation(self):
+        """The yfinance fetcher must output rows in the canonical
+        OHLCV+vwap layout so add_all_features doesn't drop every row.
+
+        Original bug: yfinance daily bars don't include a vwap
+        column.  The feature engineer puts close_to_vwap (which
+        depends on vwap) in TECHNICAL_COLUMNS, so dropna(subset=...)
+        wiped out every row -> 0-row features parquet.
+        """
+        import pandas as pd
+        from bot.data_fetcher_yf import YFinanceDataFetcher
+
+        # Synthetic raw frame in yfinance's column shape.  We don't
+        # actually call out to Yahoo (the test is hermetic) — we
+        # verify the normalisation step adds vwap and lower-cases
+        # column names.
+        raw = pd.DataFrame({
+            "Open":      [100.0, 101.0, 102.0],
+            "High":      [101.0, 102.0, 103.0],
+            "Low":       [ 99.0, 100.0, 101.0],
+            "Close":     [100.5, 101.5, 102.5],
+            "Volume":    [1_000_000, 1_100_000, 1_200_000],
+            "Adj Close": [100.5, 101.5, 102.5],
+        }, index=pd.to_datetime(["2024-01-02", "2024-01-03", "2024-01-04"]))
+
+        out = YFinanceDataFetcher._normalise_single(raw)
+        assert not out.empty, "normalisation dropped every row"
+        # Lowercased + Adj Close dropped + vwap added
+        assert list(out.columns) == ["open", "high", "low", "close",
+                                      "volume", "vwap"]
+        # vwap = HLC/3
+        assert abs(out.iloc[0]["vwap"] - (101 + 99 + 100.5) / 3) < 1e-6
+
+    def test_load_features_normalises_timezone(self):
+        """_load_features must strip timezone info so parquets written
+        by different fetchers (Alpaca tz-aware vs yfinance tz-naive)
+        can be combined without TypeError in the shared-pool simulator.
+        """
+        import pandas as pd
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            # Write a tz-aware UTC parquet (mimics legacy Alpaca data)
+            idx = pd.date_range("2024-01-01", periods=200, freq="D", tz="UTC")
+            df = pd.DataFrame({
+                "open": 100.0, "high": 101.0, "low": 99.0,
+                "close": 100.5, "volume": 1_000_000, "vwap": 100.16,
+                "rsi_14": 50.0, "macd": 0.0, "macd_signal": 0.0,
+                "macd_hist": 0.0, "bb_upper": 102, "bb_lower": 98,
+                "bb_width": 4.0, "bb_pct": 0.5, "ema_9": 100, "ema_21": 100,
+                "ema_cross": 0, "atr_14": 1.0, "volume_ratio": 1.0,
+                "price_change_1d": 0.005, "price_change_5d": 0.02,
+                "high_low_ratio": 0.02, "close_to_vwap": 0.003,
+            }, index=idx)
+            df.to_parquet(tmp / "TZTEST_features.parquet")
+
+            from dashboard import backtest_engine
+            with patch.object(backtest_engine, "DATA_DIR", tmp):
+                out = backtest_engine._load_features("TZTEST", period_days=180)
+
+        assert not out.empty
+        assert out.index.tz is None, \
+            f"_load_features didn't strip tz info (still {out.index.tz})"
+
     def test_engine_emits_failure_diagnostics_block(self):
         """End-to-end: run_filtered_backtest must include the diagnostics
         block in the result envelope, even on runs that hit 0 trades."""

@@ -46,9 +46,18 @@ TARGET_UNIVERSE_SIZE   = 700   # Total target — remaining ~600 fetched on sche
 
 # ── Lookback periods ──────────────────────────────────────────────────────────
 
-# Years of OHLCV history to fetch for each symbol
-DATA_LOOKBACK_YEARS = 6
+# Years of OHLCV history to fetch for each symbol.
+#
+# 10y is reachable via yfinance (free, ~16y available).  Alpaca's free
+# IEX feed has a hard floor at ~2020-07-27 (~5.8y), so deeper history
+# requires either yfinance OR an Alpaca SIP subscription.  See
+# bot/data_fetcher_yf.py and the pipeline's ``source`` argument.
+DATA_LOOKBACK_YEARS = 10
 DATA_LOOKBACK_DAYS  = DATA_LOOKBACK_YEARS * 365
+
+# Default OHLCV data source — "yfinance" for backtest depth, "alpaca"
+# for live/recent only.  Used as the default in bot.pipeline.
+DATA_SOURCE = "yfinance"
 
 # Days of news history to fetch from Alpaca News API
 NEWS_LOOKBACK_DAYS = 60

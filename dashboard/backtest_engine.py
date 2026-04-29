@@ -239,7 +239,13 @@ def list_saved_backtests() -> list[dict]:
 
 
 def _load_features(symbol: str, period_days: int) -> pd.DataFrame:
-    """Load features (sentiment-enriched if present) + breakout columns."""
+    """Load features (sentiment-enriched if present) + breakout columns.
+
+    Normalises the index timezone on read: drops any tz info so that
+    parquets written by different fetchers (Alpaca → tz-aware UTC,
+    yfinance → tz-naive) can be combined without ``Cannot compare
+    tz-naive and tz-aware`` errors in the shared-pool simulator.
+    """
     from bot.patterns import add_breakout_features
 
     for tag in ("features_with_sentiment", "features"):
@@ -247,6 +253,11 @@ def _load_features(symbol: str, period_days: int) -> pd.DataFrame:
         if path.exists():
             df = pd.read_parquet(path)
             df.sort_index(inplace=True)
+            # Normalise timezone — strip tz info so the shared-pool
+            # simulator can merge timelines from yfinance (tz-naive)
+            # and legacy Alpaca-fetched parquets (tz-aware UTC).
+            if df.index.tz is not None:
+                df.index = df.index.tz_localize(None)
             cutoff = df.index.max() - pd.Timedelta(days=period_days)
             df = df[df.index >= cutoff].copy()
             return add_breakout_features(df)

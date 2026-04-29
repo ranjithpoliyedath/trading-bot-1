@@ -58,3 +58,9 @@ optuna>=3.4.0
 transformers>=4.46,<4.58
 torch>=2.0
 nltk>=3.8
+
+# Yahoo Finance fallback OHLCV source — gives 16+ years of daily bars
+# for free (vs Alpaca free IEX's 5.8-year floor).  Used by
+# bot.data_fetcher_yf.YFinanceDataFetcher and bot.pipeline when
+# source="yfinance".  Pinned floor to a known-stable release.
+yfinance>=0.2.40

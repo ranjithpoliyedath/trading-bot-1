@@ -131,6 +131,29 @@ def get_top_n_by_volume(n: int = 100, eligible_only: bool = True) -> list:
     return df["symbol"].head(n).tolist()
 
 
+def get_all_for_data_fetch(min_volume: int = 0) -> list:
+    """Return ALL universe symbols suitable for OHLCV pre-fetch.
+
+    The trading-side eligibility filter (volume > 100K shares/day)
+    is too aggressive for backtesting depth — it rejects ~960 of the
+    1,500 S&P 1500 constituents because they're micro-cap small-caps.
+
+    For *data fetching* we want every symbol so the dashboard's
+    universe scopes (sp500, sp400, sp600, top_500, etc.) all work
+    immediately at full depth.  Use ``min_volume`` if you want a
+    softer filter (e.g., 10_000 to drop the truly untradeable).
+
+    Returns:
+        Sorted list of ticker symbols (ALL universe entries by default).
+    """
+    df = load_universe(eligible_only=False)
+    if df.empty or "symbol" not in df.columns:
+        return []
+    if min_volume > 0 and "avg_volume_14d" in df.columns:
+        df = df[df["avg_volume_14d"] >= min_volume]
+    return sorted(df["symbol"].dropna().unique().tolist())
+
+
 # Universe scope choices used by the dashboard.  Keep keys short and
 # stable — the dashboard dropdown writes them straight into the
 # backtest payload.
