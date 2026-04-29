@@ -5,6 +5,46 @@ Main entry point. Run with:  python -m dashboard.app
 Then open:  http://localhost:8050
 """
 
+# ── Startup hardening ─────────────────────────────────────────────────────
+# Silence three cosmetic-but-noisy startup messages so the terminal output
+# is readable.  None of these are actual errors — they're macOS / PyTorch /
+# HuggingFace artifacts that confuse users into thinking something is
+# broken.  We do this BEFORE any heavy import.
+import os
+import warnings
+import logging
+
+# 1) Stop HuggingFace tokenizers from spawning a worker pool — this
+#    pool is the source of the "resource_tracker: leaked semaphore"
+#    warning printed at process shutdown on macOS.  We don't actually
+#    benefit from tokenizer parallelism in single-threaded scoring.
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
+# 2) Quiet transformers' info logging — the "Device set to use mps:0"
+#    line fires every time the FinBERT pipeline is constructed.  In
+#    Dash debug mode the reloader runs the app in two processes,
+#    printing it twice and looking like a duplicate-load bug.
+logging.getLogger("transformers").setLevel(logging.WARNING)
+logging.getLogger("transformers.pipelines").setLevel(logging.WARNING)
+
+# 3) Suppress the (harmless) leaked-semaphore warning emitted at
+#    process shutdown.  The warning is printed by the
+#    ``multiprocessing.resource_tracker`` *subprocess* — the parent's
+#    ``warnings.filterwarnings`` doesn't reach it.  PYTHONWARNINGS is
+#    inherited via the environment, so the resource_tracker subprocess
+#    picks up the filter.  The OS reclaims the semaphore on its own;
+#    the warning is purely cosmetic.
+os.environ.setdefault(
+    "PYTHONWARNINGS",
+    "ignore::UserWarning:multiprocessing.resource_tracker",
+)
+# Also filter in-process for completeness (covers any future code that
+# emits the same warning from the parent).
+warnings.filterwarnings("ignore",
+                         message=r".*leaked semaphore.*",
+                         category=UserWarning)
+
+# ── Normal imports follow ─────────────────────────────────────────────────
 import dash
 from dash import dcc, html, Input, Output, State, ALL, callback_context, no_update
 import dash_bootstrap_components as dbc
