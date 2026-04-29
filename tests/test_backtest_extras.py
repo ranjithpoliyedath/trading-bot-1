@@ -876,13 +876,16 @@ class TestLoadReport:
 
     def test_diagnostic_lists_missing_symbols(self):
         from dashboard.pages.backtest import render_results
+        # Use 8 missing symbols so we hit the multi-symbol branch
+        # (≤5 missing now goes through a separate targeted-fetch path
+        # — covered in TestSingleTickerScope).
         s = str(render_results(self._payload_with_report(
-            requested=5, loaded=0,
-            missing=["NVDA", "INTC", "AAL", "T", "NFLX"],
+            requested=8, loaded=0,
+            missing=["NVDA", "INTC", "AAL", "T", "NFLX", "AMD", "MU", "QCOM"],
             n_traded=0,
         )))
         # New diagnostic mentions counts AND lists the missing symbols
-        assert "5/5 symbols missing"  in s
+        assert "8/8 symbols missing"  in s
         assert "NVDA"                  in s
         assert "INTC"                  in s
 
@@ -906,6 +909,120 @@ class TestLoadReport:
         }
         s = str(render_results(legacy))
         assert "No symbol data was loadable" in s
+
+
+class TestSingleTickerScope:
+    """Regression: picking 'ETF — QQQ' (or any single-ticker scope)
+    should work end-to-end.  Two fixes are pinned here:
+
+      1) ``run_filtered_backtest`` defaults sizing to 100% when only one
+         symbol resolved (no portfolio-allocation question to answer).
+      2) When the single ticker has no ``*_features.parquet`` on disk
+         and the auto-fetch fails, the diagnostic offers a one-line
+         fetch command instead of the full pipeline checklist."""
+
+    def test_single_symbol_diagnostic_offers_targeted_fetch(self):
+        """One missing ticker → one-line fetch command, not the full
+        'run python -m bot.universe + pipeline' checklist."""
+        from dashboard.pages.backtest import render_results
+        payload = {
+            "run_id":      "BT-single-ticker-test",
+            "run_at":      "2026-04-28T20:00:00",
+            "metrics":     {"total_trades": 0, "symbols_traded": 0},
+            "trades":      [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+            "load_report": {"requested": 1, "loaded": 0,
+                             "missing_features": ["QQQ"],
+                             "empty_after_window": []},
+        }
+        s = str(render_results(payload))
+        # The new targeted message
+        assert "auto-fetch failed"     in s
+        assert "QQQ"                    in s
+        assert "run_pipeline"           in s
+        # The legacy 5-step checklist should NOT appear
+        assert "refresh S&P universe"   not in s
+
+    def test_single_symbol_run_defaults_sizing_to_100pct(self, monkeypatch):
+        """When only one symbol resolves and the user didn't customise
+        sizing, fixed_pct should default to 100% — there's no other
+        ticker competing for capital."""
+        # Stub auto-fetch so the test doesn't hit Alpaca for a bogus
+        # symbol.  Then capture the INFO log emitted by the sizing
+        # override branch.
+        import logging
+        from dashboard import backtest_engine
+
+        monkeypatch.setattr(
+            "bot.pipeline.run_pipeline",
+            lambda *a, **kw: {"processed": 0, "failed": 1,
+                               "skipped": 0, "new_rows": 0},
+        )
+
+        records = []
+
+        class _Capture(logging.Handler):
+            def emit(self, record):
+                records.append(record.getMessage())
+
+        h = _Capture()
+        h.setLevel(logging.DEBUG)
+        backtest_engine.logger.addHandler(h)
+        prev_level = backtest_engine.logger.level
+        backtest_engine.logger.setLevel(logging.DEBUG)
+        try:
+            backtest_engine.run_filtered_backtest(
+                model_id="ibs_v1", filters=[],
+                symbols=["__BOGUS_TICKER_FOR_TEST__"],
+                period_days=30, conf_threshold=0.55,
+                starting_cash=10_000,
+                # Critical: don't pass sizing_kwargs — this is the
+                # default-customisation case the user hits when they
+                # just pick a scope.
+            )
+        finally:
+            backtest_engine.logger.removeHandler(h)
+            backtest_engine.logger.setLevel(prev_level)
+
+        msgs = " | ".join(records)
+        assert "defaulting fixed_pct sizing to 100%" in msgs
+
+    def test_multi_symbol_does_not_override_sizing(self, monkeypatch):
+        """Two or more symbols → don't touch sizing.  This is the
+        normal portfolio path and the user's pct=0.95 default applies."""
+        import logging
+        from dashboard import backtest_engine
+
+        monkeypatch.setattr(
+            "bot.pipeline.run_pipeline",
+            lambda *a, **kw: {"processed": 0, "failed": 0,
+                               "skipped": 0, "new_rows": 0},
+        )
+
+        records = []
+
+        class _Capture(logging.Handler):
+            def emit(self, record):
+                records.append(record.getMessage())
+
+        h = _Capture()
+        h.setLevel(logging.DEBUG)
+        backtest_engine.logger.addHandler(h)
+        prev_level = backtest_engine.logger.level
+        backtest_engine.logger.setLevel(logging.DEBUG)
+        try:
+            backtest_engine.run_filtered_backtest(
+                model_id="ibs_v1", filters=[],
+                symbols=["__BOGUS_A__", "__BOGUS_B__"],
+                period_days=30, conf_threshold=0.55,
+                starting_cash=10_000,
+            )
+        finally:
+            backtest_engine.logger.removeHandler(h)
+            backtest_engine.logger.setLevel(prev_level)
+
+        msgs = " | ".join(records)
+        assert "defaulting fixed_pct sizing to 100%" not in msgs
 
 
 class TestNoTradesFiredDiagnostic:

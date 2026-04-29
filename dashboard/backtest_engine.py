@@ -297,6 +297,46 @@ def run_filtered_backtest(
         symbols = _candidate_symbols()
     symbols = symbols[:max_symbols]
 
+    # ── Single-ticker convenience ──────────────────────────────────────
+    # When the user picks a single-symbol scope (etf:QQQ, sym:AAPL, etc.)
+    # there's no portfolio-allocation question to answer — they want
+    # 100% of capital on that one ticker.  Override the default
+    # ``fixed_pct=0.95`` only when the user didn't customise sizing
+    # themselves (kwargs empty AND method is the engine default).
+    if len(symbols) == 1 and sizing_method == "fixed_pct" and not (sizing_kwargs or {}):
+        sizing_kwargs = {"pct": 1.0}
+        logger.info("Single-symbol scope %s: defaulting fixed_pct sizing to 100%%.",
+                    symbols[0])
+
+    # ── On-the-fly fetch for missing data on small scopes ──────────────
+    # If the user picks a small universe (≤5 symbols) and some lack a
+    # ``*_features.parquet`` on disk, try to fetch them right now via
+    # the same pipeline ``python -m bot.pipeline`` would use.  Bigger
+    # scopes still require a manual pipeline run — we don't want a
+    # 50-symbol Alpaca blast triggered by a button click.
+    if len(symbols) <= 5:
+        from pathlib import Path as _Path
+        from bot.config import DATA_DIR as _DATA_DIR
+        missing_on_disk = [s for s in symbols
+                           if not _Path(_DATA_DIR / f"{s.upper()}_features.parquet").exists()]
+        if missing_on_disk:
+            try:
+                from bot.pipeline import run_pipeline
+                logger.info("Auto-fetching missing data for %s "
+                            "(small-scope convenience fetch)…",
+                            ", ".join(missing_on_disk))
+                # Use a generous lookback so even long backtests have data
+                run_pipeline(symbols=missing_on_disk,
+                             lookback_days=max(int(period_days) * 2, 365 * 6))
+            except Exception as exc:
+                # Most common: .env missing → Alpaca auth fails.  Don't
+                # crash the run — just log and let load_report record
+                # what didn't load so the dashboard can show a precise
+                # diagnostic with the right fix-it command.
+                logger.warning("Auto-fetch failed for %s: %s.  "
+                               "Run `python -m bot.pipeline` manually.",
+                               missing_on_disk, exc)
+
     try:
         model = get_model(model_id)
     except Exception as exc:

@@ -870,20 +870,40 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
         # "data missing" panel even on runs that loaded all 50 symbols
         # but where the strategy just didn't trigger any buys.
         if has_load_report and requested > 0 and loaded == 0:
-            # Symbols WERE requested but none had loadable parquet
-            headline = (f"No symbol data was loadable "
-                        f"({len(missing)}/{requested} symbols missing features).")
+            # Symbols WERE requested but none had loadable parquet.
+            # For small scopes (≤5 missing — typically ETF or single
+            # ticker) give a one-line targeted fetch command instead of
+            # the full pipeline.  Auto-fetch already tried at run time
+            # and presumably failed (Alpaca auth missing, etc.).
             sample = ", ".join(missing[:8]) + (" …" if len(missing) > 8 else "")
-            details  = (f"Universe scope picked {requested} symbols but none "
-                        f"had a *_features.parquet file on disk.  Missing: "
-                        f"{sample}.  Run the OHLCV pipeline first:")
-            bullets  = [
-                "python -m bot.universe              # refresh S&P universe + prices",
-                "python -m bot.pipeline              # fetch top 100 symbols, ~5 min",
-                "python scripts/refetch_shallow.py --apply --min-rows 1   # repair shallow",
-                "# If you JUST ran the pipeline and the dashboard was already running,",
-                "#   restart it (Ctrl-C and `python -m dashboard.app` again).",
-            ]
+            if len(missing) <= 5:
+                missing_args = " ".join(missing)
+                headline = (f"Data not on disk for "
+                            f"{', '.join(missing)} — auto-fetch failed.")
+                details  = ("The dashboard tried to fetch this symbol's "
+                            "OHLCV bars on the fly but couldn't (most "
+                            "likely Alpaca auth — check your .env).  "
+                            "You can fetch it manually with one command:")
+                bullets  = [
+                    f"python -c \"from bot.pipeline import run_pipeline; "
+                    f"run_pipeline(symbols={missing!r})\"",
+                    "# OR, if you have the pipeline configured:",
+                    f"python -m bot.pipeline    # then re-load this run",
+                    "# Then click 'Run backtest' again.  No restart needed.",
+                ]
+            else:
+                headline = (f"No symbol data was loadable "
+                            f"({len(missing)}/{requested} symbols missing features).")
+                details  = (f"Universe scope picked {requested} symbols but none "
+                            f"had a *_features.parquet file on disk.  Missing: "
+                            f"{sample}.  Run the OHLCV pipeline first:")
+                bullets  = [
+                    "python -m bot.universe              # refresh S&P universe + prices",
+                    "python -m bot.pipeline              # fetch top 100 symbols, ~5 min",
+                    "python scripts/refetch_shallow.py --apply --min-rows 1   # repair shallow",
+                    "# If you JUST ran the pipeline and the dashboard was already running,",
+                    "#   restart it (Ctrl-C and `python -m dashboard.app` again).",
+                ]
             bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
                              "color": "#1f2937", "lineHeight": "1.7"}
         elif has_load_report and requested == 0:
