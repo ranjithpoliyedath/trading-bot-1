@@ -32,6 +32,24 @@ FEATURE_COLUMNS = [
     "price_change_5d",
     "high_low_ratio",
     "close_to_vwap",
+    # Extended EMAs — used by the screener's "indicator preset"
+    # filter packs (e.g. "Above EMA10/20/50", "Bear stack").
+    "ema_10",
+    "ema_20",
+    "ema_50",
+    "ema_200",
+    # Pre-computed boolean/numeric helpers so the screener can
+    # filter without manually combining columns.  All are 0/1.
+    "above_ema_10",
+    "above_ema_20",
+    "above_ema_50",
+    "above_ema_200",
+    "above_ema_10_20",       # above both 10 and 20
+    "above_ema_10_20_50",    # above 10, 20, AND 50
+    "above_all_emas",        # above 10, 20, 50, 200
+    "below_all_emas",        # below 10, 20, 50, 200
+    "ema_bull_stack",        # close > ema10 > ema20 > ema50 > ema200
+    "ema_bear_stack",        # close < ema10 < ema20 < ema50 < ema200
     # Sentiment features — added by sentiment pipeline
     "news_sentiment_mean",
     "news_sentiment_std",
@@ -70,7 +88,8 @@ def add_all_features(df: pd.DataFrame) -> pd.DataFrame:
     df = _add_rsi(df, period=14)
     df = _add_macd(df)
     df = _add_bollinger_bands(df, period=20)
-    df = _add_ema(df, spans=[9, 21])
+    df = _add_ema(df, spans=[9, 10, 20, 21, 50, 200])
+    df = _add_ema_relations(df)
     df = _add_atr(df, period=14)
     df = _add_volume_ratio(df, period=20)
     df = _add_price_changes(df)
@@ -145,6 +164,59 @@ def _add_ema(df: pd.DataFrame, spans: list[int]) -> pd.DataFrame:
         df[f"ema_{span}"] = df["close"].ewm(span=span, adjust=False).mean()
     if 9 in spans and 21 in spans:
         df["ema_cross"] = (df["ema_9"] - df["ema_21"]) / df["close"]
+    return df
+
+
+def _add_ema_relations(df: pd.DataFrame) -> pd.DataFrame:
+    """Boolean / numeric helper columns describing the relationship
+    between price and the EMA stack.  These let the screener filter
+    on common patterns ("above 10, 20 AND 50", "bull stack", etc.)
+    without forcing the user to chain multiple raw filter rows.
+
+    All outputs are 0/1 (so screener `>0` and `==1` work out of the
+    box).  When an EMA hasn't warmed up yet (NaN), the corresponding
+    relation is NaN — filters skip those rows naturally.
+    """
+    c   = df["close"]
+    e10  = df.get("ema_10")
+    e20  = df.get("ema_20")
+    e50  = df.get("ema_50")
+    e200 = df.get("ema_200")
+
+    if e10 is not None:
+        df["above_ema_10"]  = (c > e10).astype("float64").where(e10.notna())
+    if e20 is not None:
+        df["above_ema_20"]  = (c > e20).astype("float64").where(e20.notna())
+    if e50 is not None:
+        df["above_ema_50"]  = (c > e50).astype("float64").where(e50.notna())
+    if e200 is not None:
+        df["above_ema_200"] = (c > e200).astype("float64").where(e200.notna())
+
+    if e10 is not None and e20 is not None:
+        df["above_ema_10_20"] = (
+            (c > e10) & (c > e20)
+        ).astype("float64").where(e10.notna() & e20.notna())
+
+    if e10 is not None and e20 is not None and e50 is not None:
+        df["above_ema_10_20_50"] = (
+            (c > e10) & (c > e20) & (c > e50)
+        ).astype("float64").where(e10.notna() & e20.notna() & e50.notna())
+
+    if all(s is not None for s in (e10, e20, e50, e200)):
+        all_present = e10.notna() & e20.notna() & e50.notna() & e200.notna()
+        df["above_all_emas"] = (
+            (c > e10) & (c > e20) & (c > e50) & (c > e200)
+        ).astype("float64").where(all_present)
+        df["below_all_emas"] = (
+            (c < e10) & (c < e20) & (c < e50) & (c < e200)
+        ).astype("float64").where(all_present)
+        df["ema_bull_stack"] = (
+            (c > e10) & (e10 > e20) & (e20 > e50) & (e50 > e200)
+        ).astype("float64").where(all_present)
+        df["ema_bear_stack"] = (
+            (c < e10) & (e10 < e20) & (e20 < e50) & (e50 < e200)
+        ).astype("float64").where(all_present)
+
     return df
 
 

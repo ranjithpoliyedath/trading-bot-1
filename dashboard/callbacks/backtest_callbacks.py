@@ -58,6 +58,24 @@ def parse_nl_query(n_clicks, text):
     )
 
 
+# ── Show / hide the regime-exit conflict warning ────────────────────────
+#
+# When the user toggles market-regime OR sector-regime exit on, surface
+# a yellow inline warning: these exits override per-symbol logic so
+# strategy buy signals on a downtrend day are silently dropped.
+
+@callback(
+    Output("bt-regime-conflict-warning", "style"),
+    Input("bt-exit-market-regime-on",     "value"),
+    Input("bt-exit-sector-regime-on",     "value"),
+    prevent_initial_call=False,
+)
+def toggle_regime_conflict_warning(market_on, sector_on):
+    if market_on or sector_on:
+        return {"display": "block"}
+    return {"display": "none"}
+
+
 # ── Add manual filter row ───────────────────────────────────────────────────
 
 @callback(
@@ -72,6 +90,41 @@ def add_filter(n, current):
     current = list(current or [])
     current.append(_filter_row(len(current)))
     return current
+
+
+# ── Expand "Indicator preset" picks into filter rows ─────────────────────
+#
+# When the user selects a preset from the bt-dd-indicator-preset dropdown,
+# the preset's ``filters`` definition is appended to the existing filter
+# rows.  Append (not replace) so users can stack presets — e.g. "Bull
+# stack" + "RSI oversold" — and still hand-edit fields after.
+
+@callback(
+    Output("bt-filter-rows",            "children", allow_duplicate=True),
+    Output("bt-dd-indicator-preset",    "value",    allow_duplicate=True),
+    Input("bt-dd-indicator-preset",     "value"),
+    State("bt-filter-rows",             "children"),
+    prevent_initial_call=True,
+)
+def apply_indicator_preset(preset_key, current_rows):
+    """Append the preset's filter rows to the existing list, then
+    reset the dropdown so the same preset can be re-selected later."""
+    if not preset_key:
+        return no_update, no_update
+    from bot.screener import INDICATOR_PRESETS
+    preset = INDICATOR_PRESETS.get(preset_key)
+    if not preset:
+        return no_update, ""
+    current_rows = list(current_rows or [])
+    base_idx = len(current_rows)
+    for i, f in enumerate(preset["filters"]):
+        current_rows.append(_filter_row(
+            base_idx + i,
+            default_field = f["field"],
+            default_op    = f["op"],
+            default_value = f["value"],
+        ))
+    return current_rows, ""   # reset dropdown to placeholder
 
 
 # ── Run / load backtest ──────────────────────────────────────────────────────
@@ -97,6 +150,8 @@ def add_filter(n, current):
     State("bt-exit-sl-val",    "value"),
     State("bt-exit-ts-on",     "value"),
     State("bt-exit-ts-val",    "value"),
+    State("bt-exit-market-regime-on",  "value"),
+    State("bt-exit-sector-regime-on",  "value"),
     State("bt-acct-cash",      "value"),
     State("bt-acct-sizing",    "value"),
     State("bt-acct-arg-a",     "value"),
@@ -111,6 +166,7 @@ def add_filter(n, current):
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 indicators, ff, fo, fv,
                 signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val,
+                market_regime_on, sector_regime_on,
                 acct_cash, sizing_method, sizing_a, sizing_b, atr_stop,
                 exec_model, exec_delay, slip_bps, val_mode):
     ctx = callback_context.triggered[0]["prop_id"]
@@ -172,6 +228,15 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
         slippage_bps         = float(slip_bps or 0),
     )
 
+    # Regime-exit kwargs are only honoured by run_filtered_backtest's
+    # single-sample path (the walk-forward + cross-sectional runners
+    # don't take them yet — adding silently would crash with
+    # TypeError on unexpected kwarg).
+    regime_kwargs = dict(
+        market_regime_exit = bool(market_regime_on),
+        sector_regime_exit = bool(sector_regime_on),
+    )
+
     # Walk-forward branch
     if val_mode and val_mode.startswith("wf"):
         try:
@@ -193,6 +258,7 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
             symbols     = syms,
             period_days = int(period or 365),
             **engine_kwargs,
+            **regime_kwargs,
         )
 
     # Persist scope + indicators + val_mode in the preset payload so a
@@ -280,6 +346,8 @@ def _synthesize_preset_if_missing(data: dict) -> dict:
     Output("bt-exit-sl-val",    "value",    allow_duplicate=True),
     Output("bt-exit-ts-on",     "value",    allow_duplicate=True),
     Output("bt-exit-ts-val",    "value",    allow_duplicate=True),
+    Output("bt-exit-market-regime-on", "value", allow_duplicate=True),
+    Output("bt-exit-sector-regime-on", "value", allow_duplicate=True),
     Output("bt-real-val",       "value",    allow_duplicate=True),
     Output("bt-dd-tf",          "value",    allow_duplicate=True),
     Output("bt-indicators",     "value",    allow_duplicate=True),
@@ -297,8 +365,8 @@ def apply_preset(run_id):
     by `run_or_load` (also keyed off `bt-dd-saved.value`); the two
     callbacks run in parallel so the right pane updates simultaneously.
     """
-    # 25 outputs total — keep this in sync with the @callback decorator.
-    n_outputs = 25
+    # 27 outputs total — keep this in sync with the @callback decorator.
+    n_outputs = 27
     if not run_id:
         # Cleared the dropdown — leave the form alone, just clear status
         return (*([no_update] * (n_outputs - 1)), "")
@@ -376,6 +444,8 @@ def apply_preset(run_id):
         float(sl) if sl is not None else 0.07,                     # bt-exit-sl-val
         on if ts is not None else off,                             # bt-exit-ts-on
         int(ts) if ts is not None else 30,                         # bt-exit-ts-val
+        on if p.get("market_regime_exit") else off,                # bt-exit-market-regime-on
+        on if p.get("sector_regime_exit") else off,                # bt-exit-sector-regime-on
         val_mode,                                                  # bt-real-val
         "1d",                                                      # bt-dd-tf (only daily for now)
         indicators_val,                                            # bt-indicators

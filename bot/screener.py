@@ -38,6 +38,22 @@ SCREENER_FIELDS: dict[str, dict[str, Any]] = {
     "ema_cross":          {"label": "EMA 9/21 cross",         "group": "Technical"},
     "bb_pct":             {"label": "Bollinger %B",           "group": "Technical"},
     "atr_14":             {"label": "ATR (14)",               "group": "Technical"},
+    # EMA stack relations — boolean (use op `==` 1 or `>` 0)
+    "above_ema_10":         {"label": "Price > EMA 10",         "group": "EMA"},
+    "above_ema_20":         {"label": "Price > EMA 20",         "group": "EMA"},
+    "above_ema_50":         {"label": "Price > EMA 50",         "group": "EMA"},
+    "above_ema_200":        {"label": "Price > EMA 200",        "group": "EMA"},
+    "above_ema_10_20":      {"label": "Price > EMA 10 AND 20",  "group": "EMA"},
+    "above_ema_10_20_50":   {"label": "Price > EMA 10, 20, 50", "group": "EMA"},
+    "above_all_emas":       {"label": "Price > all EMAs",       "group": "EMA"},
+    "below_all_emas":       {"label": "Price < all EMAs",       "group": "EMA"},
+    "ema_bull_stack":       {"label": "Bull stack (10>20>50>200)", "group": "EMA"},
+    "ema_bear_stack":       {"label": "Bear stack (10<20<50<200)", "group": "EMA"},
+    # Raw EMA values — useful for distance/ratio comparisons
+    "ema_10":               {"label": "EMA 10",                  "group": "EMA"},
+    "ema_20":               {"label": "EMA 20",                  "group": "EMA"},
+    "ema_50":               {"label": "EMA 50",                  "group": "EMA"},
+    "ema_200":              {"label": "EMA 200",                 "group": "EMA"},
     # Sentiment
     "combined_sentiment": {"label": "Combined sentiment",     "group": "Sentiment"},
     "news_count":         {"label": "News count",             "group": "Sentiment"},
@@ -52,6 +68,90 @@ SCREENER_FIELDS: dict[str, dict[str, Any]] = {
     "consolidation_vol_drop": {"label": "Volume dry-up ratio", "group": "Breakout"},
     "contraction_count":    {"label": "VCP contractions",       "group": "Breakout"},
     "breakout_today":       {"label": "Breakout today (1=yes)", "group": "Breakout"},
+}
+
+
+# Indicator presets — friendly names mapped to ready-to-go filter rows.
+# The dashboard's "Indicator preset" dropdown applies one of these in
+# one click instead of forcing the user to chain raw filter rows.
+INDICATOR_PRESETS: dict[str, dict] = {
+    "ema_bull_stack": {
+        "label":   "EMA bull stack (price > 10 > 20 > 50 > 200)",
+        "group":   "EMA",
+        "filters": [{"field": "ema_bull_stack", "op": "==", "value": 1}],
+    },
+    "ema_bear_stack": {
+        "label":   "EMA bear stack (price < 10 < 20 < 50 < 200)",
+        "group":   "EMA",
+        "filters": [{"field": "ema_bear_stack", "op": "==", "value": 1}],
+    },
+    "above_short_emas": {
+        "label":   "Above short EMAs (10 AND 20)",
+        "group":   "EMA",
+        "filters": [{"field": "above_ema_10_20", "op": "==", "value": 1}],
+    },
+    "above_short_mid_emas": {
+        "label":   "Above 10, 20, AND 50 EMA",
+        "group":   "EMA",
+        "filters": [{"field": "above_ema_10_20_50", "op": "==", "value": 1}],
+    },
+    "above_long_ema": {
+        "label":   "Above 200 EMA only (long-term uptrend)",
+        "group":   "EMA",
+        "filters": [{"field": "above_ema_200", "op": "==", "value": 1}],
+    },
+    "above_50_below_200": {
+        "label":   "Above 50 EMA but below 200 (early reversal)",
+        "group":   "EMA",
+        "filters": [
+            {"field": "above_ema_50",  "op": "==", "value": 1},
+            {"field": "above_ema_200", "op": "==", "value": 0},
+        ],
+    },
+    "above_all_emas": {
+        "label":   "Above all EMAs (10, 20, 50, 200)",
+        "group":   "EMA",
+        "filters": [{"field": "above_all_emas", "op": "==", "value": 1}],
+    },
+    "below_all_emas": {
+        "label":   "Below all EMAs (full breakdown)",
+        "group":   "EMA",
+        "filters": [{"field": "below_all_emas", "op": "==", "value": 1}],
+    },
+    "rsi_oversold": {
+        "label":   "RSI oversold (<30)",
+        "group":   "Momentum",
+        "filters": [{"field": "rsi_14", "op": "<", "value": 30}],
+    },
+    "rsi_overbought": {
+        "label":   "RSI overbought (>70)",
+        "group":   "Momentum",
+        "filters": [{"field": "rsi_14", "op": ">", "value": 70}],
+    },
+    "macd_bullish_above_50": {
+        "label":   "MACD bullish + above EMA 50",
+        "group":   "Trend",
+        "filters": [
+            {"field": "macd_hist",     "op": ">",  "value": 0},
+            {"field": "above_ema_50",  "op": "==", "value": 1},
+        ],
+    },
+    "high_volume_breakout": {
+        "label":   "High volume + breakout today",
+        "group":   "Breakout",
+        "filters": [
+            {"field": "volume_ratio",  "op": ">",  "value": 1.5},
+            {"field": "breakout_today", "op": "==", "value": 1},
+        ],
+    },
+    "bullish_sentiment_uptrend": {
+        "label":   "Bullish sentiment + uptrend (above 50 EMA)",
+        "group":   "Sentiment",
+        "filters": [
+            {"field": "combined_sentiment", "op": ">",  "value": 0.2},
+            {"field": "above_ema_50",       "op": "==", "value": 1},
+        ],
+    },
 }
 
 OPS = {

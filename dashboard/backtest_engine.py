@@ -292,6 +292,8 @@ def run_filtered_backtest(
     execution_delay_bars: int         = 0,
     slippage_bps:    float            = 5.0,
     date_window:     Optional[tuple]  = None,   # (start, end) timestamps for sample slicing
+    market_regime_exit: bool          = False,  # force-sell when SPY/QQQ trending down
+    sector_regime_exit: bool          = False,  # force-sell when symbol's sector ETF down
 ) -> dict:
     """
     Run a backtest across many symbols, only entering on bars that
@@ -478,6 +480,20 @@ def run_filtered_backtest(
         logger.info("Loaded %d/%d symbols.",
                     load_report["loaded"], load_report["requested"])
 
+    # Build the optional regime checker (loads SPY/QQQ + sector ETF
+    # parquets ONCE up front so the per-bar lookup in the sim is cheap).
+    regime_checker = None
+    regime_summary = None
+    if market_regime_exit or sector_regime_exit:
+        from dashboard.services.regime import RegimeChecker
+        regime_checker = RegimeChecker(
+            symbols    = list(scored_per_symbol.keys()) or list(symbols),
+            use_market = bool(market_regime_exit),
+            use_sector = bool(sector_regime_exit),
+        )
+        regime_summary = regime_checker.status_summary()
+        logger.info("Regime check: %s", regime_summary)
+
     # Run the shared-pool simulator over every symbol's scored bars
     sim = _simulate_portfolio(
         scored_per_symbol,
@@ -492,6 +508,7 @@ def run_filtered_backtest(
         execution_model      = execution_model,
         execution_delay_bars = execution_delay_bars,
         slippage_bps         = slippage_bps,
+        regime_checker       = regime_checker,
     )
     all_trades   = sim["trades"]
     equity_curve = sim["equity_curve"]
@@ -524,6 +541,9 @@ def run_filtered_backtest(
         "execution_model":  execution_model,
         "execution_delay":  int(execution_delay_bars),
         "slippage_bps":     float(slippage_bps),
+        "market_regime_exit": bool(market_regime_exit),
+        "sector_regime_exit": bool(sector_regime_exit),
+        "regime_summary":   regime_summary,
     }
 
     return {
@@ -816,6 +836,7 @@ def _simulate_portfolio(
     execution_model:      str              = "next_open",
     execution_delay_bars: int              = 0,
     slippage_bps:         float            = 5.0,
+    regime_checker      = None,            # RegimeChecker | None
 ) -> dict:
     """
     Walk every symbol's scored bars on a chronologically merged
@@ -981,11 +1002,22 @@ def _simulate_portfolio(
                              if (atr_stop_mult is not None and pos["entry_atr"] > 0)
                              else None)
             exit_reason = ""
-            if   use_signal_exit and sig == "sell":                                exit_reason = "signal"
-            elif take_profit_pct is not None and ret_pct >=  take_profit_pct:       exit_reason = "take_profit"
-            elif stop_loss_pct  is not None and ret_pct <= -stop_loss_pct:          exit_reason = "stop_loss"
-            elif atr_floor is not None and price <= atr_floor:                      exit_reason = "atr_stop"
-            elif time_stop_days is not None and held_days >= time_stop_days:        exit_reason = "time_stop"
+            # Regime exits run FIRST — they're hard "macro" overrides
+            # that should win over per-symbol logic.  When the broad
+            # market or this symbol's sector ETF is in a clear
+            # downtrend (close < EMA10 AND EMA20 AND EMA50) we sell
+            # regardless of what the strategy thinks.
+            if regime_checker is not None:
+                rr = regime_checker.regime_exit_reason(sym, ts)
+                if rr:
+                    exit_reason = rr
+            if exit_reason:
+                pass
+            elif use_signal_exit and sig == "sell":                                  exit_reason = "signal"
+            elif take_profit_pct is not None and ret_pct >=  take_profit_pct:        exit_reason = "take_profit"
+            elif stop_loss_pct  is not None and ret_pct <= -stop_loss_pct:           exit_reason = "stop_loss"
+            elif atr_floor is not None and price <= atr_floor:                       exit_reason = "atr_stop"
+            elif time_stop_days is not None and held_days >= time_stop_days:         exit_reason = "time_stop"
             if exit_reason:
                 pending[sym] = {"type": "exit", "queued_bar": sym_bar_idx[sym], "reason": exit_reason}
 

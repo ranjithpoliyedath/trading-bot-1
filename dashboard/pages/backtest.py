@@ -169,6 +169,22 @@ def _filter_row(idx: int, default_field="rsi_14", default_op="<", default_value=
 
 
 def _filter_panel():
+    """Filter rows + an Indicator-Preset dropdown that expands into
+    those rows in one click.  The user can still hand-edit afterward."""
+    from bot.screener import INDICATOR_PRESETS
+
+    # Group presets by their "group" attribute for the dropdown sections
+    preset_options = [{"label": "— Pick a preset to add filters —", "value": ""}]
+    by_group: dict[str, list] = {}
+    for key, meta in INDICATOR_PRESETS.items():
+        by_group.setdefault(meta.get("group", "Other"), []).append((key, meta))
+    for group, items in by_group.items():
+        for key, meta in items:
+            preset_options.append({
+                "label": f"[{group}] {meta['label']}",
+                "value": key,
+            })
+
     return html.Div([
         html.Div([
             html.Span("Per-bar filters (all must match for a buy)",
@@ -180,6 +196,28 @@ def _filter_panel():
                 "background": "white", "cursor": "pointer",
             }),
         ], style={"display": "flex", "alignItems": "center", "marginBottom": "10px"}),
+
+        # Indicator-preset shortcut: pick one and the filter rows
+        # auto-populate.  Append-only (doesn't wipe existing rows).
+        html.Div([
+            html.Span("Indicator preset:",
+                      style={"fontSize": "12px", "color": "#666",
+                             "marginRight": "8px",
+                             "alignSelf": "center"}),
+            dcc.Dropdown(
+                id="bt-dd-indicator-preset",
+                options=preset_options,
+                value="",
+                clearable=False,
+                style={"fontSize": "12px", "minWidth": "320px"},
+            ),
+            html.Span("Adds filter rows for the selected preset.",
+                      style={"fontSize": "11px", "color": "#888",
+                             "marginLeft": "10px",
+                             "alignSelf": "center"}),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "12px", "gap": "6px"}),
+
         html.Div(id="bt-filter-rows", children=[]),
     ], style={**CARD, "marginBottom": "16px"})
 
@@ -628,6 +666,51 @@ def _exit_conditions_panel():
             "days regardless of price action.",
             "bt-exit-ts-on", "bt-exit-ts-val", 30, "days",
             min=1, max=500, step=1),
+        row("Market regime exit",
+            "Force-sell ALL held positions on bars where the broad "
+            "market index is in a clear downtrend (close below "
+            "EMA-10, EMA-20 AND EMA-50).  Index defaults to SPY; "
+            "switches to QQQ when the universe is >50% Information "
+            "Technology.  ⚠ This OVERRIDES strategy buy signals on "
+            "the same bar — if your strategy emits a buy while the "
+            "market is downtrending, the buy fires (filtered to "
+            "'hold') but no position opens; held positions exit.",
+            "bt-exit-market-regime-on", "bt-exit-market-regime-val", 0, "",
+            value_input=False, default_on=False),
+        row("Sector regime exit",
+            "Force-sell each held position when its sector ETF "
+            "(XLK / XLF / XLV / etc., chosen by the symbol's GICS "
+            "sector) is below EMA-10/20/50.  Sector mapping comes "
+            "from the universe parquet.  ⚠ Conflicts with strategy "
+            "buy signals on downtrending sector days — same caveat "
+            "as the market regime exit.",
+            "bt-exit-sector-regime-on", "bt-exit-sector-regime-val", 0, "",
+            value_input=False, default_on=False),
+        # Loud yellow conflict warning that appears the moment EITHER
+        # regime exit is toggled on.
+        html.Div(
+            id="bt-regime-conflict-warning",
+            style={"display": "none"},
+            children=html.Div([
+                html.Span("⚠ ", style={"fontSize": "14px"}),
+                html.Span(
+                    "Regime exits OVERRIDE per-symbol logic.  On a "
+                    "downtrend bar, held positions are force-sold "
+                    "regardless of the strategy's own signal — and "
+                    "any buy signal on the same bar is silently "
+                    "skipped.  Check the trade log for "
+                    "'market_regime' / 'sector_regime' exit reasons "
+                    "to see when this fired.",
+                    style={"fontSize": "12px"}),
+            ], style={
+                "padding":      "8px 12px",
+                "background":   "#FFFBEB",
+                "color":        "#92400E",
+                "border":       "1px solid #FDE68A",
+                "borderRadius": "6px",
+                "marginTop":    "8px",
+            }),
+        ),
     ], style={**CARD, "marginTop": "12px"})
 
 
