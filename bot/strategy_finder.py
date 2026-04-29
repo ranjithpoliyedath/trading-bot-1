@@ -49,17 +49,21 @@ logger = logging.getLogger(__name__)
 PARAM_SPACES: dict[str, list[dict]] = {
     "rsi_macd_v1": [
         {"name": "buy_rsi",        "type": "int",   "low": 15, "high": 40},
-        {"name": "sell_rsi",       "type": "int",   "low": 60, "high": 85},
+        # sell_rsi removed: exits aren't gated by the screener filter
+        # chain (only buys are), so an entry here was inert and wasted
+        # Optuna trials.  Sell threshold is a class-level constant.
         {"name": "min_confidence", "type": "float", "low": 0.50, "high": 0.85, "step": 0.01},
     ],
     "bollinger_v1": [
         {"name": "lower_band_pct", "type": "float", "low": 0.0,  "high": 0.30, "step": 0.01},
-        {"name": "upper_band_pct", "type": "float", "low": 0.70, "high": 1.0,  "step": 0.01},
+        # upper_band_pct removed: same reason as sell_rsi — sell-side
+        # threshold isn't filter-tunable.
         {"name": "min_confidence", "type": "float", "low": 0.50, "high": 0.85, "step": 0.01},
     ],
     "sentiment_v1": [
         {"name": "buy_sentiment",  "type": "float", "low": 0.20, "high": 0.80, "step": 0.05},
-        {"name": "sell_sentiment", "type": "float", "low": -0.80, "high": -0.20, "step": 0.05},
+        # sell_sentiment removed: filter chain only gates buys, so a
+        # sell-threshold param was inert and wasted Optuna trials.
         {"name": "min_news_count", "type": "int",   "low": 1, "high": 15},
         {"name": "min_confidence", "type": "float", "low": 0.50, "high": 0.85, "step": 0.01},
     ],
@@ -75,11 +79,12 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
     "golden_cross_v1": [
-        {"name": "trend_buffer",   "type": "float", "low": 0.0,  "high": 0.05, "step": 0.005},
+        # trend_buffer + breakout_period removed: would require model-
+        # internal hooks that don't exist yet.  Confidence-only tuning
+        # for these strategies until per-strategy param injection ships.
         {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
     "donchian_v1": [
-        {"name": "breakout_period", "type": "int",   "low": 10, "high": 40},
         {"name": "min_confidence",  "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
     "connors_rsi2_v1": [
@@ -95,7 +100,9 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
     "keltner_breakout_v1": [
-        {"name": "atr_multiplier", "type": "float", "low": 1.0, "high": 3.0, "step": 0.1},
+        # atr_multiplier removed: it's consumed at indicator-computation
+        # time inside add_keltner, not at signal time, so Optuna can't
+        # tune it through the filter chain.  Confidence tuning only.
         {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
     "obv_momentum_v1": [
@@ -105,6 +112,34 @@ PARAM_SPACES: dict[str, list[dict]] = {
     "zscore_reversion_v1": [
         {"name": "buy_zscore",     "type": "float", "low": -3.0, "high": -1.0, "step": 0.1},
         {"name": "min_confidence", "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    # ── 2026-04-29 additions ─────────────────────────────────────
+    "tsmom_v1": [
+        # The strategy itself uses fixed 252-bar / 50-SMA rules; we
+        # tune the entry confidence + an extra "min_mom_threshold"
+        # filter so we only buy on stronger momentum readings.
+        {"name": "min_mom_12m",     "type": "float", "low": 0.0,  "high": 0.30, "step": 0.02},
+        {"name": "min_confidence",  "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "pct52w_high_v1": [
+        # The published rule uses 95% / 85% thresholds.  Tune the
+        # buy threshold (within X% of the 52w high) and confidence.
+        {"name": "min_pct_52w_high", "type": "float", "low": 0.85, "high": 0.99, "step": 0.01},
+        {"name": "min_volume_ratio", "type": "float", "low": 0.80, "high": 1.50, "step": 0.05},
+        {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "recovery_rally_v1": [
+        # The entry needs both SMA reclaim and macd_hist > 0; tune
+        # how strongly we need each to fire.
+        {"name": "min_macd_hist",    "type": "float", "low": 0.0,  "high": 0.50, "step": 0.05},
+        {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
+    "weinstein_v1": [
+        # Tune the slope threshold (how aggressively the 30-week MA
+        # has to be rising) and how extended above the MA we tolerate.
+        {"name": "min_sma_slope",    "type": "float", "low": 0.0,  "high": 0.50, "step": 0.05},
+        {"name": "max_extension",    "type": "float", "low": 0.10, "high": 0.40, "step": 0.05},
+        {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
 }
 
@@ -193,6 +228,32 @@ def params_to_filters(strategy_id: str, params: dict) -> list[dict]:
     if strategy_id == "zscore_reversion_v1":
         return [
             {"field": "zscore_close_20", "op": "<", "value": params.get("buy_zscore", -1.5)},
+        ]
+    # ── 2026-04-29 additions ─────────────────────────────────────
+    if strategy_id == "tsmom_v1":
+        # Require 12-month momentum to clear the tuned threshold
+        return [
+            {"field": "mom_12m", "op": ">=", "value": params.get("min_mom_12m", 0.0)},
+        ]
+    if strategy_id == "pct52w_high_v1":
+        return [
+            {"field": "pct_52w_high", "op": ">=", "value": params.get("min_pct_52w_high", 0.95)},
+            {"field": "volume_ratio", "op": ">=", "value": params.get("min_volume_ratio", 1.0)},
+        ]
+    if strategy_id == "recovery_rally_v1":
+        return [
+            {"field": "macd_hist", "op": ">=", "value": params.get("min_macd_hist", 0.0)},
+        ]
+    if strategy_id == "weinstein_v1":
+        # Use the price-normalised slope + extension columns the
+        # strategy emits in predict_batch.  These are dimensionless
+        # ratios so the Optuna thresholds work uniformly across
+        # symbols (no $10-stock-vs-$1000-stock scaling issue).
+        return [
+            {"field": "sma_150_slope_pct",
+             "op": ">", "value": params.get("min_sma_slope", 0.0)},
+            {"field": "sma_150_extension",
+             "op": "<", "value": params.get("max_extension", 0.30)},
         ]
     # golden_cross_v1, keltner_breakout_v1: tuning happens via min_confidence
     # only — the strategies' published rules are kept intact.

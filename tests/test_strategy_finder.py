@@ -31,9 +31,63 @@ class TestParamSpace:
 
     def test_known_strategies_have_space(self):
         from bot.strategy_finder import param_space
+        # Includes the 4 new strategies added 2026-04-29
         for sid in ("rsi_macd_v1", "bollinger_v1", "sentiment_v1",
-                    "qullamaggie_v1", "vcp_v1"):
+                    "qullamaggie_v1", "vcp_v1",
+                    "tsmom_v1", "pct52w_high_v1", "recovery_rally_v1",
+                    "weinstein_v1"):
             assert param_space(sid), f"No space for {sid}"
+
+    def test_every_param_reaches_filter_chain(self):
+        """Regression for the Weinstein bug: PARAM_SPACES declared
+        ``min_sma_slope`` and ``max_extension`` but params_to_filters
+        ignored them — Optuna search was effectively only tuning
+        min_confidence.  This test catches the same class of bug for
+        any strategy: every non-confidence param in the search space
+        must show up either as a filter field name or be referenced
+        somehow in params_to_filters."""
+        from bot.strategy_finder import param_space, params_to_filters, PARAM_SPACES
+        import inspect
+        src = inspect.getsource(params_to_filters)
+        for sid in PARAM_SPACES:
+            for p in param_space(sid):
+                name = p["name"]
+                if name == "min_confidence":
+                    continue   # confidence is engine-level, not filter
+                # The param name must appear somewhere in
+                # params_to_filters' source — either as params.get(name)
+                # or as a filter field name reference.
+                if name not in src:
+                    pytest.fail(
+                        f"Param {name!r} for {sid!r} is in PARAM_SPACES "
+                        f"but never referenced in params_to_filters — "
+                        f"Optuna would silently treat it as inert. "
+                        f"This is the same bug class as the original "
+                        f"Weinstein issue."
+                    )
+
+    def test_weinstein_emits_normalised_columns(self):
+        """The Weinstein strategy must emit price-normalised slope and
+        extension columns so threshold params work uniformly across
+        symbols (a $10 stock and a $1000 stock see the same scale)."""
+        import pandas as pd
+        from bot.models.registry import get_model
+        # Synthetic uptrending random walk
+        import numpy as np
+        rng = np.random.default_rng(42)
+        n = 400
+        rets = rng.normal(0.0008, 0.012, n)
+        closes = (100.0 * (1 + pd.Series(rets)).cumprod()).tolist()
+        df = pd.DataFrame({
+            "open":  closes,  "high": [c*1.01 for c in closes],
+            "low":   [c*0.99 for c in closes],  "close": closes,
+            "volume": rng.integers(800_000, 1_200_000, n),
+            "vwap": closes,
+        }, index=pd.date_range("2022-01-01", periods=n, freq="B"))
+        m = get_model("weinstein_v1")
+        out = m.predict_batch(df)
+        for col in ("sma_150_slope_pct", "sma_150_extension"):
+            assert col in out.columns, f"missing {col}"
 
     def test_unknown_strategy_returns_empty(self):
         from bot.strategy_finder import param_space
@@ -123,11 +177,14 @@ class TestSuggestWithClaude:
     def test_well_formed_proposals_clipped_to_range(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-fake")
 
-        # Fake tool_use response
+        # Fake tool_use response.  sell_rsi was removed from
+        # PARAM_SPACES in 2026-04-29 cleanup (filter chain only gates
+        # buys, so a sell-side param was inert).  Test reflects the
+        # current 2-param schema.
         tool_block = MagicMock()
         tool_block.type  = "tool_use"
         tool_block.input = {"proposals": [
-            {"params": {"buy_rsi": 999, "sell_rsi": -10,
+            {"params": {"buy_rsi": 999,
                          "min_confidence": 0.99},
              "rationale": "out-of-range — should be clipped"},
         ]}
@@ -145,7 +202,6 @@ class TestSuggestWithClaude:
         params = out[0].params
         # Clipped to declared ranges
         assert 15 <= params["buy_rsi"]  <= 40
-        assert 60 <= params["sell_rsi"] <= 85
         assert 0.50 <= params["min_confidence"] <= 0.85
 
     def test_no_tool_use_block_returns_empty(self, monkeypatch):
