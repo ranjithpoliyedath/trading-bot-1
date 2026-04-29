@@ -199,24 +199,30 @@ def _filter_panel():
 
         # Indicator-preset shortcut: pick one and the filter rows
         # auto-populate.  Append-only (doesn't wipe existing rows).
+        # Stacked vertically so the dropdown doesn't fight the help
+        # text for horizontal space at narrow widths (the inline
+        # variant overflowed the card on the standard 50/50 split).
         html.Div([
-            html.Span("Indicator preset:",
-                      style={"fontSize": "12px", "color": "#666",
-                             "marginRight": "8px",
-                             "alignSelf": "center"}),
+            html.Span("Indicator preset",
+                      id="bt-dd-indicator-preset-tip",
+                      style={"fontSize": "11px", "color": "#888",
+                             "display": "block",
+                             "marginBottom": "4px",
+                             "cursor": "help"}),
             dcc.Dropdown(
                 id="bt-dd-indicator-preset",
                 options=preset_options,
                 value="",
                 clearable=False,
-                style={"fontSize": "12px", "minWidth": "320px"},
+                style={"fontSize": "12px", "width": "100%"},
             ),
-            html.Span("Adds filter rows for the selected preset.",
-                      style={"fontSize": "11px", "color": "#888",
-                             "marginLeft": "10px",
-                             "alignSelf": "center"}),
-        ], style={"display": "flex", "alignItems": "center",
-                  "marginBottom": "12px", "gap": "6px"}),
+            dbc.Tooltip(
+                "Pick a preset (EMA bull stack, RSI oversold, etc.) "
+                "and its filter rows are appended below.  You can "
+                "stack multiple presets and edit them after.",
+                target="bt-dd-indicator-preset-tip", placement="top",
+                style={"maxWidth": "320px", "fontSize": "12px"}),
+        ], style={"marginBottom": "12px"}),
 
         html.Div(id="bt-filter-rows", children=[]),
     ], style={**CARD, "marginBottom": "16px"})
