@@ -1299,6 +1299,73 @@ class TestFailurePostMortem:
         # vwap = HLC/3
         assert abs(out.iloc[0]["vwap"] - (101 + 99 + 100.5) / 3) < 1e-6
 
+    def test_cross_sectional_concat_handles_mixed_timezones(self):
+        """Regression for the 'Cannot join tz-naive with tz-aware
+        DatetimeIndex' crash in run_cross_sectional_backtest.
+
+        Reproducer: a universe parquet refresh leaves a mix of tz-aware
+        UTC parquets (legacy Alpaca-fetched) and tz-naive parquets
+        (yfinance).  The cross-sectional runner builds a wide-format
+        close panel via ``pd.concat(closes, axis=1)`` — pandas refuses
+        to merge mixed-tz indices, raising TypeError.
+
+        Belt-and-suspenders fix: even though _load_features strips
+        timezone, the cross-sectional runner double-checks each Series
+        before concat.  Any rogue tz-aware index gets stripped here too.
+        """
+        import pandas as pd
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from dashboard import backtest_engine
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            n_bars = 300
+
+            # Write a tz-AWARE UTC features parquet for one symbol
+            idx_aware = pd.date_range("2023-01-01", periods=n_bars,
+                                       freq="B", tz="UTC")
+            pd.DataFrame({
+                "open": 100.0, "high": 101.0, "low": 99.0,
+                "close": 100.5, "volume": 1_000_000, "vwap": 100.16,
+                "rsi_14": 50.0, "macd": 0.0, "macd_signal": 0.0,
+                "macd_hist": 0.0, "bb_upper": 102, "bb_lower": 98,
+                "bb_width": 4.0, "bb_pct": 0.5, "ema_9": 100, "ema_21": 100,
+                "ema_cross": 0, "atr_14": 1.0, "volume_ratio": 1.0,
+                "price_change_1d": 0.005, "price_change_5d": 0.02,
+                "high_low_ratio": 0.02, "close_to_vwap": 0.003,
+            }, index=idx_aware).to_parquet(tmp / "TZAWARE_features.parquet")
+
+            # Write a tz-NAIVE features parquet for another symbol
+            idx_naive = pd.date_range("2023-01-01", periods=n_bars, freq="B")
+            pd.DataFrame({
+                "open": 200.0, "high": 201.0, "low": 199.0,
+                "close": 200.5, "volume": 2_000_000, "vwap": 200.16,
+                "rsi_14": 55.0, "macd": 0.1, "macd_signal": 0.05,
+                "macd_hist": 0.05, "bb_upper": 202, "bb_lower": 198,
+                "bb_width": 4.0, "bb_pct": 0.5, "ema_9": 200, "ema_21": 200,
+                "ema_cross": 0, "atr_14": 2.0, "volume_ratio": 1.0,
+                "price_change_1d": 0.005, "price_change_5d": 0.02,
+                "high_low_ratio": 0.02, "close_to_vwap": 0.003,
+            }, index=idx_naive).to_parquet(tmp / "TZNAIVE_features.parquet")
+
+            # Run a cross-sectional backtest mixing them — old code
+            # raised TypeError on the pd.concat call inside the runner.
+            with patch.object(backtest_engine, "DATA_DIR", tmp):
+                out = backtest_engine.run_cross_sectional_backtest(
+                    model_id="jt_momentum_v1",
+                    symbols=["TZAWARE", "TZNAIVE"],
+                    period_days=200,
+                    top_decile=0.50,
+                    rebalance_days=21,
+                )
+
+        # The exact failure mode is a TypeError raised inside pandas;
+        # if we made it here, the fix is in place.
+        assert "metrics" in out, "cross-sectional run didn't return an envelope"
+
     def test_load_features_normalises_timezone(self):
         """_load_features must strip timezone info so parquets written
         by different fetchers (Alpaca tz-aware vs yfinance tz-naive)

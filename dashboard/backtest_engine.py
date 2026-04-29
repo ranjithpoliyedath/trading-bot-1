@@ -1240,13 +1240,21 @@ def run_cross_sectional_backtest(
         logger.error("Cannot load cross-sectional model %r: %s", model_id, exc)
         return {**_empty_results(), "preset": xs_preset}
 
-    # Build the wide-format close panel from disk
+    # Build the wide-format close panel from disk.  Belt-and-suspenders:
+    # ``_load_features`` already strips tz info, but we double-check here
+    # so a stale parquet that escaped the loader (or a future code path
+    # that bypasses _load_features) can't blow up pd.concat with
+    # "Cannot join tz-naive with tz-aware DatetimeIndex".
     closes = {}
     for s in syms:
         df = _load_features(s, period_days)
         if df.empty or "close" not in df.columns:
             continue
-        closes[s] = df["close"]
+        s_close = df["close"]
+        if s_close.index.tz is not None:
+            s_close = s_close.copy()
+            s_close.index = s_close.index.tz_localize(None)
+        closes[s] = s_close
     if not closes:
         logger.warning("No symbols had features data for cross-sectional run.")
         return {**_empty_results(), "preset": xs_preset}
