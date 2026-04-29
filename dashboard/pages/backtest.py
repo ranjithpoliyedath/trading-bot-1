@@ -856,13 +856,20 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
         #   - 0 symbols requested  → universe scope didn't resolve
         #   - 0 symbols loaded     → parquet data missing for the picks
         #   - >0 loaded, 0 traded  → strategy/filter just didn't trigger
-        n_symbols   = int(m.get("symbols_traded", 0) or 0)
-        load_report = (results.get("load_report") or {}) if isinstance(results, dict) else {}
-        requested   = int(load_report.get("requested", 0) or 0)
-        loaded      = int(load_report.get("loaded",    0) or 0)
-        missing     = list(load_report.get("missing_features") or [])
+        n_symbols       = int(m.get("symbols_traded", 0) or 0)
+        load_report     = (results.get("load_report") or {}) if isinstance(results, dict) else {}
+        has_load_report = "load_report" in (results or {})
+        requested       = int(load_report.get("requested", 0) or 0)
+        loaded          = int(load_report.get("loaded",    0) or 0)
+        missing         = list(load_report.get("missing_features") or [])
 
-        if n_symbols == 0 and requested > 0 and loaded == 0:
+        # Decision tree — branch on what the *load_report* says, NOT on
+        # symbols_traded.  symbols_traded is derived from the trades
+        # list, so it's always 0 when no trades fire — regardless of
+        # whether data loaded fine.  Conflating those two showed the
+        # "data missing" panel even on runs that loaded all 50 symbols
+        # but where the strategy just didn't trigger any buys.
+        if has_load_report and requested > 0 and loaded == 0:
             # Symbols WERE requested but none had loadable parquet
             headline = (f"No symbol data was loadable "
                         f"({len(missing)}/{requested} symbols missing features).")
@@ -879,18 +886,17 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
             ]
             bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
                              "color": "#1f2937", "lineHeight": "1.7"}
-        elif n_symbols == 0 and "load_report" in (results or {}) and requested == 0:
-            # New-shape result with explicit empty load_report — universe
-            # scope returned nothing.
+        elif has_load_report and requested == 0:
+            # Universe scope resolved to zero symbols
             headline = "Universe scope returned no symbols."
             details  = ("The selected scope didn't match any rows in "
                         "data/universe.parquet.  Refresh the universe first:")
             bullets  = ["python -m bot.universe"]
             bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
                              "color": "#1f2937", "lineHeight": "1.7"}
-        elif n_symbols == 0:
-            # Fallback for older runs without load_report (or runs where
-            # load_report is missing for any other reason)
+        elif not has_load_report and n_symbols == 0:
+            # Legacy saved run with no load_report — we genuinely don't
+            # know whether data loaded or not, so keep the old fallback.
             headline = "No symbol data was loadable for this run."
             details  = ("The engine couldn't find any *_features.parquet files "
                         "for the requested universe scope.  Run the OHLCV "
@@ -903,16 +909,65 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
             bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
                              "color": "#1f2937", "lineHeight": "1.7"}
         else:
-            headline = "No trades fired with these parameters."
-            details  = ("This is not a dashboard error — the engine ran "
-                        "successfully and the strategy/filter combo just "
-                        "didn't trigger any buys.  Most common causes:")
-            bullets  = [
-                "Confidence threshold too tight — try 0.55 to start.",
-                "Filter combination too restrictive — AND-only filters multiply quickly.",
-                "Strategy needs sentiment / sma_200 / etc. that may be sparse on the chosen universe.",
+            # Engine ran fine, data loaded fine — strategy + sizing just
+            # didn't produce any buys.  Surface hints based on the preset
+            # so the user knows what to tune.
+            preset = results.get("preset") or {}
+            sm     = (preset.get("sizing_method") or "").lower()
+            sk     = preset.get("sizing_kwargs") or {}
+            hints: list[str] = []
+
+            # Diagnostic: Kelly fraction can go negative when the user's
+            # win_rate × win_loss_ratio < 1-win_rate.  A negative Kelly
+            # sizes every trade to 0 shares → 0 trades recorded.
+            if sm in ("kelly", "half_kelly"):
+                try:
+                    p   = float(sk.get("win_rate", 0.5))
+                    b   = float(sk.get("win_loss_ratio", 1.5))
+                    q   = 1.0 - p
+                    f   = (p * b - q) / b if b > 0 else 0.0
+                    if sm == "half_kelly":
+                        f *= 0.5
+                    if f <= 0:
+                        kind_label = "Half-Kelly" if sm == "half_kelly" else "Full Kelly"
+                        hints.append(
+                            f"{kind_label} sized every trade to 0 shares: "
+                            f"with win-rate {p*100:.0f}% and win/loss ratio "
+                            f"{b:.2f}, the formula gives a non-positive "
+                            f"fraction ({f:+.2%}).  Either raise win-rate, "
+                            f"raise win/loss ratio, or switch to fixed_pct."
+                        )
+                except (TypeError, ValueError):
+                    pass
+
+            conf = preset.get("min_confidence") or preset.get("conf_threshold")
+            if conf is not None and float(conf) > 0.6:
+                hints.append(
+                    f"Confidence threshold {float(conf):.2f} is high — "
+                    f"try 0.55 to start."
+                )
+
+            if loaded_filters := preset.get("filters") or []:
+                hints.append(
+                    f"{len(loaded_filters)} filter(s) are AND-combined; "
+                    f"every condition must match the same bar."
+                )
+
+            # Always include the standard checklist after the run-specific hints
+            hints.extend([
+                "Strategy may need sentiment / sma_200 / etc. that's sparse on the chosen universe.",
                 "Universe too small or period too short.",
-            ]
+            ])
+
+            data_status = (f"Data loaded fine ({loaded}/{requested} symbols). "
+                            if has_load_report and requested > 0
+                            else "")
+            headline = "No trades fired with these parameters."
+            details  = (f"{data_status}This is not a dashboard error — the "
+                        f"engine ran successfully and the strategy / sizing "
+                        f"combo just didn't produce any buys.  Likely "
+                        f"causes for this run:")
+            bullets      = hints
             bullet_style = {"fontSize": "13px", "color": "#444"}
         return html.Div([
             _loaded_banner(results) or html.Div(),

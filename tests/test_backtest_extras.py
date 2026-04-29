@@ -855,7 +855,7 @@ class TestDataMissingDiagnostic:
         from dashboard.pages.backtest import render_results
         s = str(render_results(self._payload(n_symbols=12)))
         assert "No trades fired" in s
-        assert "didn't trigger any buys" in s
+        assert "didn't produce any buys" in s
 
 
 # ── Per-symbol load report (precise diagnostic for "0 symbols traded") ────
@@ -906,6 +906,73 @@ class TestLoadReport:
         }
         s = str(render_results(legacy))
         assert "No symbol data was loadable" in s
+
+
+class TestNoTradesFiredDiagnostic:
+    """Regression: BT-20260428-165823-golden_cross_v1-multi-2190d
+    loaded all 50 symbols successfully (load_report: requested=50,
+    loaded=50) but produced 0 trades because the user's Half-Kelly
+    inputs (win_rate=0.10, win_loss_ratio=2.0) produced a *negative*
+    Kelly fraction → every trade sized to 0 shares.  The dashboard
+    used to show 'No symbol data was loadable' here — wrong, the data
+    loaded fine.  Show 'No trades fired' with a Kelly-zero hint."""
+
+    def _payload(self, *, sizing_method, sizing_kwargs, requested=50, loaded=50):
+        return {
+            "run_id": "BT-test-no-trades",
+            "run_at": "2026-04-28T16:58:23",
+            "metrics":      {"total_trades": 0, "symbols_traded": 0},
+            "trades":       [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+            "load_report":  {"requested": requested, "loaded": loaded,
+                              "missing_features": [], "empty_after_window": []},
+            "preset": {
+                "model_id":         "golden_cross_v1",
+                "sizing_method":    sizing_method,
+                "sizing_kwargs":    sizing_kwargs,
+                "use_signal_exit":  False,
+                "stop_loss_pct":    0.07,
+                "starting_cash":    10_000,
+                "execution_model":  "next_open",
+                "slippage_bps":     5,
+                "filters":          [],
+            },
+        }
+
+    def test_loaded_symbols_zero_trades_renders_strategy_diagnostic(self):
+        """When load_report shows symbols loaded but no trades fired,
+        the panel must NOT say 'No symbol data was loadable'."""
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload(
+            sizing_method="fixed_pct",
+            sizing_kwargs={"pct": 0.95},
+        )))
+        assert "No symbol data was loadable" not in s
+        assert "No trades fired"             in s
+        assert "Data loaded fine (50/50"     in s
+
+    def test_negative_half_kelly_surfaces_specific_hint(self):
+        """The exact bug: half-Kelly with win_rate=0.10, ratio=2.0
+        produces Kelly = -17.5%.  The diagnostic must call this out."""
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload(
+            sizing_method="half_kelly",
+            sizing_kwargs={"win_rate": 0.10, "win_loss_ratio": 2.0},
+        )))
+        assert "Half-Kelly sized every trade to 0 shares" in s
+        assert "win-rate 10%"                              in s
+        assert "win/loss ratio 2.00"                       in s
+
+    def test_positive_kelly_does_not_show_hint(self):
+        """Sane Kelly inputs shouldn't trigger the 'sized to 0' hint."""
+        from dashboard.pages.backtest import render_results
+        s = str(render_results(self._payload(
+            sizing_method="half_kelly",
+            sizing_kwargs={"win_rate": 0.55, "win_loss_ratio": 2.0},
+        )))
+        assert "sized every trade to 0 shares" not in s
+        # Still shows the generic 'No trades fired' panel
+        assert "No trades fired" in s
 
 
 # ── Shared-pool simulator (every trade draws from one cash account) ────
