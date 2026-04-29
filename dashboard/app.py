@@ -103,6 +103,26 @@ def render_page(view, account, model, symbol):
 
 
 @app.callback(
+    Output("topbar-model-symbol", "style"),
+    Input("store-view", "data"),
+)
+def show_model_symbol_on_overview_only(view):
+    """Hide the Model + Symbol topbar dropdowns on pages that don't
+    use them.  Audit (2026-04-29) showed only Overview consumes both;
+    every other page either has its own selector (Backtest, Screener,
+    Builder, Finder) or doesn't use them at all (Market, Data).
+
+    Visible pages: overview, trades, model (legacy "model" tab).
+    Hidden pages:  backtest, screener, builder, finder, market, data.
+    """
+    visible = view in (None, "", "overview", "trades", "model")
+    base = {"display": "flex", "alignItems": "center"}
+    if not visible:
+        base["display"] = "none"
+    return base
+
+
+@app.callback(
     Output("store-account", "data"),
     Input("btn-paper", "n_clicks"),
     Input("btn-live",  "n_clicks"),

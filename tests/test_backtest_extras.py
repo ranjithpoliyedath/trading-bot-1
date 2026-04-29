@@ -897,6 +897,28 @@ class TestLoadReport:
         )))
         assert "Universe scope returned no symbols" in s
 
+    def test_save_backtest_sanitises_colon_in_run_id(self, tmp_path):
+        """save_backtest must replace illegal-on-Windows characters
+        (colons) with underscores before writing the parquet — and
+        reflect the sanitised id back in the envelope so subsequent
+        load_backtest() calls find the file."""
+        from unittest.mock import patch
+        from dashboard import backtest_engine
+
+        with patch.object(backtest_engine, "BACKTEST_DIR", tmp_path):
+            results = {"run_id": "LBRD-20260429-custom:keltner_tuned",
+                        "metrics": {"total_trades": 1},
+                        "trades":  [{"date": "2024-01-01", "pl": 100}],
+                        "equity_curve": [{"date": "start", "value": 10000}]}
+            rid = backtest_engine.save_backtest(results)
+
+        assert ":" not in rid
+        assert rid == "LBRD-20260429-custom_keltner_tuned"
+        assert (tmp_path / f"{rid}.json").exists()
+        # Envelope mutated to the sanitised id (so subsequent load_backtest
+        # by either form works)
+        assert results["run_id"] == rid
+
     def test_diagnostic_falls_back_for_legacy_payload(self):
         """Older saved runs lack load_report — render the legacy
         'No symbol data was loadable' message."""

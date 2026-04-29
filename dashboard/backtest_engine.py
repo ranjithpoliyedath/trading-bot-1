@@ -163,10 +163,27 @@ def run_backtest(
     }
 
 
+def _sanitize_run_id(run_id: str) -> str:
+    """Make a run_id safe for filenames on every platform.
+
+    Colons (commonly appearing in custom-model run_ids like
+    ``custom:foo``) are illegal on Windows and confuse some tools on
+    macOS/Linux when shell-globbing.  Replace them with underscores.
+    Also strips any ``..`` path-traversal attempts.
+    """
+    safe = run_id.replace(":", "_").replace("/", "_").replace("\\", "_")
+    safe = safe.replace("..", "_")
+    return safe
+
+
 def save_backtest(results: dict) -> str:
-    """Save backtest results to disk. Returns the run_id."""
-    run_id = results["run_id"]
-    path   = BACKTEST_DIR / f"{run_id}.json"
+    """Save backtest results to disk. Returns the (sanitised) run_id."""
+    run_id      = results["run_id"]
+    safe_run_id = _sanitize_run_id(run_id)
+    # Reflect the sanitised id back in the envelope so downstream
+    # load_backtest(run_id) lookups work consistently.
+    results["run_id"] = safe_run_id
+    path = BACKTEST_DIR / f"{safe_run_id}.json"
 
     serialisable = {
         k: (v.to_dict("records") if isinstance(v, pd.DataFrame) else v)
@@ -176,7 +193,7 @@ def save_backtest(results: dict) -> str:
         json.dump(serialisable, f, indent=2, default=str)
 
     logger.info("Saved backtest to %s", path)
-    return run_id
+    return safe_run_id
 
 
 def load_backtest(run_id: str) -> dict:

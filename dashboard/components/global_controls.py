@@ -74,18 +74,36 @@ def render_topbar():
                 ], style={"display": "flex", "border": "1px solid #ddd", "borderRadius": "8px", "overflow": "hidden", "marginRight": "16px"}),
             ], style={"display": "flex", "alignItems": "center"}),
 
+            # Model + Symbol selectors are only used by the Overview
+            # page (signal panel + per-symbol equity chart).  Every
+            # other page either has its own selector (Backtest,
+            # Screener, Builder, Finder) or doesn't use these inputs
+            # at all (Market, Data).  We wrap them in a dedicated
+            # container so a callback (in app.py) can hide them on
+            # pages where they're dead UI — clears clutter.
             html.Div([
-                html.Span("Model", style={"fontSize": "11px", "color": "#888", "marginRight": "6px"}),
-                dcc.Dropdown(id="dd-model", options=MODELS,
-                             value=(MODELS[0]["value"] if MODELS else None),
-                             clearable=False, style=DD_STYLE),
-            ], style={"display": "flex", "alignItems": "center", "marginRight": "16px"}),
+                html.Div([
+                    html.Span("Model", style={"fontSize": "11px",
+                                                "color": "#888",
+                                                "marginRight": "6px"}),
+                    dcc.Dropdown(id="dd-model", options=MODELS,
+                                  value=(MODELS[0]["value"] if MODELS else None),
+                                  clearable=False, style=DD_STYLE),
+                ], style={"display": "flex", "alignItems": "center",
+                          "marginRight": "16px"}),
 
-            html.Div([
-                html.Span("Symbol", style={"fontSize": "11px", "color": "#888", "marginRight": "6px"}),
-                dcc.Dropdown(id="dd-symbol", options=SYMBOLS, value="AAPL",
-                             clearable=False, style={"fontSize": "13px", "minWidth": "100px"}),
-            ], style={"display": "flex", "alignItems": "center", "marginRight": "20px"}),
+                html.Div([
+                    html.Span("Symbol", style={"fontSize": "11px",
+                                                 "color": "#888",
+                                                 "marginRight": "6px"}),
+                    dcc.Dropdown(id="dd-symbol", options=SYMBOLS, value="AAPL",
+                                  clearable=False,
+                                  style={"fontSize": "13px",
+                                         "minWidth": "100px"}),
+                ], style={"display": "flex", "alignItems": "center",
+                          "marginRight": "20px"}),
+            ], id="topbar-model-symbol",
+                style={"display": "flex", "alignItems": "center"}),
 
             html.Div([
                 html.Span(style={"width": "8px", "height": "8px", "borderRadius": "50%",
