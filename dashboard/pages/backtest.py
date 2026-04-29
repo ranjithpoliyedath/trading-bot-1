@@ -824,6 +824,176 @@ def _loaded_banner(results: dict):
     )
 
 
+def _failure_post_mortem(results: dict):
+    """Render a forensic post-mortem panel for a 0-trade run.
+
+    Reads the ``failure_diagnostics`` block the engine accumulates
+    while scoring symbols and applying screener filters.  Walks the
+    pipeline stage-by-stage so the user sees exactly where signals
+    vanished:
+
+        raw model buys  →  after confidence cutoff  →  after filters
+
+    The panel returns None if there's no diagnostic block to render
+    (e.g., loaded saved run from before this telemetry shipped, or
+    the run hit an earlier failure mode like all-data-missing).
+    """
+    diag = (results or {}).get("failure_diagnostics") or {}
+    if not diag or not isinstance(diag, dict):
+        return None
+
+    raw   = int(diag.get("raw_buy_signals", 0) or 0)
+    aft_c = int(diag.get("after_confidence_cutoff", 0) or 0)
+    aft_f = int(diag.get("after_filters", 0) or 0)
+    cthr  = float(diag.get("conf_threshold", 0) or 0)
+    f_diags = diag.get("filters") or []
+
+    # Where did signals die?  Identify the dominant kill stage so we
+    # can show a one-line headline before the table.
+    if raw == 0:
+        verdict = ("Strategy emitted ZERO buy signals across the entire universe. "
+                    "Either the strategy needs features this universe doesn't have, "
+                    "or the period contains no setup the model recognises.")
+    elif aft_c == 0 and raw > 0:
+        verdict = (f"All {raw:,} raw buy signals were rejected by the confidence "
+                    f"cutoff ({cthr:.2f}).  Either the model's confidence is "
+                    f"calibrated below this threshold or the threshold is too tight.")
+    elif aft_f == 0 and aft_c > 0:
+        verdict = (f"All {aft_c:,} buy signals (after confidence) were rejected "
+                    f"by the screener filters.  Look at the filter table below — "
+                    f"any row showing 'field missing' or '0 bars passed alone' "
+                    f"is the bottleneck.")
+    else:
+        verdict = (f"Signals survived all stages ({aft_f:,} buys after filters) "
+                    f"but no trades fired — likely a sizing or cash-pool issue "
+                    f"(see hints in the orange panel above).")
+
+    # ── Pipeline funnel table ────────────────────────────────────
+    funnel_rows = [
+        ("1. Raw model buy signals",        f"{raw:,}",     ""),
+        (f"2. After confidence ≥ {cthr:.2f}", f"{aft_c:,}",
+            (f"−{raw - aft_c:,} dropped" if raw > aft_c else "")),
+        ("3. After screener filters",        f"{aft_f:,}",
+            (f"−{aft_c - aft_f:,} dropped" if aft_c > aft_f else "")),
+    ]
+
+    funnel_table = html.Table([
+        html.Thead(html.Tr([
+            html.Th("Pipeline stage", style={"textAlign": "left",
+                                              "padding": "6px 12px",
+                                              "fontSize": "12px",
+                                              "color": "#666",
+                                              "fontWeight": "600",
+                                              "borderBottom": "1px solid #E5E7EB"}),
+            html.Th("Buy signals", style={"textAlign": "right",
+                                            "padding": "6px 12px",
+                                            "fontSize": "12px",
+                                            "color": "#666",
+                                            "fontWeight": "600",
+                                            "borderBottom": "1px solid #E5E7EB"}),
+            html.Th("Δ", style={"textAlign": "right",
+                                  "padding": "6px 12px",
+                                  "fontSize": "12px",
+                                  "color": "#666",
+                                  "fontWeight": "600",
+                                  "borderBottom": "1px solid #E5E7EB"}),
+        ])),
+        html.Tbody([
+            html.Tr([
+                html.Td(stage, style={"padding": "6px 12px", "fontSize": "13px"}),
+                html.Td(count, style={"padding": "6px 12px", "fontSize": "13px",
+                                       "textAlign": "right",
+                                       "fontFamily": "monospace",
+                                       "fontWeight": "600"}),
+                html.Td(delta, style={"padding": "6px 12px", "fontSize": "12px",
+                                       "textAlign": "right",
+                                       "color": "#A32D2D"
+                                                if delta else "#666",
+                                       "fontFamily": "monospace"}),
+            ])
+            for stage, count, delta in funnel_rows
+        ]),
+    ], style={"width": "100%", "borderCollapse": "collapse"})
+
+    # ── Per-filter accountability table ──────────────────────────
+    if f_diags:
+        filter_header = html.Tr([
+            html.Th(h, style={"textAlign": ta, "padding": "6px 12px",
+                               "fontSize": "12px", "color": "#666",
+                               "fontWeight": "600",
+                               "borderBottom": "1px solid #E5E7EB"})
+            for h, ta in [("Filter",       "left"),
+                           ("Field present in",  "right"),
+                           ("Field missing in",  "right"),
+                           ("Bars passing alone", "right"),
+                           ("Verdict", "left")]
+        ])
+        filter_rows = []
+        for f in f_diags:
+            present = int(f.get("field_present_in", 0) or 0)
+            missing = int(f.get("field_missing_in", 0) or 0)
+            passing = int(f.get("bars_passing_alone", 0) or 0)
+            label   = f"{f.get('field','?')} {f.get('op','?')} {f.get('value','?')}"
+            if missing > 0 and present == 0:
+                v = f"❌ Field doesn't exist in any of the {missing} loaded symbols"
+                v_color = "#A32D2D"
+            elif missing > 0:
+                v = f"⚠ Field missing in {missing} of {missing+present} symbols"
+                v_color = "#D97706"
+            elif passing == 0:
+                v = "❌ Threshold never satisfied — relax the operator/value"
+                v_color = "#A32D2D"
+            else:
+                v = f"✓ {passing:,} bars matched alone"
+                v_color = "#27500A"
+            filter_rows.append(html.Tr([
+                html.Td(label, style={"padding": "6px 12px", "fontSize": "13px",
+                                       "fontFamily": "monospace"}),
+                html.Td(f"{present}/{present+missing}",
+                        style={"padding": "6px 12px", "fontSize": "13px",
+                                "textAlign": "right", "fontFamily": "monospace"}),
+                html.Td(str(missing) if missing else "—",
+                        style={"padding": "6px 12px", "fontSize": "13px",
+                                "textAlign": "right", "fontFamily": "monospace",
+                                "color": "#A32D2D" if missing else "#666"}),
+                html.Td(f"{passing:,}",
+                        style={"padding": "6px 12px", "fontSize": "13px",
+                                "textAlign": "right", "fontFamily": "monospace",
+                                "color": "#A32D2D" if passing == 0 else "#1f2937"}),
+                html.Td(v, style={"padding": "6px 12px", "fontSize": "12px",
+                                    "color": v_color}),
+            ]))
+        filter_table = html.Table([
+            html.Thead(filter_header),
+            html.Tbody(filter_rows),
+        ], style={"width": "100%", "borderCollapse": "collapse",
+                  "marginTop": "16px"})
+    else:
+        filter_table = html.Div("No screener filters configured.",
+                                 style={"fontSize": "12px", "color": "#666",
+                                        "marginTop": "12px",
+                                        "fontStyle": "italic"})
+
+    return html.Div([
+        html.Div("🔬 Backtest post-mortem",
+                 style={"fontSize": "13px", "fontWeight": "600",
+                        "color": "#1f2937", "marginBottom": "6px"}),
+        html.P(verdict, style={"fontSize": "13px", "color": "#444",
+                                "margin": "0 0 16px"}),
+        html.Div("Signal pipeline funnel",
+                 style={"fontSize": "12px", "fontWeight": "600",
+                        "color": "#666", "marginBottom": "4px"}),
+        funnel_table,
+        html.Div("Per-filter accountability",
+                 style={"fontSize": "12px", "fontWeight": "600",
+                        "color": "#666", "marginTop": "16px",
+                        "marginBottom": "4px"}) if f_diags else html.Div(),
+        filter_table,
+    ], style={**CARD, "padding": "20px", "marginTop": "12px",
+              "background": "#F9FAFB",
+              "border": "1px solid #E5E7EB"})
+
+
 def render_results(results: dict, ns: str = "", section_label: Optional[str] = None):
     """Render a single-period results envelope.
 
@@ -989,6 +1159,12 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
                         f"causes for this run:")
             bullets      = hints
             bullet_style = {"fontSize": "13px", "color": "#444"}
+        # Post-mortem: full forensic breakdown when the run actually
+        # touched data + emitted signals but lost them somewhere.
+        # Shown below the orange diagnostic card so the user gets both
+        # the high-level reason AND the bar-by-bar accounting.
+        post_mortem = _failure_post_mortem(results)
+
         return html.Div([
             _loaded_banner(results) or html.Div(),
             _section_label(label),
@@ -1016,6 +1192,7 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
                 "padding":        "32px",
                 "marginTop":      "8px",
             }),
+            post_mortem if post_mortem is not None else html.Div(),
         ])
 
     return html.Div([

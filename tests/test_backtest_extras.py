@@ -1182,3 +1182,110 @@ class TestSharedPortfolioPool:
         sim = _simulate_portfolio(scored, starting_cash=0)
         assert sim["trades"] == []
         assert sim["final_cash"] == 0
+
+
+class TestFailurePostMortem:
+    """Regression: when a backtest fires 0 trades, the dashboard must
+    show a forensic breakdown (signal funnel + per-filter accountability)
+    so the user doesn't have to inspect the saved JSON manually.
+
+    Reproducer: BT-20260428-182144-golden_cross_v1-multi-2190d filtered
+    on st_bullish_ratio AND contraction_count — neither column exists in
+    any of the 50 S&P feature parquets.  Engine produced 0 trades; the
+    panel must explain why."""
+
+    def _diag_payload(self, **diag_overrides):
+        diag = {
+            "raw_buy_signals":         500,
+            "after_confidence_cutoff": 300,
+            "after_filters":           0,
+            "conf_threshold":          0.55,
+            "filters": [
+                {"field": "st_bullish_ratio", "op": ">",  "value": 65,
+                 "field_missing_in": 50, "field_present_in": 0,
+                 "bars_passing_alone": 0, "bars_present_total": 0},
+                {"field": "contraction_count","op": "==", "value": 1,
+                 "field_missing_in": 50, "field_present_in": 0,
+                 "bars_passing_alone": 0, "bars_present_total": 0},
+            ],
+        }
+        diag.update(diag_overrides)
+        return {
+            "run_id": "BT-test-postmortem",
+            "run_at": "2026-04-28T18:21:44",
+            "metrics":      {"total_trades": 0, "symbols_traded": 0},
+            "trades":       [],
+            "equity_curve": [{"date": "start", "value": 10000}],
+            "load_report":  {"requested": 50, "loaded": 50,
+                              "missing_features": [], "empty_after_window": []},
+            "preset":       {"model_id": "golden_cross_v1",
+                              "filters":  [
+                                  {"field": "st_bullish_ratio", "op": ">",  "value": 65},
+                                  {"field": "contraction_count","op": "==", "value": 1},
+                              ]},
+            "failure_diagnostics": diag,
+        }
+
+    def test_panel_renders_when_diagnostics_present(self):
+        from dashboard.pages.backtest import _failure_post_mortem
+        panel = _failure_post_mortem(self._diag_payload())
+        assert panel is not None
+        s = str(panel)
+        assert "Backtest post-mortem"        in s
+        assert "Signal pipeline funnel"      in s
+        assert "Per-filter accountability"   in s
+
+    def test_funnel_shows_drop_at_filter_stage(self):
+        from dashboard.pages.backtest import _failure_post_mortem
+        s = str(_failure_post_mortem(self._diag_payload()))
+        # Funnel should label each stage
+        assert "Raw model buy signals"       in s
+        assert "After confidence"            in s
+        assert "After screener filters"      in s
+        # And label the kill-stage in the verdict
+        assert "rejected by the screener filters" in s
+
+    def test_per_filter_table_calls_out_missing_field(self):
+        from dashboard.pages.backtest import _failure_post_mortem
+        s = str(_failure_post_mortem(self._diag_payload()))
+        # The exact bug-symptom: filter field doesn't exist on any symbol
+        assert "Field doesn"                 in s
+        assert "st_bullish_ratio"            in s
+        assert "contraction_count"           in s
+
+    def test_no_diagnostics_returns_none(self):
+        """Saved runs from before this telemetry shipped don't have a
+        failure_diagnostics block — panel returns None silently."""
+        from dashboard.pages.backtest import _failure_post_mortem
+        legacy = {"run_id": "old", "metrics": {"total_trades": 0}}
+        assert _failure_post_mortem(legacy) is None
+
+    def test_zero_raw_signals_verdict(self):
+        from dashboard.pages.backtest import _failure_post_mortem
+        s = str(_failure_post_mortem(self._diag_payload(
+            raw_buy_signals=0, after_confidence_cutoff=0, after_filters=0)))
+        assert "Strategy emitted ZERO buy signals" in s
+
+    def test_engine_emits_failure_diagnostics_block(self):
+        """End-to-end: run_filtered_backtest must include the diagnostics
+        block in the result envelope, even on runs that hit 0 trades."""
+        from dashboard.backtest_engine import run_filtered_backtest
+        out = run_filtered_backtest(
+            model_id="ibs_v1", filters=[
+                {"field": "__nonexistent_col__", "op": ">", "value": 0},
+            ],
+            symbols=["__BOGUS_TICKER_EFD_TEST__"],
+            period_days=30, conf_threshold=0.55, starting_cash=10_000,
+        )
+        diag = out.get("failure_diagnostics")
+        assert isinstance(diag, dict)
+        assert "raw_buy_signals"        in diag
+        assert "after_confidence_cutoff" in diag
+        assert "after_filters"          in diag
+        assert "filters"                in diag
+        # And the per-filter dict has the right shape
+        assert len(diag["filters"]) == 1
+        f0 = diag["filters"][0]
+        for k in ("field", "op", "value", "field_missing_in",
+                  "field_present_in", "bars_passing_alone"):
+            assert k in f0, f"failure_diagnostics.filters[0] missing {k}"

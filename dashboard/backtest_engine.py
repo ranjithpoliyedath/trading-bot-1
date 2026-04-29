@@ -367,6 +367,30 @@ def run_filtered_backtest(
     load_report = {"requested": len(symbols), "loaded": 0,
                    "missing_features": [], "empty_after_window": []}
 
+    # Failure post-mortem telemetry — accumulated as we score symbols
+    # and apply filters.  The dashboard renders this when total_trades
+    # comes back 0 so the user can see *exactly* where signals
+    # vanished (raw model buys → after confidence cutoff → after
+    # filters).  Cost is one Series.sum() per filter per symbol.
+    diag = {
+        "raw_buy_signals":         0,   # before any masking
+        "after_confidence_cutoff": 0,   # after conf_threshold
+        "after_filters":           0,   # after screener filters
+        "conf_threshold":          float(conf_threshold or 0),
+        "filters": [
+            {
+                "field":                f["field"],
+                "op":                   f["op"],
+                "value":                f["value"],
+                "field_missing_in":     0,   # symbols where col absent
+                "field_present_in":     0,   # symbols where col present
+                "bars_passing_alone":   0,   # how often this filter alone fires
+                "bars_present_total":   0,   # bars where the field is non-null
+            }
+            for f in (filters or [])
+        ],
+    }
+
     # ── Pre-score every symbol; queue scored DataFrames for the shared-pool
     # simulator below.  Each symbol gets its model signals + filter mask
     # applied; the simulator then walks them on a chronologically-merged
@@ -393,23 +417,36 @@ def run_filtered_backtest(
         scored = model.predict_batch(df.copy())
         scored["signal"]     = scored.get("signal", "hold").fillna("hold")
         scored["confidence"] = scored.get("confidence", 0.5).fillna(0.5)
+
+        # ── Diagnostic telemetry: count buy signals at each stage ──
+        raw_buys = int((scored["signal"] == "buy").sum())
+        diag["raw_buy_signals"] += raw_buys
         scored.loc[scored["confidence"] < conf_threshold, "signal"] = "hold"
+        after_conf_buys = int((scored["signal"] == "buy").sum())
+        diag["after_confidence_cutoff"] += after_conf_buys
 
         # Apply screener filters per-bar — only allow buys when all match
         if filters:
             mask = pd.Series(True, index=scored.index)
-            for f in filters:
+            for fi, f in enumerate(filters):
                 fld = f["field"]; op = f["op"]; val = float(f["value"])
+                fdiag = diag["filters"][fi]
                 if fld not in scored.columns:
+                    fdiag["field_missing_in"] += 1
                     mask &= False
                     continue
+                fdiag["field_present_in"] += 1
                 col = pd.to_numeric(scored[fld], errors="coerce")
+                fdiag["bars_present_total"] += int(col.notna().sum())
                 opfn = OPS.get(op)
                 if opfn is None:
                     continue
-                mask &= opfn(col, val).fillna(False)
+                this_filter_pass = opfn(col, val).fillna(False)
+                fdiag["bars_passing_alone"] += int(this_filter_pass.sum())
+                mask &= this_filter_pass
             scored.loc[~mask & (scored["signal"] == "buy"), "signal"] = "hold"
 
+        diag["after_filters"] += int((scored["signal"] == "buy").sum())
         scored_per_symbol[symbol] = scored
 
     # Single-line load summary so the user sees a concise view of how
@@ -491,6 +528,7 @@ def run_filtered_backtest(
         "trades":          all_trades,
         "per_symbol":      metric_per_symbol,
         "load_report":     load_report,
+        "failure_diagnostics": diag,
         "preset":          preset,
         "run_at":          datetime.now().isoformat(),
     }
