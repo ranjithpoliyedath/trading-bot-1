@@ -118,26 +118,49 @@ def _get_volume_movers(threshold: float = 2.0, limit: int = 10) -> list[dict]:
 
 
 def _get_sentiment_heatmap(limit: int = 25) -> list[dict]:
-    """Return universe symbols with their latest sentiment score for the heatmap."""
+    """Return universe symbols with their latest sentiment score for the heatmap.
+
+    Sort by 14-day average volume so the heatmap shows the most-traded
+    names (the ones users care about), not whichever symbols happen to
+    sort first alphabetically in the universe parquet.  Also filters
+    out tiles with zero sentiment when at least some symbols DO have
+    sentiment data — keeps the panel focused on actionable signal."""
     universe = load_universe(eligible_only=True)
     if universe.empty:
         return []
 
+    # Sort by liquidity to surface the symbols most users actually trade
+    if "avg_volume_14d" in universe.columns:
+        universe = universe.sort_values("avg_volume_14d", ascending=False,
+                                          na_position="last")
+
     rows = []
-    for symbol in universe["symbol"].head(limit):
+    nonzero = 0
+    for symbol in universe["symbol"].head(limit * 2):  # over-pull then trim
         df = _load_features(symbol)
         if df.empty:
             continue
         last       = df.iloc[-1]
         sentiment  = last.get("combined_sentiment", 0)
         sentiment  = 0.0 if pd.isna(sentiment) else float(sentiment)
+        if sentiment != 0:
+            nonzero += 1
         rows.append({
             "symbol":     symbol,
             "sentiment":  round(sentiment, 3),
             "close":      round(float(last.get("close", 0)), 2),
             "change_pct": round(float(last.get("price_change_1d", 0)) * 100, 2),
         })
-    return rows
+        if len(rows) >= limit:
+            break
+
+    # If at least some symbols have sentiment data, prefer non-zero
+    # tiles in the rendered list (sort by abs(sentiment) desc).  If
+    # NOTHING has sentiment yet, return the volume-sorted list as-is
+    # so the user sees neutral tiles instead of an empty panel.
+    if nonzero > 0:
+        rows.sort(key=lambda r: abs(r["sentiment"]), reverse=True)
+    return rows[:limit]
 
 
 def _get_recent_news(limit: int = 12) -> list[dict]:

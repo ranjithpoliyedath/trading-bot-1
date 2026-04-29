@@ -8,6 +8,7 @@ risk metrics, saved runs dropdown.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 import plotly.graph_objects as go
@@ -1210,6 +1211,78 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
             dbc.Col(_signal_quality(m, ns=ns), md=4),
         ], className="g-3 mb-3"),
         _trade_log(results, ns=ns),
+        _ai_analyzer_panel(results, ns=ns),
+    ])
+
+
+def _ai_analyzer_panel(results: dict, ns: str = ""):
+    """Card with an "Analyze this run" button.  Click triggers an
+    Anthropic API call (or local-heuristic fallback when no API key)
+    and renders the resulting markdown verdict / issues / recs.
+
+    Stateful via the analyzer service singleton — multiple runs in
+    the same session re-use the most recent analysis until the user
+    clicks Analyze again on a different run."""
+    from dashboard.services.run_analyzer import get_analyzer_status
+
+    status = get_analyzer_status()
+    initial_md = ""
+    if status["status"] == "done" and status.get("result"):
+        # If the cached analysis matches THIS run's run_id, show it
+        cached_run_id = status.get("run_id")
+        this_run_id   = (results or {}).get("run_id")
+        if cached_run_id == this_run_id:
+            initial_md = status["result"].get("text", "")
+
+    button_id   = f"btn-analyze-run-{ns}" if ns else "btn-analyze-run"
+    panel_id    = f"ai-analyzer-panel-{ns}" if ns else "ai-analyzer-panel"
+    poll_id     = f"ai-analyzer-poll-{ns}"  if ns else "ai-analyzer-poll"
+
+    has_key = bool(os.getenv("ANTHROPIC_API_KEY", "").strip())
+
+    return html.Div([
+        html.Div([
+            html.Div("🤖 Analyze this run", style={
+                "fontSize": "13px", "fontWeight": "600",
+                "color": "#1f2937", "marginBottom": "4px"}),
+            html.P(
+                "Run an AI agent over the result envelope.  It "
+                "explains what happened, flags suspicious numbers, "
+                "names specific issues with the strategy / sizing / "
+                "exits, and suggests next steps.",
+                style={"fontSize": "12px", "color": "#666",
+                       "margin": "0 0 12px"}),
+            html.Button(
+                "Analyze this backtest",
+                id=button_id,
+                style={
+                    "background":   "#3C3489",
+                    "color":        "white",
+                    "border":       "none",
+                    "padding":      "10px 24px",
+                    "borderRadius": "8px",
+                    "fontSize":     "13px",
+                    "fontWeight":   "600",
+                    "cursor":       "pointer",
+                },
+            ),
+            html.Div(id=panel_id,
+                      children=(dcc.Markdown(initial_md,
+                                              link_target="_blank",
+                                              style={"fontSize": "13px",
+                                                     "color": "#1f2937",
+                                                     "lineHeight": "1.6"})
+                                if initial_md else
+                                html.Div(
+                                    "Click the button above to analyze this run.",
+                                    style={"fontSize": "12px",
+                                           "color": "#888",
+                                           "fontStyle": "italic"})),
+                      style={"marginTop": "16px"}),
+            dcc.Interval(id=poll_id, interval=2000, disabled=False),
+            dcc.Store(id=f"{button_id}-run-cache",
+                      data=(results or {}).get("run_id", "")),
+        ], style={**CARD, "padding": "16px", "marginTop": "12px"})
     ])
 
 
@@ -1720,8 +1793,19 @@ def _trade_log(results: dict, ns: str = ""):
     """Collapsible per-trade table.  Shown collapsed by default so the
     main metrics aren't drowned by a long list; click the header to
     expand.  Rows include entry/exit dates, hold time, P&L, % return,
-    % of starting portfolio, and the exit reason."""
+    % of starting portfolio, and the exit reason.
+
+    Cross-sectional fallback: when ``trades`` is empty but
+    ``rebalance_trades`` exists (legacy XS runs from before the trade-
+    log fix shipped), render the rebalance log instead so the user can
+    still see something rather than a blank panel."""
     trades = (results or {}).get("trades", []) or []
+    is_xs_fallback = False
+    if not trades:
+        rb = (results or {}).get("rebalance_trades", []) or []
+        if rb:
+            trades = rb
+            is_xs_fallback = True
     if not trades:
         return html.Div()
 

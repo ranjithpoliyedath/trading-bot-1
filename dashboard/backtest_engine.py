@@ -1274,6 +1274,7 @@ def run_cross_sectional_backtest(
     equity        = cash
     holdings:      dict[str, int]   = {}     # symbol -> shares
     entry_prices:  dict[str, float] = {}     # symbol -> entry fill price
+    entry_dates:   dict[str, str]   = {}     # symbol -> ISO entry date
     trades        = []
     equity_curve  = [{"date": "start", "value": equity}]
 
@@ -1293,26 +1294,52 @@ def run_cross_sectional_backtest(
             continue
 
         # ── Liquidate everything we currently hold (sell at current close × (1-bps)) ──
+        # IMPORTANT: if the symbol's price is NaN at the rebalance date
+        # (corp action, halt, delist), fall back to its most recent
+        # valid close.  The old code did `continue` here which silently
+        # cleared the position from holdings WITHOUT crediting the
+        # cash — leaking real money out of the portfolio every time a
+        # held symbol had a missing bar.  That's how a long-only
+        # momentum run on 100 symbols over 6 years could end at -99%.
         for sym, shares in list(holdings.items()):
             price = panel.at[dt, sym] if sym in panel.columns else None
             if price is None or pd.isna(price):
-                continue
+                # Forward-fill: use the last valid price <= dt.
+                if sym in panel.columns:
+                    series = panel[sym].loc[:dt].dropna()
+                    if not series.empty:
+                        price = float(series.iloc[-1])
+                if price is None or pd.isna(price):
+                    # The symbol genuinely has no price history through
+                    # dt — should be impossible since we only entered
+                    # on a valid bar, but punt safely: use entry price
+                    # to credit the original cost back (zero P&L).
+                    price = entry_prices.get(sym, 0.0)
+                    if price <= 0:
+                        # Last resort: drop the position without leaking.
+                        continue
             fill = float(price) * (1 - bps)
             cash += shares * fill
             entry_fill = entry_prices.get(sym, fill)
             pl = round((fill - entry_fill) * shares, 2)
             trades.append({
                 "date":        str(dt.date()) if hasattr(dt, "date") else str(dt),
+                "entry_date":  entry_dates.get(sym, ""),
                 "symbol":      sym,
                 "pl":          pl,
                 "win":         pl > 0,
                 "exit_reason": "rebalance",
+                "entry_price": round(entry_fill, 2),
+                "exit_price":  round(fill, 2),
+                "shares":      int(shares),
             })
         holdings.clear()
         entry_prices.clear()
+        entry_dates.clear()
 
         # ── Allocate equally among picks (buy at close × (1+bps)) ──
         per_position = cash / len(picks)
+        entry_iso = str(dt.date()) if hasattr(dt, "date") else str(dt)
         for sym in picks:
             price = panel.at[dt, sym]
             if pd.isna(price):
@@ -1327,40 +1354,62 @@ def run_cross_sectional_backtest(
             cash -= cost
             holdings[sym]     = shares
             entry_prices[sym] = fill
+            entry_dates[sym]  = entry_iso
 
-        # mark-to-market equity
-        m2m = sum(
-            shares * float(panel.at[dt, sym])
-            for sym, shares in holdings.items()
-            if sym in panel.columns and not pd.isna(panel.at[dt, sym])
-        )
+        # mark-to-market equity — use forward-filled close so a one-day
+        # NaN doesn't artificially zero out a position's value.
+        m2m = 0.0
+        for sym, shares in holdings.items():
+            if sym not in panel.columns:
+                continue
+            cur = panel.at[dt, sym]
+            if pd.isna(cur):
+                series = panel[sym].loc[:dt].dropna()
+                if series.empty:
+                    continue
+                cur = float(series.iloc[-1])
+            m2m += shares * float(cur)
         equity = cash + m2m
         equity_curve.append({
             "date":  str(dt.date()) if hasattr(dt, "date") else str(dt),
             "value": round(float(equity), 2),
         })
 
-    # Final liquidation at panel's last close so the equity curve is closed
+    # Final liquidation at panel's last close so the equity curve is
+    # closed.  Same forward-fill logic as the rebalance liquidation —
+    # a NaN final-bar price must NOT silently drop the position.
     last_dt = panel.index[-1]
+    last_iso = str(last_dt.date()) if hasattr(last_dt, "date") else str(last_dt)
     for sym, shares in list(holdings.items()):
         if sym not in panel.columns:
             continue
         price = panel.at[last_dt, sym]
         if pd.isna(price):
-            continue
+            series = panel[sym].dropna()
+            if not series.empty:
+                price = float(series.iloc[-1])
+        if price is None or pd.isna(price):
+            price = entry_prices.get(sym, 0.0)
+            if price <= 0:
+                continue
         fill = float(price) * (1 - bps)
         cash += shares * fill
         entry_fill = entry_prices.get(sym, fill)
         pl = round((fill - entry_fill) * shares, 2)
         trades.append({
-            "date":        str(last_dt.date()) if hasattr(last_dt, "date") else str(last_dt),
+            "date":        last_iso,
+            "entry_date":  entry_dates.get(sym, ""),
             "symbol":      sym,
             "pl":          pl,
             "win":         pl > 0,
             "exit_reason": "final_liquidation",
+            "entry_price": round(entry_fill, 2),
+            "exit_price":  round(fill, 2),
+            "shares":      int(shares),
         })
     holdings.clear()
     entry_prices.clear()
+    entry_dates.clear()
     equity = cash
     equity_curve.append({"date": str(last_dt.date()), "value": round(equity, 2)})
 

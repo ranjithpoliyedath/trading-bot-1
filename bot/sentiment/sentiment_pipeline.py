@@ -124,6 +124,15 @@ def run_sentiment_pipeline(
         df_tech.index = pd.to_datetime(df_tech.index).normalize()
         df_sent.index = pd.to_datetime(df_sent.index).normalize()
 
+        # Strip timezones so tech (yfinance, tz-naive) + sentiment
+        # (tz-aware from news/StockTwits ISO timestamps) can join.
+        # Without this the merge raises:
+        #   "Cannot join tz-naive with tz-aware DatetimeIndex"
+        if df_tech.index.tz is not None:
+            df_tech.index = df_tech.index.tz_localize(None)
+        if df_sent.index.tz is not None:
+            df_sent.index = df_sent.index.tz_localize(None)
+
         available = [c for c in SENTIMENT_FEATURE_COLUMNS if c in df_sent.columns]
         # feature_engineer pre-seeds zero-valued sentiment columns on every
         # row; drop them before joining so the real values from df_sent win.
