@@ -141,6 +141,14 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "max_extension",    "type": "float", "low": 0.10, "high": 0.40, "step": 0.05},
         {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
+    "quantitativo_mr_v1": [
+        # The article uses fixed 25/10/2.5 + IBS<0.3.  Tune around
+        # these neighbourhoods to see if the QQQ-tuned defaults
+        # transfer or need re-fitting on the user's universe.
+        {"name": "max_ibs",          "type": "float", "low": 0.10, "high": 0.40, "step": 0.05},
+        {"name": "min_band_dive",    "type": "float", "low": 0.0,  "high": 0.05, "step": 0.005},
+        {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
 }
 
 
@@ -254,6 +262,19 @@ def params_to_filters(strategy_id: str, params: dict) -> list[dict]:
              "op": ">", "value": params.get("min_sma_slope", 0.0)},
             {"field": "sma_150_extension",
              "op": "<", "value": params.get("max_extension", 0.30)},
+        ]
+    if strategy_id == "quantitativo_mr_v1":
+        # Tune the IBS ceiling + how deeply below the band we want to
+        # see before buying.  qmr_band_dive is the strategy-emitted
+        # column "(lower_band - close) / close, clipped to >=0",
+        # so larger values = more oversold.
+        return [
+            {"field": "ibs",
+             "op":    "<",
+             "value": params.get("max_ibs", 0.30)},
+            {"field": "qmr_band_dive",
+             "op":    ">=",
+             "value": params.get("min_band_dive", 0.0)},
         ]
     # golden_cross_v1, keltner_breakout_v1: tuning happens via min_confidence
     # only — the strategies' published rules are kept intact.

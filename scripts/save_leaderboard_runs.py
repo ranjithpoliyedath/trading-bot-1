@@ -81,6 +81,21 @@ TUNED_CONFIGS = [
         "conf":     0.85,
         "note":     "OOS Sharpe 0.695 (4-fold WF, after Optuna fix)",
     },
+    {
+        # Quantitativo mean-reversion tuned for high-precision QQQ
+        # entries (84.6% win rate, max DD only -5.9%).  Article:
+        # quantitativo.com "A Mean Reversion Strategy with 2.11 Sharpe".
+        "name":     "quantitativo_mr_qqq",
+        "model_id": "quantitativo_mr_v1",
+        "filters":  [
+            {"field": "ibs",           "op": "<",  "value": 0.10},
+            {"field": "qmr_band_dive", "op": ">=", "value": 0.015},
+        ],
+        "conf":     0.66,
+        "note":     ("Quantitativo MR tuned on QQQ — 4-fold WF OOS "
+                     "Sharpe 0.838.  IBS<0.10 + 1.5% below band for "
+                     "rare high-precision setups."),
+    },
 ]
 
 

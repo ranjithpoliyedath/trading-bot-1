@@ -199,6 +199,52 @@ class TestRegimeChecker:
 
 class TestEngineRegimeKwargs:
 
+    def test_quantitativo_mr_v1_emits_required_columns(self):
+        """Strategy from quantitativo.com 'Sharpe 2.11' article.
+        Pin the derived columns the strategy emits so future
+        refactors can't silently break the screener filter chain."""
+        import pandas as pd
+        import numpy as np
+        from bot.models.registry import get_model
+
+        rng = np.random.default_rng(42)
+        n   = 500
+        rets   = rng.normal(0.0005, 0.012, n)
+        closes = (100.0 * (1 + pd.Series(rets)).cumprod()).tolist()
+        df = pd.DataFrame({
+            "open":  closes,
+            "high":  [c * 1.012 for c in closes],
+            "low":   [c * 0.988 for c in closes],
+            "close": closes,
+            "volume": rng.integers(1_000_000, 2_000_000, n),
+            "vwap":  closes,
+        }, index=pd.date_range("2022-01-01", periods=n, freq="B"))
+
+        m   = get_model("quantitativo_mr_v1")
+        out = m.predict_batch(df.copy())
+
+        for col in ("ibs", "qmr_range_mean", "qmr_high_n",
+                    "qmr_lower_band", "qmr_band_dive",
+                    "prev_high", "sma_300"):
+            assert col in out.columns, f"missing {col}"
+
+        # IBS bounded to [0,1] when high != low
+        ibs_valid = out["ibs"].dropna()
+        assert ibs_valid.between(-0.01, 1.01).all(), "IBS out of [0,1] bounds"
+
+        # qmr_band_dive must be >= 0 (clipped)
+        assert (out["qmr_band_dive"].dropna() >= 0).all()
+
+        # Strategy emits buy/sell/hold signals
+        sig_set = set(out["signal"].unique())
+        assert sig_set.issubset({"buy", "sell", "hold"})
+
+    def test_quantitativo_mr_registered(self):
+        """Registry must list the new strategy."""
+        from bot.models.registry import list_models
+        ids = {m.id for m in list_models()}
+        assert "quantitativo_mr_v1" in ids
+
     def test_engine_accepts_regime_kwargs(self, monkeypatch):
         """run_filtered_backtest accepts the new kwargs without
         TypeError, even if there's no data on disk."""
