@@ -294,6 +294,8 @@ def run_filtered_backtest(
     date_window:     Optional[tuple]  = None,   # (start, end) timestamps for sample slicing
     market_regime_exit: bool          = False,  # force-sell when SPY/QQQ trending down
     sector_regime_exit: bool          = False,  # force-sell when symbol's sector ETF down
+    tax_rate:           float         = 0.0,    # fraction of YTD gains paid in tax (Dec 31)
+    omit_top_n_outliers: int          = 0,      # exclude N largest-P&L wins from metrics
 ) -> dict:
     """
     Run a backtest across many symbols, only entering on bars that
@@ -512,13 +514,41 @@ def run_filtered_backtest(
     )
     all_trades   = sim["trades"]
     equity_curve = sim["equity_curve"]
+
+    # ── Post-processing: outlier-trim + year-end tax ────────────────
+    # Outlier-trim drops the N largest-P&L wins from the trade log
+    # before metrics are computed.  Year-end tax deducts a fixed %
+    # of YTD gains from the equity curve every Dec 31.  Both are
+    # off by default — when enabled, the original trade log is
+    # preserved on the envelope alongside the trimmed/taxed view so
+    # the dashboard can show "with vs without" panels.
+    raw_trades = list(all_trades)
+    raw_equity = list(equity_curve)
+
+    kept_trades, omitted_trades = _apply_outlier_trim(all_trades,
+                                                       top_n=int(omit_top_n_outliers or 0))
+    if omitted_trades:
+        all_trades = kept_trades
+        # Rebuild the equity curve from the kept trades so metrics
+        # reflect the trimmed view.
+        equity_curve = _calc_equity_curve(all_trades, starting_cash=initial_cash)
+
+    after_tax_equity, tax_events = _apply_year_end_tax(equity_curve,
+                                                        tax_rate=float(tax_rate or 0))
+    if tax_events:
+        equity_curve = after_tax_equity
+
     metric_per_symbol = _build_per_symbol_summary(all_trades)
 
     monthly = _calc_monthly_returns(equity_curve)
     metrics = _calc_metrics(all_trades, equity_curve)
     metrics["symbols_traded"] = len(metric_per_symbol)
     metrics["starting_cash"]  = float(initial_cash)
-    metrics["ending_cash"]    = float(sim.get("final_cash", initial_cash))
+    # ending_cash reflects the post-tax / post-trim equity if either
+    # was applied; raw cash is kept on the envelope for comparison.
+    metrics["ending_cash"]    = float(equity_curve[-1]["value"]
+                                       if equity_curve else
+                                       sim.get("final_cash", initial_cash))
 
     run_id = f"BT-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{model_id}-multi-{period_days}d"
 
@@ -544,6 +574,8 @@ def run_filtered_backtest(
         "market_regime_exit": bool(market_regime_exit),
         "sector_regime_exit": bool(sector_regime_exit),
         "regime_summary":   regime_summary,
+        "tax_rate":         float(tax_rate or 0),
+        "omit_top_n_outliers": int(omit_top_n_outliers or 0),
     }
 
     return {
@@ -561,6 +593,9 @@ def run_filtered_backtest(
         "load_report":     load_report,
         "failure_diagnostics": diag,
         "preset":          preset,
+        "tax_events":      tax_events,
+        "omitted_trades":  omitted_trades,
+        "raw_trades":      raw_trades if (omitted_trades or tax_events) else None,
         "run_at":          datetime.now().isoformat(),
     }
 
@@ -1092,6 +1127,127 @@ def _extract_trades(df: pd.DataFrame) -> list[dict]:
                 "exit_reason": str(row.get("exit_reason", "")),
             })
     return trades
+
+
+def _apply_outlier_trim(trades: list, top_n: int = 0) -> tuple[list, list]:
+    """Optionally remove the ``top_n`` largest-P&L wins from the trade
+    list before metrics are computed.  Big lucky wins can dominate the
+    aggregate return on a small trade count and obscure whether the
+    strategy has a real edge.  Excluded trades are returned separately
+    so the dashboard can still show them in a "trimmed outliers" panel.
+
+    Args:
+        trades: full trade log (each row has a ``pl`` field).
+        top_n:  how many of the largest-P&L wins to omit.
+
+    Returns:
+        ``(kept_trades, omitted_trades)``.  Original order preserved
+        in ``kept_trades``.  ``omitted_trades`` is sorted by P&L desc.
+    """
+    n = int(top_n or 0)
+    if n <= 0 or not trades:
+        return list(trades), []
+    # Pick the indices of the top-N P&L wins
+    sorted_with_idx = sorted(
+        enumerate(trades),
+        key=lambda kv: float(kv[1].get("pl", 0) or 0),
+        reverse=True,
+    )
+    omit_indices = {idx for idx, _ in sorted_with_idx[:n]}
+    omitted = [trades[i] for i, _ in sorted_with_idx[:n]]
+    kept    = [t for i, t in enumerate(trades) if i not in omit_indices]
+    return kept, omitted
+
+
+def _apply_year_end_tax(
+    equity_curve: list,
+    tax_rate: float = 0.30,
+) -> tuple[list, list]:
+    """Adjust the equity curve to reflect a year-end capital-gains tax
+    payment.  Each Dec 31 (or last bar of the calendar year) we deduct
+    ``tax_rate × max(0, ytd_gains)`` from the running equity.
+
+    Args:
+        equity_curve: [{date, value}, ...] in chronological order.
+        tax_rate:     fraction of YTD gains paid in tax (0.30 = 30%).
+
+    Returns:
+        ``(after_tax_curve, tax_events)``.  ``tax_events`` is a list of
+        ``{date, ytd_gain, tax_paid, equity_before, equity_after}``
+        rows the dashboard can show in a small panel.
+    """
+    if not equity_curve or float(tax_rate or 0) <= 0:
+        return list(equity_curve), []
+
+    rate = float(tax_rate)
+    out: list[dict] = []
+    events: list[dict] = []
+    # year_start_equity tracks the equity at the start of the
+    # current calendar year (after-tax basis).  We seed it with the
+    # equity_curve's first point — typically the "start" bar with the
+    # initial deposit.  This way Y1 gains are measured from the
+    # starting capital, not from the second bar.
+    year_start_equity: Optional[float] = (
+        float(equity_curve[0].get("value", 0)) if equity_curve else None
+    )
+    current_year: Optional[int] = None
+    cumulative_tax_paid = 0.0
+
+    for i, point in enumerate(equity_curve):
+        d = point.get("date", "")
+        v = float(point.get("value", 0))
+        # First-year anchor: when we see the first dated bar, record
+        # the calendar year so we can detect year-rollover later.
+        if current_year is None and d != "start":
+            try:
+                current_year = int(str(d)[:4])
+            except ValueError:
+                pass
+
+        # Detect "last bar of a calendar year" — current bar is in
+        # year Y, next bar is in year Y+1 (or this is the final bar)
+        try:
+            this_year = int(str(d)[:4]) if d != "start" else None
+        except ValueError:
+            this_year = None
+        next_d = equity_curve[i + 1].get("date", "") if i + 1 < len(equity_curve) else ""
+        try:
+            next_year = int(str(next_d)[:4]) if next_d not in ("", "start") else None
+        except ValueError:
+            next_year = None
+
+        is_year_end = (
+            this_year is not None
+            and (next_year is None or next_year > this_year)
+        )
+
+        adjusted_v = v - cumulative_tax_paid
+        out.append({"date": d, "value": round(adjusted_v, 2)})
+
+        if is_year_end and year_start_equity is not None:
+            # ytd_gain measured against last year-end's after-tax
+            # equity (or the initial deposit for Y1).
+            ytd_gain = max(0.0, adjusted_v - year_start_equity)
+            tax = ytd_gain * rate
+            if tax > 0:
+                events.append({
+                    "date":          d,
+                    "year":          this_year,
+                    "ytd_gain":      round(ytd_gain, 2),
+                    "tax_rate":      rate,
+                    "tax_paid":      round(tax, 2),
+                    "equity_before": round(adjusted_v, 2),
+                    "equity_after":  round(adjusted_v - tax, 2),
+                })
+                cumulative_tax_paid += tax
+                # Update the just-appended point with the after-tax value
+                out[-1]["value"] = round(adjusted_v - tax, 2)
+            # Roll the year-start anchor to this bar's after-tax value
+            year_start_equity = adjusted_v - tax
+            current_year = (next_year if next_year is not None
+                            else (this_year + 1 if this_year else None))
+
+    return out, events
 
 
 def _calc_equity_curve(trades: list, starting_cash: float = 10_000.0) -> list[dict]:

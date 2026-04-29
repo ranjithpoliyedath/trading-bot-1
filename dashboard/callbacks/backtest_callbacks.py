@@ -161,6 +161,8 @@ def apply_indicator_preset(preset_key, current_rows):
     State("bt-real-delay",     "value"),
     State("bt-real-slip",      "value"),
     State("bt-real-val",       "value"),
+    State("bt-real-tax",       "value"),
+    State("bt-real-omit",      "value"),
     prevent_initial_call=True,
 )
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
@@ -168,7 +170,8 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 signal_on, tp_on, tp_val, sl_on, sl_val, ts_on, ts_val,
                 market_regime_on, sector_regime_on,
                 acct_cash, sizing_method, sizing_a, sizing_b, atr_stop,
-                exec_model, exec_delay, slip_bps, val_mode):
+                exec_model, exec_delay, slip_bps, val_mode,
+                tax_pct, omit_top_n):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         data = load_backtest(saved_id)
@@ -233,8 +236,10 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
     # don't take them yet — adding silently would crash with
     # TypeError on unexpected kwarg).
     regime_kwargs = dict(
-        market_regime_exit = bool(market_regime_on),
-        sector_regime_exit = bool(sector_regime_on),
+        market_regime_exit  = bool(market_regime_on),
+        sector_regime_exit  = bool(sector_regime_on),
+        tax_rate            = float(tax_pct or 0) / 100.0,
+        omit_top_n_outliers = int(omit_top_n or 0),
     )
 
     # Walk-forward branch
@@ -348,6 +353,8 @@ def _synthesize_preset_if_missing(data: dict) -> dict:
     Output("bt-exit-ts-val",    "value",    allow_duplicate=True),
     Output("bt-exit-market-regime-on", "value", allow_duplicate=True),
     Output("bt-exit-sector-regime-on", "value", allow_duplicate=True),
+    Output("bt-real-tax",       "value",    allow_duplicate=True),
+    Output("bt-real-omit",      "value",    allow_duplicate=True),
     Output("bt-real-val",       "value",    allow_duplicate=True),
     Output("bt-dd-tf",          "value",    allow_duplicate=True),
     Output("bt-indicators",     "value",    allow_duplicate=True),
@@ -365,8 +372,8 @@ def apply_preset(run_id):
     by `run_or_load` (also keyed off `bt-dd-saved.value`); the two
     callbacks run in parallel so the right pane updates simultaneously.
     """
-    # 27 outputs total — keep this in sync with the @callback decorator.
-    n_outputs = 27
+    # 29 outputs total — keep this in sync with the @callback decorator.
+    n_outputs = 29
     if not run_id:
         # Cleared the dropdown — leave the form alone, just clear status
         return (*([no_update] * (n_outputs - 1)), "")
@@ -446,6 +453,8 @@ def apply_preset(run_id):
         int(ts) if ts is not None else 30,                         # bt-exit-ts-val
         on if p.get("market_regime_exit") else off,                # bt-exit-market-regime-on
         on if p.get("sector_regime_exit") else off,                # bt-exit-sector-regime-on
+        round(float(p.get("tax_rate", 0) or 0) * 100, 0),          # bt-real-tax (% display)
+        int(p.get("omit_top_n_outliers", 0) or 0),                 # bt-real-omit
         val_mode,                                                  # bt-real-val
         "1d",                                                      # bt-dd-tf (only daily for now)
         indicators_val,                                            # bt-indicators

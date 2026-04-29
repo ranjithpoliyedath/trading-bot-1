@@ -482,6 +482,45 @@ def _realism_panel():
                     target="bt-real-val-tip", placement="top",
                     style={"maxWidth": "360px", "fontSize": "12px"}),
             ], md=12),
+
+            # Year-end capital gains tax adjustment.
+            dbc.Col([
+                html.Span("Year-end tax rate (%)", id="bt-real-tax-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-tax", type="number", value=0,
+                          min=0, max=60, step=1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Deducts this % of YTD gains from the equity curve "
+                    "every Dec 31 — simulates real-world capital-gains "
+                    "tax.  0 = off (gross returns).  US short-term "
+                    "rate is roughly 30%.  When > 0, the equity curve "
+                    "and total return reflect AFTER-TAX values, and a "
+                    "Tax events panel shows what was deducted each year.",
+                    target="bt-real-tax-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
+
+            # Outlier-trim filter — drop the N largest-P&L wins from
+            # the metrics so a single lucky moonshot doesn't fake a
+            # great strategy.  The trades are still visible in a
+            # separate panel.
+            dbc.Col([
+                html.Span("Omit top-N outlier wins", id="bt-real-omit-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-omit", type="number", value=0,
+                          min=0, max=20, step=1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Excludes the N largest-P&L wins from metrics + "
+                    "equity curve before computing returns.  Catches "
+                    "strategies whose results are dominated by a few "
+                    "lucky trades.  0 = off; 1-3 is a common 'is the "
+                    "edge real?' check.  Excluded trades still show "
+                    "in a separate panel for transparency.",
+                    target="bt-real-omit-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
         ], className="g-3"),
     ], style={**CARD, "marginTop": "12px"})
 
@@ -668,19 +707,19 @@ def _exit_conditions_panel():
             min=1, max=500, step=1),
         row("Market regime exit",
             "Force-sell ALL held positions on bars where the broad "
-            "market index is in a clear downtrend (close below "
-            "EMA-10, EMA-20 AND EMA-50).  Index defaults to SPY; "
+            "market index is below its 200-day SMA — the classic "
+            "investor-grade trend filter.  Index defaults to SPY; "
             "switches to QQQ when the universe is >50% Information "
             "Technology.  ⚠ This OVERRIDES strategy buy signals on "
             "the same bar — if your strategy emits a buy while the "
-            "market is downtrending, the buy fires (filtered to "
-            "'hold') but no position opens; held positions exit.",
+            "market is below its SMA-200, no position opens; held "
+            "positions exit.",
             "bt-exit-market-regime-on", "bt-exit-market-regime-val", 0, "",
             value_input=False, default_on=False),
         row("Sector regime exit",
             "Force-sell each held position when its sector ETF "
             "(XLK / XLF / XLV / etc., chosen by the symbol's GICS "
-            "sector) is below EMA-10/20/50.  Sector mapping comes "
+            "sector) is below its 200-day SMA.  Sector mapping comes "
             "from the universe parquet.  ⚠ Conflicts with strategy "
             "buy signals on downtrending sector days — same caveat "
             "as the market regime exit.",
@@ -1873,15 +1912,17 @@ def _strategy_explainer(results: dict):
 # ── Trade log (collapsible per-trade table) ────────────────────────────────
 
 def _trade_log(results: dict, ns: str = ""):
-    """Collapsible per-trade table.  Shown collapsed by default so the
-    main metrics aren't drowned by a long list; click the header to
-    expand.  Rows include entry/exit dates, hold time, P&L, % return,
-    % of starting portfolio, and the exit reason.
+    """Collapsible, **sortable** per-trade table.  Click any column
+    header to sort by that field — useful for spotting outliers
+    (sort by P&L desc), longest holds, or strategy-specific exit
+    patterns.  Built on dash_table.DataTable for native sort/page.
 
     Cross-sectional fallback: when ``trades`` is empty but
     ``rebalance_trades`` exists (legacy XS runs from before the trade-
     log fix shipped), render the rebalance log instead so the user can
     still see something rather than a blank panel."""
+    from dash import dash_table
+
     trades = (results or {}).get("trades", []) or []
     is_xs_fallback = False
     if not trades:
@@ -1901,46 +1942,105 @@ def _trade_log(results: dict, ns: str = ""):
     header_id = f"bt-trade-log-toggle-{ns}" if ns else "bt-trade-log-toggle"
     body_id   = f"bt-trade-log-body-{ns}"   if ns else "bt-trade-log-body"
 
-    rows = []
+    # Build the data array for DataTable.  Each cell is a NUMBER for
+    # the numeric columns (so sorting works correctly) and a STRING
+    # for display.  We use DataTable's column ``type`` + ``format`` to
+    # render numbers nicely without losing sortability.
+    data_rows = []
     for t in trades:
-        pl     = float(t.get("pl", 0) or 0)
-        win    = bool(t.get("win", pl > 0))
-        ret_pct = (pl / starting_cash) * 100 if starting_cash else 0.0
+        pl       = float(t.get("pl", 0) or 0)
+        win      = bool(t.get("win", pl > 0))
+        ret_pct  = (pl / starting_cash) * 100 if starting_cash else 0.0
         port_pct = abs(pl) / starting_cash * 100 if starting_cash else 0.0
-        exit_reason = t.get("exit_reason", "")
+        # Compute hold days as a number (so sortable)
+        hold_days = None
+        try:
+            from datetime import date
+            entry = t.get("entry_date") or ""
+            exit_ = t.get("date") or ""
+            if entry and exit_:
+                e = date.fromisoformat(entry[:10])
+                x = date.fromisoformat(exit_[:10])
+                hold_days = (x - e).days
+        except Exception:
+            hold_days = None
+        data_rows.append({
+            "symbol":      t.get("symbol", "—"),
+            "entry_date":  str(t.get("entry_date", "") or ""),
+            "exit_date":   str(t.get("date", "") or ""),
+            "held_days":   hold_days if hold_days is not None else 0,
+            "pl":          round(pl, 2),
+            "ret_pct":     round(ret_pct, 3),
+            "port_pct":    round(port_pct, 3),
+            "exit_reason": t.get("exit_reason", "") or "—",
+            "_win":        win,    # used by conditional formatting only
+        })
 
-        rows.append(html.Tr([
-            html.Td(t.get("symbol", "—"),                            style=_td(weight="500")),
-            html.Td(t.get("entry_date", "—"),                        style=_td()),
-            html.Td(t.get("date", "—"),                              style=_td()),
-            html.Td(_fmt_held(t),                                     style=_td()),
-            html.Td(f"${pl:+,.2f}",
-                    style={**_td(), "color": "#27500A" if win else "#A32D2D",
-                            "fontWeight": "500"}),
-            html.Td(f"{ret_pct:+.2f}%",
-                    style={**_td(), "color": "#27500A" if win else "#A32D2D"}),
-            html.Td(f"{port_pct:.2f}%",                              style=_td()),
-            html.Td(_exit_reason_badge(exit_reason),                  style=_td()),
-        ]))
-
-    table = html.Table([
-        html.Thead(html.Tr([
-            html.Th("Symbol",        style=_th()),
-            html.Th("Entry date",    style=_th()),
-            html.Th("Exit date",     style=_th()),
-            html.Th("Held",          style=_th()),
-            html.Th("P&L ($)",       style=_th()),
-            html.Th("Return %",      style=_th()),
-            html.Th("% of portfolio",style=_th()),
-            html.Th("Exit reason",   style=_th()),
-        ])),
-        html.Tbody(rows),
-    ], style={"width": "100%", "borderCollapse": "collapse",
-              "marginTop": "8px"})
+    table = dash_table.DataTable(
+        id=f"bt-trade-table-{ns}" if ns else "bt-trade-table",
+        columns=[
+            {"name": "Symbol",         "id": "symbol",      "type": "text"},
+            {"name": "Entry date",     "id": "entry_date",  "type": "text"},
+            {"name": "Exit date",      "id": "exit_date",   "type": "text"},
+            {"name": "Held (days)",    "id": "held_days",   "type": "numeric"},
+            {"name": "P&L ($)",        "id": "pl",          "type": "numeric",
+             "format": {"specifier": "+,.2f"}},
+            {"name": "Return %",       "id": "ret_pct",     "type": "numeric",
+             "format": {"specifier": "+.2f"}},
+            {"name": "% of portfolio", "id": "port_pct",    "type": "numeric",
+             "format": {"specifier": ".2f"}},
+            {"name": "Exit reason",    "id": "exit_reason", "type": "text"},
+        ],
+        data=data_rows,
+        sort_action="native",          # ← click-to-sort on every column
+        sort_mode="single",
+        page_action="native",
+        page_size=25,
+        style_cell={
+            "fontSize": "12px",
+            "fontFamily": "system-ui, sans-serif",
+            "padding": "6px 10px",
+            "textAlign": "left",
+        },
+        style_header={
+            "background":   "#F1F1F1",
+            "fontWeight":   "600",
+            "fontSize":     "11px",
+            "color":        "#666",
+            "letterSpacing": "0.04em",
+            "textTransform": "uppercase",
+            "border":       "none",
+            "borderBottom": "1px solid #DDD",
+            "cursor":       "pointer",
+        },
+        style_data={
+            "borderBottom": "1px solid #F1F1F1",
+        },
+        # Win/loss colouring — green P&L for wins, red for losses
+        style_data_conditional=[
+            {"if": {"filter_query": "{_win} = 1",
+                     "column_id": "pl"},
+             "color": "#27500A", "fontWeight": "500"},
+            {"if": {"filter_query": "{_win} = 0",
+                     "column_id": "pl"},
+             "color": "#A32D2D", "fontWeight": "500"},
+            {"if": {"filter_query": "{_win} = 1",
+                     "column_id": "ret_pct"},
+             "color": "#27500A"},
+            {"if": {"filter_query": "{_win} = 0",
+                     "column_id": "ret_pct"},
+             "color": "#A32D2D"},
+        ],
+        style_table={"overflowX": "auto"},
+        # Hide the internal _win helper column visually but keep it
+        # available for the style_data_conditional filter_query.
+        hidden_columns=["_win"],
+        css=[{"selector": ".show-hide", "rule": "display: none"}],
+    )
 
     summary = (
         f"Trade log — {len(trades)} trade{'s' if len(trades) != 1 else ''}.  "
-        f"Click to expand."
+        f"Click to expand.  Sort any column by clicking its header."
     )
     return html.Details([
         html.Summary(summary, style={

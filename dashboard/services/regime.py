@@ -4,11 +4,16 @@ dashboard/services/regime.py
 Market-regime + sector-regime detection for the backtest engine's
 optional "regime exit" feature.
 
-A symbol is in a DOWN-trend when its close is below ALL of EMA-10,
-EMA-20 and EMA-50.  When the user enables either regime exit, the
-backtest simulator force-sells held positions on bars where the
-relevant regime is down — overriding the strategy's own buy/sell
-logic for that bar.
+A symbol is in a DOWN-trend when its close is below the **200-day
+simple moving average** (SMA-200) of the relevant index/ETF.  This
+is the classic "investor-grade" trend-filter rule: above 200-day SMA
+= bull, below = bear.  We use SMA (not EMA) because it's the
+industry-standard trend filter referenced everywhere from O'Neil's
+CAN-SLIM to managed-futures literature.
+
+When the user enables either regime exit, the backtest simulator
+force-sells held positions on bars where the relevant regime is
+down — overriding the strategy's own buy/sell logic for that bar.
 
 Two separate regimes:
 
@@ -55,44 +60,51 @@ _SECTOR_ETF: dict[str, str] = {
 }
 
 
-def _load_close_emas(symbol: str) -> pd.DataFrame:
-    """Read close + ema_10/20/50 columns for an ETF/index parquet.
+def _load_close_for_regime(symbol: str) -> pd.DataFrame:
+    """Read just the close column for an ETF/index parquet.  We
+    compute the 200-day SMA on the fly rather than relying on a
+    pre-engineered column, so this works even on legacy parquets
+    that pre-date the SMA-200 feature.
 
-    Returns an empty DataFrame if the parquet isn't on disk — caller
-    decides how to handle (typically: log a warning and disable that
-    branch of the regime check)."""
+    Returns an empty DataFrame if the parquet isn't on disk."""
     path = DATA_DIR / f"{symbol}_features.parquet"
     if not path.exists():
-        return pd.DataFrame()
-    try:
-        cols = ["close", "ema_10", "ema_20", "ema_50"]
-        df   = pd.read_parquet(path)
-        # Some legacy parquets may lack ema_10/20/50 — only return
-        # rows where all three are present.
-        avail = [c for c in cols if c in df.columns]
-        if len(avail) < 4:
-            logger.warning("%s: missing EMA columns %s — re-run the pipeline.",
-                            symbol, set(cols) - set(avail))
+        # Fall back to the raw bars
+        path = DATA_DIR / f"{symbol}_raw.parquet"
+        if not path.exists():
             return pd.DataFrame()
+    try:
+        df = pd.read_parquet(path, columns=["close"])
+        if df.empty:
+            return df
         # Strip tz so downstream comparisons with strategy data work
         if df.index.tz is not None:
             df.index = df.index.tz_localize(None)
-        return df[cols].dropna()
+        return df.sort_index()
     except Exception as exc:
         logger.warning("Failed to load %s feature parquet: %s", symbol, exc)
         return pd.DataFrame()
 
 
-def _downtrend_series(df: pd.DataFrame) -> pd.Series:
-    """Boolean Series — True when close < ema_10 AND close < ema_20 AND
-    close < ema_50.  Empty if the input is empty."""
-    if df.empty:
+def _downtrend_series(df: pd.DataFrame, sma_window: int = 200) -> pd.Series:
+    """Boolean Series — True when close < SMA_200.
+
+    Uses simple moving average (not exponential) to match the
+    investor-grade "200-day SMA" trend filter convention.
+
+    Args:
+        df: DataFrame with a ``close`` column.
+        sma_window: Window in bars (200 = the classic trend filter).
+
+    Returns:
+        Boolean Series aligned with ``df.index``.  NaN bars (during
+        the 200-day warm-up) are treated as False so we don't force-
+        sell on the very first bar of a new symbol.
+    """
+    if df.empty or "close" not in df.columns:
         return pd.Series(dtype=bool)
-    return (
-        (df["close"] < df["ema_10"]) &
-        (df["close"] < df["ema_20"]) &
-        (df["close"] < df["ema_50"])
-    )
+    sma = df["close"].rolling(window=sma_window, min_periods=sma_window).mean()
+    return (df["close"] < sma).fillna(False)
 
 
 def _pick_market_etf(symbols: list[str]) -> str:
@@ -149,7 +161,7 @@ class RegimeChecker:
 
         if use_market:
             self.market_etf = _pick_market_etf(symbols)
-            df = _load_close_emas(self.market_etf)
+            df = _load_close_for_regime(self.market_etf)
             if df.empty:
                 self._missing_etfs.append(self.market_etf)
                 self.use_market = False
@@ -161,7 +173,7 @@ class RegimeChecker:
             needed = sorted({etf for etf in self._sym_to_sector.values()
                                   if etf})
             for etf in needed:
-                df = _load_close_emas(etf)
+                df = _load_close_for_regime(etf)
                 if df.empty:
                     self._missing_etfs.append(etf)
                     continue

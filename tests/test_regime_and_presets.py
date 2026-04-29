@@ -142,7 +142,7 @@ class TestRegimeChecker:
             "eligible": [True] * 6,
             "avg_volume_14d": [1_000_000] * 6,
         })
-        with patch("dashboard.services.regime._load_close_emas",
+        with patch("dashboard.services.regime._load_close_for_regime",
                     return_value=pd.DataFrame()):
             with patch("bot.universe.load_universe", return_value=mock_universe):
                 from dashboard.services.regime import _pick_market_etf
@@ -167,13 +167,32 @@ class TestRegimeChecker:
         """If the market ETF parquet doesn't exist, use_market silently
         flips to False and missing_etfs records what was missing."""
         from dashboard.services.regime import RegimeChecker
-        with patch("dashboard.services.regime._load_close_emas",
+        with patch("dashboard.services.regime._load_close_for_regime",
                     return_value=pd.DataFrame()):
             rc = RegimeChecker(symbols=["AAPL"], use_market=True,
                                 use_sector=False)
         assert rc.use_market is False
         assert "SPY" in rc.status_summary()["missing_etfs"] or \
                "QQQ" in rc.status_summary()["missing_etfs"]
+
+    def test_downtrend_uses_200d_sma(self):
+        """The downtrend rule must use SMA-200 (not EMA stack).
+        Verify by feeding a synthetic close series that crosses the
+        SMA-200 boundary."""
+        from dashboard.services.regime import _downtrend_series
+        # 250 bars: first 200 trending up to 100, then crash to 50
+        rising  = list(range(50, 100))                 # 50 bars
+        flat    = [100] * 150                           # 150 bars
+        crash   = [60] * 50                             # 50 bars (clearly < SMA-200)
+        df = pd.DataFrame({"close": rising + flat + crash},
+                           index=pd.date_range("2022-01-01", periods=250, freq="B"))
+        s = _downtrend_series(df, sma_window=200)
+        # Warm-up bars should be False (NaN sma → fillna False)
+        assert s.iloc[0] is False or s.iloc[0] == False
+        # Last bar (close=60, sma~90) should be True (downtrend)
+        assert s.iloc[-1] == True
+        # Middle of flat period (close=100, sma~80-90) should be False
+        assert s.iloc[199] == False
 
 
 # ── Engine integration ─────────────────────────────────────────────
@@ -193,6 +212,69 @@ class TestEngineRegimeKwargs:
         )
         # Should fall through to empty result without crashing
         assert "metrics" in out
+
+    def test_outlier_trim_excludes_top_n_by_pl(self):
+        from dashboard.backtest_engine import _apply_outlier_trim
+        trades = [{"pl": p, "date": f"2024-01-{i:02d}"}
+                   for i, p in enumerate([10, 50, 1000, -20, 30, 999], 1)]
+        kept, omitted = _apply_outlier_trim(trades, top_n=2)
+        assert len(kept) == 4
+        assert len(omitted) == 2
+        # Top 2 P&Ls: 1000 and 999
+        omit_pls = sorted(t["pl"] for t in omitted)
+        assert omit_pls == [999, 1000]
+
+    def test_outlier_trim_zero_n_passes_through(self):
+        from dashboard.backtest_engine import _apply_outlier_trim
+        trades = [{"pl": 10}, {"pl": 20}]
+        kept, omitted = _apply_outlier_trim(trades, top_n=0)
+        assert kept == trades
+        assert omitted == []
+
+    def test_outlier_trim_n_larger_than_list_omits_all(self):
+        from dashboard.backtest_engine import _apply_outlier_trim
+        trades = [{"pl": 10}, {"pl": 20}]
+        kept, omitted = _apply_outlier_trim(trades, top_n=10)
+        assert len(kept) == 0
+        assert len(omitted) == 2
+
+    def test_year_end_tax_applies_to_dec31(self):
+        from dashboard.backtest_engine import _apply_year_end_tax
+        # Equity grows $1K then ends year; +$1K next year
+        ec = [
+            {"date": "start",       "value": 10_000},
+            {"date": "2023-06-01",  "value": 10_500},
+            {"date": "2023-12-29",  "value": 11_000},
+            {"date": "2024-06-01",  "value": 12_000},
+            {"date": "2024-12-30",  "value": 13_300},
+        ]
+        out, events = _apply_year_end_tax(ec, tax_rate=0.30)
+        assert len(events) == 2
+        # 2023: $1K gain × 30% = $300 tax
+        assert events[0]["tax_paid"] == 300.0
+        assert events[0]["equity_after"] == 10_700.0
+        # 2024: starts at $10,700 (after tax), ends at $13,300 - $300 = $13,000
+        # gain = $13,000 - $10,700 = $2,300 × 30% = $690
+        assert events[1]["tax_paid"] == 690.0
+
+    def test_zero_tax_rate_is_passthrough(self):
+        from dashboard.backtest_engine import _apply_year_end_tax
+        ec = [{"date": "start", "value": 10_000},
+               {"date": "2023-12-29", "value": 12_000}]
+        out, events = _apply_year_end_tax(ec, tax_rate=0.0)
+        assert events == []
+        assert out == ec
+
+    def test_loss_year_pays_no_tax(self):
+        """If YTD gains < 0 (loss year), no tax is owed."""
+        from dashboard.backtest_engine import _apply_year_end_tax
+        ec = [{"date": "start", "value": 10_000},
+               {"date": "2023-06-01", "value": 9_000},
+               {"date": "2023-12-30", "value": 8_500}]
+        out, events = _apply_year_end_tax(ec, tax_rate=0.30)
+        assert events == []   # no tax on losses
+        # Equity unchanged
+        assert out[-1]["value"] == 8_500
 
     def test_preset_persists_regime_flags(self, monkeypatch):
         """Even when no trades fire, the preset block records the

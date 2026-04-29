@@ -194,12 +194,17 @@ def _volume_movers_panel(movers: list[dict]):
 # ── Panel 5: Sentiment heatmap ────────────────────────────────────────────────
 
 def _sentiment_heatmap_panel(items: list[dict]):
-    """Render a grid of symbol tiles colored by sentiment."""
+    """Render a grid of symbol tiles colored by sentiment, plus an
+    expandable "How to read this" panel that explains what the values
+    mean and how the score is computed."""
     if not items:
         return html.Div([
-            html.P("Sentiment heatmap", style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
+            html.P("Sentiment heatmap",
+                   style={"fontSize": "12px", "fontWeight": "500",
+                          "margin": "0 0 10px"}),
             html.P("No sentiment data — run sentiment pipeline.",
                    style={"color": "#aaa", "fontSize": "12px"}),
+            _sentiment_doc_panel(),
         ], style=CARD)
 
     tiles = []
@@ -207,8 +212,11 @@ def _sentiment_heatmap_panel(items: list[dict]):
         s     = it["sentiment"]
         color = _sentiment_color(s)
         tiles.append(html.Div([
-            html.Div(it["symbol"], style={"fontSize": "11px", "fontWeight": "500", "color": "white"}),
-            html.Div(f"{s:+.2f}", style={"fontSize": "10px", "color": "rgba(255,255,255,0.85)"}),
+            html.Div(it["symbol"], style={"fontSize": "11px",
+                                           "fontWeight": "500",
+                                           "color": "white"}),
+            html.Div(f"{s:+.2f}", style={"fontSize": "10px",
+                                          "color": "rgba(255,255,255,0.85)"}),
         ], style={
             "background":   color,
             "borderRadius": "6px",
@@ -219,13 +227,145 @@ def _sentiment_heatmap_panel(items: list[dict]):
         }))
 
     return html.Div([
-        html.P("Sentiment heatmap", style={"fontSize": "12px", "fontWeight": "500", "margin": "0 0 10px"}),
+        html.P("Sentiment heatmap",
+               style={"fontSize": "12px", "fontWeight": "500",
+                      "margin": "0 0 10px"}),
         html.Div(tiles, style={
             "display":  "flex",
             "flexWrap": "wrap",
             "gap":      "5px",
         }),
+        _sentiment_doc_panel(),
     ], style=CARD)
+
+
+def _sentiment_doc_panel():
+    """Collapsible "How to read this" doc.  Explains the score scale,
+    colour palette, and what to actually DO with the values."""
+    legend = html.Div([
+        html.Div([
+            html.Span("Strongly bullish (+0.30 → +1.00)",
+                      style={"fontSize": "11px", "color": "#444"}),
+            html.Span(style={"width": "16px", "height": "16px",
+                              "background": "#16A34A",
+                              "borderRadius": "3px",
+                              "marginLeft": "auto"}),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "4px"}),
+        html.Div([
+            html.Span("Mildly bullish (+0.10 → +0.30)",
+                      style={"fontSize": "11px", "color": "#444"}),
+            html.Span(style={"width": "16px", "height": "16px",
+                              "background": "#84CC16",
+                              "borderRadius": "3px",
+                              "marginLeft": "auto"}),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "4px"}),
+        html.Div([
+            html.Span("Neutral (−0.10 → +0.10)",
+                      style={"fontSize": "11px", "color": "#444"}),
+            html.Span(style={"width": "16px", "height": "16px",
+                              "background": "#888888",
+                              "borderRadius": "3px",
+                              "marginLeft": "auto"}),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "4px"}),
+        html.Div([
+            html.Span("Mildly bearish (−0.30 → −0.10)",
+                      style={"fontSize": "11px", "color": "#444"}),
+            html.Span(style={"width": "16px", "height": "16px",
+                              "background": "#EA580C",
+                              "borderRadius": "3px",
+                              "marginLeft": "auto"}),
+        ], style={"display": "flex", "alignItems": "center",
+                  "marginBottom": "4px"}),
+        html.Div([
+            html.Span("Strongly bearish (−1.00 → −0.30)",
+                      style={"fontSize": "11px", "color": "#444"}),
+            html.Span(style={"width": "16px", "height": "16px",
+                              "background": "#A32D2D",
+                              "borderRadius": "3px",
+                              "marginLeft": "auto"}),
+        ], style={"display": "flex", "alignItems": "center"}),
+    ], style={"padding": "10px 12px", "background": "#F8F8F7",
+              "borderRadius": "6px", "marginTop": "8px"})
+
+    body = html.Div([
+        html.Div([
+            html.Strong("Scale:", style={"color": "#1f2937"}),
+            html.Span(" −1.00 (very bearish) → 0.00 (neutral) → +1.00 (very bullish).  "
+                      "Anything between −0.10 and +0.10 should be read as 'no clear signal'.",
+                      style={"color": "#444"}),
+        ], style={"fontSize": "12px", "marginBottom": "8px",
+                  "lineHeight": "1.5"}),
+        html.Div([
+            html.Strong("How it's computed:", style={"color": "#1f2937"}),
+            html.Span(" The score is a daily aggregate from two sources:", style={"color": "#444"}),
+            html.Ul([
+                html.Li([html.Code("FinBERT"),
+                          " runs a financial-text BERT model over each "
+                          "Alpaca news headline + summary about the symbol; "
+                          "outputs probabilities for positive / negative / "
+                          "neutral.  The scalar score = ",
+                          html.Code("p(positive) − p(negative)"),
+                          ", so a 90%-positive headline scores ~+0.9, a "
+                          "60-30 split scores ~+0.3."],
+                         style={"marginBottom": "4px"}),
+                html.Li([html.Code("StockTwits"),
+                          " posts come pre-labelled bullish/bearish by "
+                          "the user; that label maps directly to ±1.  "
+                          "Unlabelled posts are scored with FinBERT/VADER."]),
+            ], style={"fontSize": "12px", "color": "#444",
+                      "marginTop": "4px", "marginBottom": "4px",
+                      "paddingLeft": "20px", "lineHeight": "1.5"}),
+            html.P("The two streams are length-weighted-averaged into a single "
+                   "daily ", style={"fontSize": "12px", "color": "#444",
+                                     "margin": "0 0 8px"}),
+        ]),
+        html.Div([
+            html.Strong("How to read the tile values:", style={"color": "#1f2937"}),
+        ], style={"fontSize": "12px", "marginTop": "6px",
+                  "marginBottom": "4px"}),
+        legend,
+        html.Div([
+            html.Strong("How to use it:", style={"color": "#1f2937"}),
+            html.Ul([
+                html.Li("Cross-check with technicals — a +0.5 score on a "
+                         "stock that's also above its 200-day SMA is a "
+                         "stronger buy than either signal alone.",
+                         style={"marginBottom": "4px"}),
+                html.Li("Watch for divergence — a green tile while the "
+                         "stock is selling off can flag opportunity (or "
+                         "be retail-bullish noise; check the news panel).",
+                         style={"marginBottom": "4px"}),
+                html.Li("Use it as a screener filter — the screener has a "
+                         "field combined_sentiment > 0.2 you can stack "
+                         "on top of a technical setup like ema_bull_stack.",
+                         style={"marginBottom": "4px"}),
+                html.Li([html.Strong("Limits: "),
+                          "tile shows TODAY's score only, not the trend.  "
+                          "Sample sizes vary by symbol — large-caps get "
+                          "many news items, small-caps may have just one.  "
+                          "Sentiment is a leading indicator at best, "
+                          "noise at worst."]),
+            ], style={"fontSize": "12px", "color": "#444",
+                      "paddingLeft": "20px", "lineHeight": "1.5",
+                      "marginTop": "4px"}),
+        ], style={"fontSize": "12px", "marginTop": "8px"}),
+    ], style={"padding": "12px 14px", "background": "#FAFAFA",
+              "borderRadius": "0 0 8px 8px", "border": "1px solid #eee",
+              "borderTop": "none", "marginTop": "-4px"})
+
+    return html.Details([
+        html.Summary("ℹ️  How to read this heatmap",
+                     style={"cursor": "pointer", "fontSize": "11px",
+                            "fontWeight": "500", "color": "#666",
+                            "padding": "8px 12px", "background": "#FAFAFA",
+                            "borderRadius": "8px",
+                            "border": "1px solid #eee",
+                            "userSelect": "none"}),
+        body,
+    ], style={"marginTop": "10px"})
 
 
 def _sentiment_color(s: float) -> str:

@@ -466,10 +466,11 @@ class TestTradeLogRender:
         }
         out = _trade_log(results)
         s = str(out)
-        # Both dates appear in the table, plus exit-reason badge text
+        # Both dates appear in the table, plus the raw exit reason
+        # (DataTable renders the raw cell value, not a formatted badge).
         assert "2024-01-05" in s
         assert "2024-01-19" in s
-        assert "take profit" in s
+        assert "take_profit" in s
 
     def test_trade_log_empty_when_no_trades(self):
         from dashboard.pages.backtest import _trade_log
