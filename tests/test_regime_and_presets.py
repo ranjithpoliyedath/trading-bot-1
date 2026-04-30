@@ -245,6 +245,51 @@ class TestEngineRegimeKwargs:
         ids = {m.id for m in list_models()}
         assert "quantitativo_mr_v1" in ids
 
+    def test_leaders_breakout_v1_emits_required_columns(self):
+        """User-designed Leaders Breakout — pin the derived columns
+        the strategy emits so the screener filter chain (Optuna
+        params: min_volume_spike, min_5d_return) keeps working."""
+        import pandas as pd
+        import numpy as np
+        from bot.models.registry import get_model
+
+        rng = np.random.default_rng(42)
+        n   = 400
+        rets   = rng.normal(0.0008, 0.012, n)
+        closes = (100.0 * (1 + pd.Series(rets)).cumprod()).tolist()
+        df = pd.DataFrame({
+            "open":  closes,
+            "high":  [c * 1.012 for c in closes],
+            "low":   [c * 0.988 for c in closes],
+            "close": closes,
+            "volume": rng.integers(800_000, 1_500_000, n),
+            "vwap":  closes,
+        }, index=pd.date_range("2022-01-01", periods=n, freq="B"))
+
+        m   = get_model("leaders_breakout_v1")
+        out = m.predict_batch(df.copy())
+
+        for col in ("sma_10", "sma_20", "sma_50", "sma_200",
+                    "volume_ratio", "volume_spike_5d_max",
+                    "price_change_5d", "breakout_today_20d"):
+            assert col in out.columns, f"missing {col}"
+
+        # breakout_today_20d is 0/1
+        bt = out["breakout_today_20d"].dropna().unique()
+        assert set(bt).issubset({0.0, 1.0})
+
+        # volume_spike_5d_max is the rolling MAX so >= per-bar volume_ratio
+        non_nan = out[["volume_ratio", "volume_spike_5d_max"]].dropna()
+        assert (non_nan["volume_spike_5d_max"] >= non_nan["volume_ratio"] - 1e-9).all()
+
+        # Strategy emits one of buy/sell/hold
+        assert set(out["signal"].unique()).issubset({"buy", "sell", "hold"})
+
+    def test_leaders_breakout_registered(self):
+        from bot.models.registry import list_models
+        ids = {m.id for m in list_models()}
+        assert "leaders_breakout_v1" in ids
+
     def test_engine_accepts_regime_kwargs(self, monkeypatch):
         """run_filtered_backtest accepts the new kwargs without
         TypeError, even if there's no data on disk."""

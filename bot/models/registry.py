@@ -94,6 +94,8 @@ def _ensure_builtin_imports():
             weinstein_v1, sector_rotation_v1,
             # ── 2026-04-29: quantitativo.com mean reversion ──
             quantitativo_mr_v1,
+            # ── 2026-04-29: user-designed leaders breakout ──
+            leaders_breakout_v1,
         )
     except ImportError as exc:
         logger.warning("Could not import built-in models: %s", exc)

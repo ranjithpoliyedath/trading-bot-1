@@ -149,6 +149,17 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "min_band_dive",    "type": "float", "low": 0.0,  "high": 0.05, "step": 0.005},
         {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
+    "leaders_breakout_v1": [
+        # All four entry knobs: volume spike multiplier, 5d return
+        # threshold, breakout lookback aren't filter-tunable (they
+        # determine whether the strategy fires AT ALL), so we tune
+        # the post-firing thresholds: volume spike strength,
+        # required 5d return, and confidence.  These read from the
+        # strategy's emitted columns.
+        {"name": "min_volume_spike", "type": "float", "low": 1.5,  "high": 5.0,  "step": 0.25},
+        {"name": "min_5d_return",    "type": "float", "low": 0.01, "high": 0.10, "step": 0.005},
+        {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
 }
 
 
@@ -275,6 +286,17 @@ def params_to_filters(strategy_id: str, params: dict) -> list[dict]:
             {"field": "qmr_band_dive",
              "op":    ">=",
              "value": params.get("min_band_dive", 0.0)},
+        ]
+    if strategy_id == "leaders_breakout_v1":
+        # Tune the volume-spike floor + 5-day return floor.  Both
+        # are emitted by the strategy as filter-friendly columns.
+        return [
+            {"field": "volume_spike_5d_max",
+             "op":    ">=",
+             "value": params.get("min_volume_spike", 2.5)},
+            {"field": "price_change_5d",
+             "op":    ">=",
+             "value": params.get("min_5d_return", 0.03)},
         ]
     # golden_cross_v1, keltner_breakout_v1: tuning happens via min_confidence
     # only — the strategies' published rules are kept intact.

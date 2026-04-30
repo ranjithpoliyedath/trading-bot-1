@@ -96,6 +96,21 @@ TUNED_CONFIGS = [
                      "Sharpe 0.838.  IBS<0.10 + 1.5% below band for "
                      "rare high-precision setups."),
     },
+    {
+        # User-designed Leaders Breakout, tuned via Optuna walk-forward.
+        # OOS Sharpe 1.592 — strongest persistent edge in the suite.
+        "name":     "leaders_breakout",
+        "model_id": "leaders_breakout_v1",
+        "filters":  [
+            {"field": "volume_spike_5d_max", "op": ">=", "value": 1.5},
+            {"field": "price_change_5d",     "op": ">=", "value": 0.09},
+        ],
+        "conf":     0.73,
+        "note":     ("Leaders Breakout tuned via Optuna 4-fold WF.  "
+                     "OOS Sharpe 1.592.  Lower volume floor (1.5x) + "
+                     "bigger price-move requirement (9% in 5d) = "
+                     "stronger leaders-of-leaders filtering."),
+    },
 ]
 
 
