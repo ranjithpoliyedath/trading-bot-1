@@ -527,6 +527,71 @@ def _realism_panel():
                     target="bt-real-omit-tip", placement="top",
                     style={"maxWidth": "380px", "fontSize": "12px"}),
             ], md=12),
+
+            # Sector concentration cap — engine-side enforcement of
+            # max-N positions per GICS sector.  Set to 0 to disable.
+            # When > 0, on any bar that fires multiple buys, the
+            # simulator picks the highest-confidence ones first and
+            # silently drops same-sector buys after the cap is hit.
+            dbc.Col([
+                html.Span("Max positions per sector  (0 = off)",
+                          id="bt-real-sector-cap-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-sector-cap", type="number", value=0,
+                          min=0, max=20, step=1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Caps simultaneous open positions in the same "
+                    "GICS sector.  Useful for the Leaders Breakout "
+                    "strategy: \"only keep 2 leaders per sector.\"  "
+                    "Sector lookup comes from the universe parquet's "
+                    "sector column.  When the cap is hit on a bar "
+                    "with multiple same-sector buys, the highest-"
+                    "confidence (= strongest 5d return) leaders win "
+                    "the slots; laggards are silently skipped.  "
+                    "Set 0 to disable.",
+                    target="bt-real-sector-cap-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
+
+            # Strategy-specific knobs for leaders_breakout_v1.  These
+            # become extra screener filter rows at run time when set,
+            # so they ALSO work for any other strategy that emits the
+            # same columns (volume_spike_5d_max, price_change_5d).
+            dbc.Col([
+                html.Span("Min volume spike (×)  ·  Leaders Breakout",
+                          id="bt-real-vol-spike-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-vol-spike", type="number", value=0,
+                          min=0, max=10, step=0.1,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Optional filter on volume_spike_5d_max — the "
+                    "rolling-5-day max of (today's volume / 20-day "
+                    "avg volume).  e.g. 2.5 means \"only enter when "
+                    "volume hit 2.5x average at some point in the "
+                    "last 5 days.\"  0 = no filter.  Used by the "
+                    "Leaders Breakout strategy and any other "
+                    "strategy that emits this column.",
+                    target="bt-real-vol-spike-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
+            dbc.Col([
+                html.Span("Min 5-day return (%)  ·  Leaders Breakout",
+                          id="bt-real-5d-return-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Input(id="bt-real-5d-return", type="number", value=0,
+                          min=0, max=50, step=0.5,
+                          style={**NUMBOX, "marginTop": "4px"}),
+                dbc.Tooltip(
+                    "Optional filter on price_change_5d — the trailing "
+                    "5-bar return.  e.g. 3 means \"only enter when "
+                    "the symbol has moved at least +3% in the last "
+                    "5 days.\"  0 = no filter.  Used by the Leaders "
+                    "Breakout strategy.",
+                    target="bt-real-5d-return-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
         ], className="g-3"),
     ], style={**CARD, "marginTop": "12px"})
 

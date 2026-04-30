@@ -163,6 +163,9 @@ def apply_indicator_preset(preset_key, current_rows):
     State("bt-real-val",       "value"),
     State("bt-real-tax",       "value"),
     State("bt-real-omit",      "value"),
+    State("bt-real-sector-cap", "value"),
+    State("bt-real-vol-spike", "value"),
+    State("bt-real-5d-return", "value"),
     prevent_initial_call=True,
 )
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
@@ -171,7 +174,8 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 market_regime_on, sector_regime_on,
                 acct_cash, sizing_method, sizing_a, sizing_b, atr_stop,
                 exec_model, exec_delay, slip_bps, val_mode,
-                tax_pct, omit_top_n):
+                tax_pct, omit_top_n,
+                sector_cap, min_vol_spike, min_5d_return):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         data = load_backtest(saved_id)
@@ -240,7 +244,27 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
         sector_regime_exit  = bool(sector_regime_on),
         tax_rate            = float(tax_pct or 0) / 100.0,
         omit_top_n_outliers = int(omit_top_n or 0),
+        max_per_sector      = int(sector_cap) if sector_cap else None,
     )
+
+    # Strategy-specific knob filters appended to the user's manual
+    # filter list — only when the user actually set them (>0).  They
+    # gate on the columns the Leaders Breakout strategy emits in
+    # predict_batch (volume_spike_5d_max, price_change_5d).  Other
+    # strategies that emit the same columns also benefit.
+    if min_vol_spike and float(min_vol_spike) > 0:
+        filters = list(filters) + [{
+            "field": "volume_spike_5d_max",
+            "op":    ">=",
+            "value": float(min_vol_spike),
+        }]
+    if min_5d_return and float(min_5d_return) > 0:
+        # UI value is in PERCENT (3 = 3%); the column is a fraction (0.03).
+        filters = list(filters) + [{
+            "field": "price_change_5d",
+            "op":    ">=",
+            "value": float(min_5d_return) / 100.0,
+        }]
 
     # Walk-forward branch
     if val_mode and val_mode.startswith("wf"):
@@ -355,6 +379,9 @@ def _synthesize_preset_if_missing(data: dict) -> dict:
     Output("bt-exit-sector-regime-on", "value", allow_duplicate=True),
     Output("bt-real-tax",       "value",    allow_duplicate=True),
     Output("bt-real-omit",      "value",    allow_duplicate=True),
+    Output("bt-real-sector-cap", "value",   allow_duplicate=True),
+    Output("bt-real-vol-spike",  "value",   allow_duplicate=True),
+    Output("bt-real-5d-return",  "value",   allow_duplicate=True),
     Output("bt-real-val",       "value",    allow_duplicate=True),
     Output("bt-dd-tf",          "value",    allow_duplicate=True),
     Output("bt-indicators",     "value",    allow_duplicate=True),
@@ -373,7 +400,7 @@ def apply_preset(run_id):
     callbacks run in parallel so the right pane updates simultaneously.
     """
     # 29 outputs total — keep this in sync with the @callback decorator.
-    n_outputs = 29
+    n_outputs = 32
     if not run_id:
         # Cleared the dropdown — leave the form alone, just clear status
         return (*([no_update] * (n_outputs - 1)), "")
@@ -455,6 +482,14 @@ def apply_preset(run_id):
         on if p.get("sector_regime_exit") else off,                # bt-exit-sector-regime-on
         round(float(p.get("tax_rate", 0) or 0) * 100, 0),          # bt-real-tax (% display)
         int(p.get("omit_top_n_outliers", 0) or 0),                 # bt-real-omit
+        int(p.get("max_per_sector", 0) or 0),                      # bt-real-sector-cap
+        # vol_spike + 5d_return aren't on the preset directly — they
+        # come back in via the persisted filters list, so we leave
+        # the inputs at 0 here and let the user re-enter them if they
+        # want to tweak.  Future improvement: introspect ``filters``
+        # for matching field names and back-populate.
+        0,                                                          # bt-real-vol-spike
+        0,                                                          # bt-real-5d-return
         val_mode,                                                  # bt-real-val
         "1d",                                                      # bt-dd-tf (only daily for now)
         indicators_val,                                            # bt-indicators

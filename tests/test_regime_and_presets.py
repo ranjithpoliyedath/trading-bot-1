@@ -290,6 +290,95 @@ class TestEngineRegimeKwargs:
         ids = {m.id for m in list_models()}
         assert "leaders_breakout_v1" in ids
 
+    def test_sector_cap_limits_simultaneous_positions(self):
+        """When max_per_sector is set, the simulator must never let
+        more than N positions in the same sector be open at once.
+        Synthesise 4 symbols all in 'Tech' and verify only 2 are
+        ever simultaneously held."""
+        import pandas as pd
+        from dashboard.backtest_engine import _simulate_portfolio
+
+        n_bars = 30
+        idx = pd.date_range("2024-01-01", periods=n_bars, freq="B")
+
+        def scored(buy_bar: int, sell_bar: int = None):
+            df = pd.DataFrame({
+                "open":  100.0, "high": 101.0, "low": 99.0,
+                "close": 100.0, "volume": 1_000_000,
+                "next_open": 100.0,
+                "signal":     ["hold"] * n_bars,
+                "confidence": [0.7] * n_bars,
+            }, index=idx)
+            df.iloc[buy_bar, df.columns.get_loc("signal")] = "buy"
+            if sell_bar is not None:
+                df.iloc[sell_bar, df.columns.get_loc("signal")] = "sell"
+            return df
+
+        # 4 symbols, all entering on bar 1, all in "Tech"
+        sps = {f"T{i}": scored(buy_bar=1) for i in range(4)}
+        sym_to_sector = {f"T{i}": "Tech" for i in range(4)}
+
+        sim = _simulate_portfolio(
+            sps,
+            starting_cash      = 100_000,
+            sizing_method      = "fixed_pct",
+            sizing_kwargs      = {"pct": 0.10},
+            use_signal_exit    = False,
+            take_profit_pct    = None,
+            stop_loss_pct      = None,
+            time_stop_days     = 25,         # exit before final liquidation
+            atr_stop_mult      = None,
+            max_per_sector     = 2,          # ← cap to 2
+            sym_to_sector      = sym_to_sector,
+        )
+
+        # Count entries (each trade = one entry+exit round-trip).
+        # With cap=2, at most 2 of the 4 Tech symbols should have
+        # been entered.  The other 2's pending buys get dropped at
+        # entry time when the sector is already at cap.
+        symbols_traded = {t["symbol"] for t in sim["trades"]}
+        assert len(symbols_traded) <= 2, (
+            f"sector cap should have limited entries to 2; got "
+            f"{len(symbols_traded)}: {sorted(symbols_traded)}"
+        )
+
+    def test_no_sector_cap_allows_all_entries(self):
+        """Without max_per_sector, all 4 same-sector symbols should
+        enter (this is the existing behaviour we're preserving)."""
+        import pandas as pd
+        from dashboard.backtest_engine import _simulate_portfolio
+
+        n_bars = 30
+        idx = pd.date_range("2024-01-01", periods=n_bars, freq="B")
+        def scored(buy_bar: int):
+            df = pd.DataFrame({
+                "open":  100.0, "high": 101.0, "low": 99.0,
+                "close": 100.0, "volume": 1_000_000,
+                "next_open": 100.0,
+                "signal":     ["hold"] * n_bars,
+                "confidence": [0.7] * n_bars,
+            }, index=idx)
+            df.iloc[buy_bar, df.columns.get_loc("signal")] = "buy"
+            return df
+
+        sps = {f"T{i}": scored(buy_bar=1) for i in range(4)}
+        sim = _simulate_portfolio(
+            sps,
+            starting_cash      = 100_000,
+            sizing_method      = "fixed_pct",
+            sizing_kwargs      = {"pct": 0.10},
+            use_signal_exit    = False,
+            take_profit_pct    = None,
+            stop_loss_pct      = None,
+            time_stop_days     = 25,
+            atr_stop_mult      = None,
+            max_per_sector     = None,        # ← no cap
+        )
+
+        # All 4 should enter and exit (4 trades) when uncapped
+        symbols_traded = {t["symbol"] for t in sim["trades"]}
+        assert len(symbols_traded) == 4
+
     def test_engine_accepts_regime_kwargs(self, monkeypatch):
         """run_filtered_backtest accepts the new kwargs without
         TypeError, even if there's no data on disk."""

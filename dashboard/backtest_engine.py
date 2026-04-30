@@ -313,6 +313,7 @@ def run_filtered_backtest(
     sector_regime_exit: bool          = False,  # force-sell when symbol's sector ETF down
     tax_rate:           float         = 0.0,    # fraction of YTD gains paid in tax (Dec 31)
     omit_top_n_outliers: int          = 0,      # exclude N largest-P&L wins from metrics
+    max_per_sector:     Optional[int] = None,   # cap simultaneous positions per GICS sector
 ) -> dict:
     """
     Run a backtest across many symbols, only entering on bars that
@@ -513,6 +514,23 @@ def run_filtered_backtest(
         regime_summary = regime_checker.status_summary()
         logger.info("Regime check: %s", regime_summary)
 
+    # Build sym→sector lookup if the user has enabled the sector
+    # concentration cap.  Same data source the regime checker uses
+    # (universe parquet's GICS ``sector`` column).
+    sym_to_sector: Optional[dict] = None
+    if max_per_sector and int(max_per_sector) > 0:
+        try:
+            from bot.universe import load_universe
+            u = load_universe(eligible_only=False)
+            if not u.empty and "sector" in u.columns:
+                sub = u[u["symbol"].isin(scored_per_symbol.keys())]
+                sym_to_sector = dict(zip(sub["symbol"], sub["sector"]))
+                logger.info("Sector cap enabled — max %d positions per sector "
+                            "(mapped %d symbols).",
+                            int(max_per_sector), len(sym_to_sector))
+        except Exception as exc:
+            logger.warning("Sector lookup failed — cap disabled: %s", exc)
+
     # Run the shared-pool simulator over every symbol's scored bars
     sim = _simulate_portfolio(
         scored_per_symbol,
@@ -528,6 +546,8 @@ def run_filtered_backtest(
         execution_delay_bars = execution_delay_bars,
         slippage_bps         = slippage_bps,
         regime_checker       = regime_checker,
+        max_per_sector       = int(max_per_sector) if max_per_sector else None,
+        sym_to_sector        = sym_to_sector,
     )
     all_trades   = sim["trades"]
     equity_curve = sim["equity_curve"]
@@ -593,6 +613,7 @@ def run_filtered_backtest(
         "regime_summary":   regime_summary,
         "tax_rate":         float(tax_rate or 0),
         "omit_top_n_outliers": int(omit_top_n_outliers or 0),
+        "max_per_sector":   int(max_per_sector) if max_per_sector else 0,
     }
 
     return {
@@ -889,6 +910,8 @@ def _simulate_portfolio(
     execution_delay_bars: int              = 0,
     slippage_bps:         float            = 5.0,
     regime_checker      = None,            # RegimeChecker | None
+    max_per_sector:       Optional[int]    = None,    # cap simultaneous positions per sector
+    sym_to_sector:        Optional[dict]   = None,    # {symbol: sector} lookup
 ) -> dict:
     """
     Walk every symbol's scored bars on a chronologically merged
@@ -993,13 +1016,48 @@ def _simulate_portfolio(
             })
 
         # ── Step 2: execute any pending BUY actions that are due ──
+        # When the user sets a sector cap (max_per_sector > 0), we
+        # process pending buys in *confidence-descending* order so
+        # the strongest leaders consume cap slots first, matching
+        # the "leaders of leaders" intent.  Without the cap, the
+        # original event-order behaviour is preserved.
         portfolio_value = _mark_to_market(ts)
-        for sym, row in events:
+        if max_per_sector and max_per_sector > 0 and sym_to_sector:
+            # Count current per-sector positions
+            sector_count: dict[str, int] = {}
+            for held_sym in positions:
+                sec = sym_to_sector.get(held_sym)
+                if sec:
+                    sector_count[sec] = sector_count.get(sec, 0) + 1
+            # Sort pending buys for THIS bar by confidence desc
+            ordered_events = sorted(
+                events,
+                key=lambda kv: (
+                    pending.get(kv[0], {}).get("confidence", 0.0)
+                    if pending.get(kv[0], {}).get("type") == "buy" else -1
+                ),
+                reverse=True,
+            )
+        else:
+            sector_count = {}
+            ordered_events = events
+
+        for sym, row in ordered_events:
             p = pending.get(sym)
             if p is None or p["type"] != "buy" or sym in positions:
                 continue
             if (sym_bar_idx[sym] - p["queued_bar"]) < required_wait:
                 continue
+            # Sector-cap enforcement — silently drop the buy when the
+            # symbol's sector already has ``max_per_sector`` open
+            # positions.  The "skip and free the slot for a stronger
+            # name later" effect emerges naturally from the
+            # confidence-desc ordering above.
+            if max_per_sector and max_per_sector > 0 and sym_to_sector:
+                sec = sym_to_sector.get(sym)
+                if sec and sector_count.get(sec, 0) >= max_per_sector:
+                    del pending[sym]
+                    continue
             if fill_col not in row or pd.isna(row[fill_col]):
                 continue
             raw_fill = float(row[fill_col])
@@ -1029,6 +1087,12 @@ def _simulate_portfolio(
                 "entry_date":  str(ts.date()) if hasattr(ts, "date") else str(ts),
                 "entry_idx":   sym_bar_idx[sym],
             }
+            # Bump per-sector count so subsequent same-bar entries in
+            # the same sector get capped correctly.
+            if max_per_sector and max_per_sector > 0 and sym_to_sector:
+                sec = sym_to_sector.get(sym)
+                if sec:
+                    sector_count[sec] = sector_count.get(sec, 0) + 1
             del pending[sym]
 
         # ── Step 3: detect new signals / exits this bar and queue them ──
@@ -1043,7 +1107,16 @@ def _simulate_portfolio(
 
             if sym not in positions:
                 if sig == "buy":
-                    pending[sym] = {"type": "buy", "queued_bar": sym_bar_idx[sym]}
+                    pending[sym] = {
+                        "type": "buy",
+                        "queued_bar": sym_bar_idx[sym],
+                        # Capture confidence at signal time so the
+                        # sector-cap entry path can prefer the
+                        # strongest leaders when cash/cap-limited.
+                        "confidence": float(row.get("confidence", 0.5)
+                                              if not pd.isna(row.get("confidence", 0.5))
+                                              else 0.5),
+                    }
                 continue
 
             pos          = positions[sym]
