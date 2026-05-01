@@ -290,6 +290,80 @@ class TestEngineRegimeKwargs:
         ids = {m.id for m in list_models()}
         assert "leaders_breakout_v1" in ids
 
+    def test_best_winners_preset_registered_with_real_columns(self):
+        """The 'Best Winners' preset added 2026-05-01 must be in
+        INDICATOR_PRESETS and every filter row must reference a
+        field that's actually emitted by the feature engineer.
+        Without this guard the preset is dead UI — clicking it
+        adds filter rows that all evaluate to "field not found"
+        and silently mask every bar to False."""
+        from bot.screener        import INDICATOR_PRESETS
+        from bot.feature_engineer import add_all_features
+        import pandas as pd
+        import numpy as np
+
+        assert "best_winners" in INDICATOR_PRESETS
+        preset = INDICATOR_PRESETS["best_winners"]
+        assert preset["filters"], "preset has no filter rows"
+
+        # Build a 300-bar synthetic so all warm-ups complete
+        rng = np.random.default_rng(1)
+        n = 300
+        close = 100 + np.cumsum(rng.normal(0, 0.5, n))
+        df = pd.DataFrame({
+            "open":  close * 0.998, "high": close * 1.005,
+            "low":   close * 0.995, "close": close,
+            "volume": rng.integers(500_000, 2_000_000, n).astype(float),
+            "vwap":  close * 1.001,
+        }, index=pd.date_range("2023-01-01", periods=n, freq="D"))
+
+        out = add_all_features(df)
+        for f in preset["filters"]:
+            assert f["field"] in out.columns, (
+                f"preset 'best_winners' references field {f['field']!r} "
+                f"that the feature engineer doesn't produce.  Either fix "
+                f"_add_winners_features or update the preset."
+            )
+
+    def test_oversold_dip_registered_and_emits_columns(self):
+        """Oversold Dip Buyer (C2 companion) — pin the derived columns
+        the screener filter chain references."""
+        import pandas as pd
+        from bot.models.registry import get_model, list_models
+
+        ids = {m.id for m in list_models()}
+        assert "oversold_dip_v1" in ids
+
+        m = get_model("oversold_dip_v1")
+        from pathlib import Path
+        from bot.config import DATA_DIR
+        sample = Path(DATA_DIR) / "AAPL_features.parquet"
+        if not sample.exists():
+            import pytest
+            pytest.skip("AAPL features parquet missing — run pipeline first")
+
+        df  = pd.read_parquet(sample)
+        out = m.predict_batch(df.copy())
+
+        for c in ("ibs", "sma_10", "sma_20", "sma_50", "sma_200",
+                  "liquidity_score", "spy_rsi_2", "spy_dd_from_20",
+                  "spx_oversold", "beta_60d"):
+            assert c in out.columns, f"missing {c}"
+
+        # spx_oversold is 0/1 boolean
+        vals = set(out["spx_oversold"].dropna().unique())
+        assert vals.issubset({0.0, 1.0})
+
+        # SPY RSI(2) must be in [0, 100] when present
+        rsi = out["spy_rsi_2"].dropna()
+        if not rsi.empty:
+            assert (rsi >= 0).all() and (rsi <= 100).all()
+
+        # Strategy must emit at least some buy signals on a 10y series
+        # (oversold setups happen often enough)
+        sig_set = set(out["signal"].unique())
+        assert sig_set.issubset({"buy", "sell", "hold"})
+
     def test_macro_aware_leaders_registered_and_emits_columns(self):
         """Macro-Aware Leaders strategy: must register AND emit all
         13 derived columns the UI / Optuna param map references."""

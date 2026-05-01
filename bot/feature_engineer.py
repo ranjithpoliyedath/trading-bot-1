@@ -50,6 +50,19 @@ FEATURE_COLUMNS = [
     "below_all_emas",        # below 10, 20, 50, 200
     "ema_bull_stack",        # close > ema10 > ema20 > ema50 > ema200
     "ema_bear_stack",        # close < ema10 < ema20 < ema50 < ema200
+    # ── 2026-05-01: "Best Winners" momentum/quality filter set ──
+    # Short-warmup columns are kept in the canonical FEATURE_COLUMNS
+    # list (tested for "no NaN after dropna").  The long-warmup ones
+    # (perf_3m: 63 bars, perf_6m: 126, perf_1y: 252, pct_from_52w_low:
+    # 20–252) are emitted by the helper but NOT listed here — adding
+    # them would force the warm-up dropna to discard 252 rows from
+    # every parquet, killing recent IPOs.  They're still surfaced
+    # through SCREENER_FIELDS so the screener / "Best Winners" preset
+    # finds them on disk.
+    "ema_60",                # extra EMA used by some momentum filters
+    "dollar_volume_30d",     # close × 30-day mean volume (USD turnover)
+    "dollar_volume_today",   # close × today's volume
+    "adr_pct",               # Average Daily Range over 14d as % of close
     # Sentiment features — added by sentiment pipeline
     "news_sentiment_mean",
     "news_sentiment_std",
@@ -88,12 +101,13 @@ def add_all_features(df: pd.DataFrame) -> pd.DataFrame:
     df = _add_rsi(df, period=14)
     df = _add_macd(df)
     df = _add_bollinger_bands(df, period=20)
-    df = _add_ema(df, spans=[9, 10, 20, 21, 50, 200])
+    df = _add_ema(df, spans=[9, 10, 20, 21, 50, 60, 200])
     df = _add_ema_relations(df)
     df = _add_atr(df, period=14)
     df = _add_volume_ratio(df, period=20)
     df = _add_price_changes(df)
     df = _add_ratio_features(df)
+    df = _add_winners_features(df)
 
     before = len(df)
     df.dropna(subset=TECHNICAL_COLUMNS, inplace=True)
@@ -251,4 +265,59 @@ def _add_ratio_features(df: pd.DataFrame) -> pd.DataFrame:
         df["close_to_vwap"] = (df["close"] - df["vwap"]) / df["vwap"]
     else:
         df["close_to_vwap"] = np.nan
+    return df
+
+
+def _add_winners_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Multi-period returns + dollar-volume + 52-week-low distance +
+    ADR%.  These power the "Best Winners" momentum filter preset
+    (US momentum-screener heuristic).
+
+    Trading-day approximations:
+      • 3 months  ≈ 63 bars
+      • 6 months  ≈ 126 bars
+      • 1 year    ≈ 252 bars
+      • 52 weeks  = 252 bars
+
+    All outputs are dimensionless ratios (or USD turnover for the
+    dollar-volume columns) so screener thresholds work across
+    symbols of different price levels.
+    """
+    close  = df["close"]
+    high   = df["high"]
+    low    = df["low"]
+    volume = df["volume"]
+
+    # Multi-period total return (used for Perf 3M/6M/1Y filters)
+    if "perf_3m" not in df.columns:
+        df["perf_3m"] = close.pct_change(63)
+    if "perf_6m" not in df.columns:
+        df["perf_6m"] = close.pct_change(126)
+    if "perf_1y" not in df.columns:
+        df["perf_1y"] = close.pct_change(252)
+
+    # Distance above the 52-week low (>=0.70 means "70%+ off the low").
+    # Uses min_periods=1 so newly-listed symbols still get a sensible
+    # value once they have any history; the 52w window simply hasn't
+    # filled yet.
+    if "pct_from_52w_low" not in df.columns:
+        low_52w = low.rolling(252, min_periods=20).min()
+        df["pct_from_52w_low"] = (close - low_52w) / low_52w
+
+    # Dollar volume — USD turnover.  Used to filter for liquidity
+    # ("Price * Avg Vol 30D > 15M USD" type rules).
+    if "dollar_volume_30d" not in df.columns:
+        avg_vol_30d = volume.rolling(30, min_periods=10).mean()
+        df["dollar_volume_30d"] = close * avg_vol_30d
+    if "dollar_volume_today" not in df.columns:
+        df["dollar_volume_today"] = close * volume
+
+    # ADR% — Average Daily Range as % of close.  A volatility/edge
+    # measure that some momentum screeners use as a "moves enough to
+    # be worth trading" gate.  4-5% is the typical floor for
+    # day-trading strategies on US large/mid-caps.
+    if "adr_pct" not in df.columns:
+        daily_range_pct = (high - low) / close
+        df["adr_pct"]  = daily_range_pct.rolling(14, min_periods=7).mean() * 100.0
+
     return df

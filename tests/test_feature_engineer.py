@@ -22,8 +22,10 @@ from bot.feature_engineer import (
 
 @pytest.fixture
 def sample_df() -> pd.DataFrame:
-    """200 rows of synthetic OHLCV data — enough for all indicator warm-ups."""
-    n = 200
+    """300 rows of synthetic OHLCV data — enough for every warm-up,
+    including the 252-bar perf_1y / pct_from_52w_low windows added
+    in the 2026-05-01 'Best Winners' feature pack."""
+    n = 300
     np.random.seed(42)
     close = 100 + np.cumsum(np.random.randn(n) * 0.5)
     return pd.DataFrame(

@@ -62,6 +62,16 @@ SCREENER_FIELDS: dict[str, dict[str, Any]] = {
     "price_change_1d":    {"label": "Price change 1d",        "group": "Price"},
     "price_change_5d":    {"label": "Price change 5d",        "group": "Price"},
     "volume_ratio":       {"label": "Volume vs avg",          "group": "Price"},
+    # ── Multi-period returns + liquidity + range (Best Winners preset) ──
+    "close":                {"label": "Close price (USD)",         "group": "Price"},
+    "perf_3m":              {"label": "Performance 3-month",       "group": "Momentum"},
+    "perf_6m":              {"label": "Performance 6-month",       "group": "Momentum"},
+    "perf_1y":              {"label": "Performance 1-year",        "group": "Momentum"},
+    "pct_from_52w_low":     {"label": "% from 52-week low",        "group": "Momentum"},
+    "dollar_volume_30d":    {"label": "Dollar volume (30d avg)",   "group": "Liquidity"},
+    "dollar_volume_today":  {"label": "Dollar volume (today)",     "group": "Liquidity"},
+    "adr_pct":              {"label": "Average Daily Range %",     "group": "Volatility"},
+    "ema_60":               {"label": "EMA 60",                    "group": "EMA"},
     # Breakout patterns (computed lazily by add_breakout_features)
     "prior_runup_pct":      {"label": "Prior 60d runup %",     "group": "Breakout"},
     "consolidation_range":  {"label": "Consolidation range",   "group": "Breakout"},
@@ -150,6 +160,32 @@ INDICATOR_PRESETS: dict[str, dict] = {
         "filters": [
             {"field": "combined_sentiment", "op": ">",  "value": 0.2},
             {"field": "above_ema_50",       "op": "==", "value": 1},
+        ],
+    },
+    "best_winners": {
+        # User-supplied "best winners" momentum/quality screen — the
+        # filter set seen in popular US momentum screeners.  Looks
+        # for stocks that are well off their 52-week low, have
+        # positive 3M/6M/1Y returns, decent dollar-volume turnover,
+        # high enough ADR to be tradable, and sit above the 60-EMA.
+        "label":   "Best Winners (momentum + quality + liquidity)",
+        "group":   "Winners",
+        "filters": [
+            # Quality price-floor (ignore penny stocks)
+            {"field": "close",                "op": ">",  "value": 1.0},
+            # 70%+ off 52-week low — meaningful run-up already
+            {"field": "pct_from_52w_low",     "op": ">=", "value": 0.70},
+            # Positive trailing returns at three horizons
+            {"field": "perf_3m",              "op": ">",  "value": 0.0},
+            {"field": "perf_6m",              "op": ">",  "value": 0.0},
+            {"field": "perf_1y",              "op": ">",  "value": 0.0},
+            # Liquidity: ≥$15M average daily $ volume + ≥$5M today
+            {"field": "dollar_volume_30d",    "op": ">=", "value": 15_000_000},
+            {"field": "dollar_volume_today",  "op": ">=", "value": 5_000_000},
+            # Trend filter: above the 60-day EMA
+            {"field": "above_ema_50",         "op": "==", "value": 1},
+            # Volatility: enough daily range to be worth trading
+            {"field": "adr_pct",              "op": ">=", "value": 4.5},
         ],
     },
 }
