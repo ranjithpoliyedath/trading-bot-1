@@ -1329,6 +1329,39 @@ def render_results(results: dict, ns: str = "", section_label: Optional[str] = N
             bullets  = ["python -m bot.universe"]
             bullet_style = {"fontFamily": "monospace", "fontSize": "12px",
                              "color": "#1f2937", "lineHeight": "1.7"}
+        elif (has_load_report
+              and load_report.get("rebalances_in_user_period") == 0
+              and loaded > 0
+              and (load_report.get("formation_warmup_days", 0) or 0) > 0):
+            # Cross-sectional run with data loaded but ZERO rebalances
+            # in the user-requested period.  Almost always means
+            # period_days is shorter than the strategy's formation
+            # window — JT-12-1 with period_days=365 is the canonical case.
+            warmup_days   = int(load_report.get("formation_warmup_days") or 0)
+            min_recommended = int(period_days or 0) + warmup_days
+            user_start    = load_report.get("user_period_first_bar") or "?"
+            first_valid   = load_report.get("first_valid_rank_bar")  or "?"
+            headline = (f"Cross-sectional run produced 0 rebalances "
+                        f"in the {period_days}-day window.")
+            details  = (f"All {loaded}/{requested} symbols loaded fine — "
+                        f"this isn't a data problem.  The strategy needs "
+                        f"~{warmup_days} days of formation history before "
+                        f"it can compute its first rank, but the user-"
+                        f"requested period started at {user_start} and "
+                        f"the earliest valid rank bar is {first_valid}.  "
+                        f"Workarounds:")
+            bullets  = [
+                f"Increase period_days to ≥{min_recommended} "
+                f"(your {period_days} → {min_recommended})",
+                "OR pick a strategy without a long formation window "
+                "(e.g. ibs_v1, keltner_breakout_v1, recovery_rally_v1).",
+                "The cross-sectional runner already auto-loads "
+                f"{warmup_days} extra days of warmup data — but the "
+                "rebalance schedule still needs at least one bar AFTER "
+                "the formation completes within your requested period.",
+            ]
+            bullet_style = {"fontSize": "13px", "color": "#444",
+                             "lineHeight": "1.7"}
         elif not has_load_report and n_symbols == 0:
             # Legacy saved run with no load_report — we genuinely don't
             # know whether data loaded or not, so keep the old fallback.

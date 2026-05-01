@@ -1509,14 +1509,52 @@ def run_cross_sectional_backtest(
         syms = select_universe("top_100", limit=50)
     else:
         syms = list(symbols)
+
+    # Per-symbol load diagnostics — populated as we go so the
+    # dashboard's render_results can show a precise diagnostic
+    # instead of the generic "no data on disk" message when an XS
+    # run produces no rebalances.
+    load_report = {
+        "requested":         len(syms),
+        "loaded":            0,
+        "missing_features":  [],
+        "empty_after_window": [],
+        # XS-specific:
+        "formation_warmup_days":    0,
+        "user_period_first_bar":    None,
+        "panel_first_bar":          None,
+        "panel_last_bar":           None,
+        "first_valid_rank_bar":     None,
+        "rebalances_in_user_period": 0,
+    }
+
     if not syms:
-        return {**_empty_results(), "preset": xs_preset}
+        return {**_empty_results(), "preset": xs_preset, "load_report": load_report}
 
     try:
         model = get_model(model_id)
     except Exception as exc:
         logger.error("Cannot load cross-sectional model %r: %s", model_id, exc)
-        return {**_empty_results(), "preset": xs_preset}
+        return {**_empty_results(), "preset": xs_preset, "load_report": load_report}
+
+    # Auto-extend the loaded history by the model's formation
+    # requirement.  Without this, a "12-month backtest" of JT-12-1
+    # would only load 252 trading days — exactly the formation
+    # window — and `rank_universe` would return NaN for every bar
+    # (the strategy needs PRIOR data to compute the trailing 12-1
+    # return).  Result: 0 rebalances, dashboard shows misleading
+    # "no data on disk" diagnostic.  Fix: load extra warmup, then
+    # only count rebalances within the user's requested period.
+    formation_months = (
+        getattr(model, "FORMATION_MONTHS", 0)
+        + getattr(model, "SKIP_MONTHS", 0)
+    )
+    formation_warmup_days = (
+        # Generous calendar-day estimate: ~31 days/month + 30-day buffer
+        formation_months * 31 + 30 if formation_months > 0 else 0
+    )
+    effective_load_days = int(period_days) + int(formation_warmup_days)
+    load_report["formation_warmup_days"] = int(formation_warmup_days)
 
     # Build the wide-format close panel from disk.  Belt-and-suspenders:
     # ``_load_features`` already strips tz info, but we double-check here
@@ -1525,26 +1563,59 @@ def run_cross_sectional_backtest(
     # "Cannot join tz-naive with tz-aware DatetimeIndex".
     closes = {}
     for s in syms:
-        df = _load_features(s, period_days)
+        df = _load_features(s, effective_load_days)
         if df.empty or "close" not in df.columns:
+            load_report["missing_features"].append(s)
             continue
         s_close = df["close"]
         if s_close.index.tz is not None:
             s_close = s_close.copy()
             s_close.index = s_close.index.tz_localize(None)
         closes[s] = s_close
+        load_report["loaded"] += 1
     if not closes:
         logger.warning("No symbols had features data for cross-sectional run.")
-        return {**_empty_results(), "preset": xs_preset}
+        return {**_empty_results(), "preset": xs_preset, "load_report": load_report}
 
     panel = pd.concat(closes, axis=1).sort_index()
+    load_report["panel_first_bar"] = (
+        str(panel.index.min().date()) if hasattr(panel.index.min(), "date")
+        else str(panel.index.min())
+    )
+    load_report["panel_last_bar"] = (
+        str(panel.index.max().date()) if hasattr(panel.index.max(), "date")
+        else str(panel.index.max())
+    )
 
     # Get cross-sectional ranks per bar
     try:
         ranks = model.rank_universe(panel.copy())
     except Exception as exc:
         logger.error("rank_universe failed: %s", exc, exc_info=True)
-        return {**_empty_results(), "preset": xs_preset}
+        return {**_empty_results(), "preset": xs_preset, "load_report": load_report}
+
+    # Find the first bar where ranks are valid (formation completed).
+    # This is the earliest date the strategy could possibly have
+    # signalled a rebalance — useful context for the diagnostic
+    # panel when the user's period_days is too short for formation.
+    if isinstance(ranks, pd.DataFrame) and not ranks.empty:
+        valid_mask = ranks.notna().any(axis=1)
+        if valid_mask.any():
+            first_valid = ranks.index[valid_mask][0]
+            load_report["first_valid_rank_bar"] = (
+                str(first_valid.date()) if hasattr(first_valid, "date")
+                else str(first_valid)
+            )
+
+    # Compute the user's requested period start.  Rebalances and
+    # equity tracking happen ONLY within [user_period_start, end].
+    # Any earlier dates are pure formation-warmup and don't count
+    # as backtest activity.
+    user_period_start = panel.index.max() - pd.Timedelta(days=int(period_days))
+    load_report["user_period_first_bar"] = (
+        str(user_period_start.date()) if hasattr(user_period_start, "date")
+        else str(user_period_start)
+    )
 
     # Walk the rebalance schedule
     bps           = float(slippage_bps or 0) / 10_000.0
@@ -1556,7 +1627,14 @@ def run_cross_sectional_backtest(
     trades        = []
     equity_curve  = [{"date": "start", "value": equity}]
 
-    rebal_dates = panel.index[::rebalance_days]
+    # Only include rebalance dates within the user-requested period.
+    # We anchor the cadence at panel.start so warmup-period rebalances
+    # are computed in the same grid (consistent with re-running with
+    # a longer period_days), but we don't ACT on the warmup rebalances
+    # — the loop skips them silently below.
+    rebal_dates = [d for d in panel.index[::rebalance_days]
+                    if d >= user_period_start]
+    load_report["rebalances_in_user_period"] = len(rebal_dates)
 
     for i, dt in enumerate(rebal_dates):
         if dt not in ranks.index:
@@ -1725,6 +1803,7 @@ def run_cross_sectional_backtest(
         "trades":            trades,             # per-symbol buy/sell history
         "rebalance_trades":  rebalance_trades,   # one entry per rebalance period
         "preset":            xs_preset,
+        "load_report":       load_report,
         "run_at":            datetime.now().isoformat(),
     }
 

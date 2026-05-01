@@ -105,6 +105,42 @@ class TestRunner:
         # Empty results envelope rather than crash
         assert out.get("metrics", {}).get("total_trades", 0) == 0
 
+    def test_runner_auto_extends_warmup_for_short_period(self, have_data):
+        """Regression: XS-20260501-154607-jt_momentum_v1-50syms.
+
+        A 12-month JT-12-1 backtest used to produce 0 rebalances —
+        the formation period (~12 months) consumed the entire loaded
+        data window, leaving no valid rank dates.  The dashboard
+        then showed a misleading "no data on disk" diagnostic.
+
+        Fix: cross-sectional runner auto-loads
+        ``formation_months × 31 + 30`` extra days of warmup, populates
+        a load_report with the timing diagnostics, and only counts
+        rebalances within the user-requested period.
+        """
+        from dashboard.backtest_engine import run_cross_sectional_backtest
+
+        out = run_cross_sectional_backtest(
+            model_id      = "jt_momentum_v1",
+            symbols       = have_data,
+            period_days   = 365,            # short period — the bug trigger
+            top_decile    = 0.30,
+            rebalance_days= 21,
+        )
+        lr = out.get("load_report") or {}
+
+        # The runner must auto-set warmup_days for jt_momentum_v1
+        # (it has FORMATION_MONTHS=12 + SKIP_MONTHS=1 class attributes).
+        assert lr.get("formation_warmup_days", 0) > 0
+
+        # All diagnostic fields the dashboard's render_results uses
+        # to choose the right error-message branch must be present.
+        for key in ("requested", "loaded", "formation_warmup_days",
+                    "user_period_first_bar", "panel_first_bar",
+                    "panel_last_bar", "first_valid_rank_bar",
+                    "rebalances_in_user_period"):
+            assert key in lr, f"load_report missing {key}"
+
     def test_runner_pl_per_trade_matches_equity_change(self, have_data):
         """
         Regression test for the piggyback-storage bug: trade P&L summed
