@@ -111,6 +111,21 @@ TUNED_CONFIGS = [
                      "bigger price-move requirement (9% in 5d) = "
                      "stronger leaders-of-leaders filtering."),
     },
+    {
+        # User-designed Macro-Aware Leaders, tuned via Optuna 4-fold WF.
+        # OOS Sharpe 0.535.  Entry gates OFF (Optuna found exits-only
+        # works better in the 2020–2026 window).  Beta floor 0.2.
+        "name":     "macro_aware_leaders",
+        "model_id": "macro_aware_leaders_v1",
+        "filters":  [
+            {"field": "beta_60d", "op": ">=", "value": 0.2},
+        ],
+        "conf":     0.56,
+        "note":     ("Macro-Aware Leaders tuned via Optuna 4-fold WF.  "
+                     "OOS Sharpe 0.535.  Entry gates OFF (exits "
+                     "always-on still cap drawdown).  beta_60d>=0.2 "
+                     "filters out the truly defensive low-beta names."),
+    },
 ]
 
 

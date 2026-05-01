@@ -160,6 +160,16 @@ PARAM_SPACES: dict[str, list[dict]] = {
         {"name": "min_5d_return",    "type": "float", "low": 0.01, "high": 0.10, "step": 0.005},
         {"name": "min_confidence",   "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
     ],
+    "macro_aware_leaders_v1": [
+        # Optuna can toggle each macro gate by setting a 0/1
+        # required value on the corresponding macro_*_bullish
+        # column.  Setting "require_spy_gate" = 1 makes the trial
+        # only enter when SPY is fully bullish.
+        {"name": "require_spy_gate",     "type": "categorical", "choices": [0, 1]},
+        {"name": "require_breadth_gate", "type": "categorical", "choices": [0, 1]},
+        {"name": "min_beta",             "type": "float", "low": 0.0, "high": 1.5, "step": 0.1},
+        {"name": "min_confidence",       "type": "float", "low": 0.55, "high": 0.85, "step": 0.01},
+    ],
 }
 
 
@@ -298,6 +308,19 @@ def params_to_filters(strategy_id: str, params: dict) -> list[dict]:
              "op":    ">=",
              "value": params.get("min_5d_return", 0.03)},
         ]
+    if strategy_id == "macro_aware_leaders_v1":
+        rules: list[dict] = []
+        if params.get("require_spy_gate", 1):
+            rules.append({"field": "macro_spy_bullish",
+                          "op":    "==", "value": 1})
+        if params.get("require_breadth_gate", 1):
+            rules.append({"field": "macro_breadth_bullish",
+                          "op":    "==", "value": 1})
+        if float(params.get("min_beta", 0.0)) > 0:
+            rules.append({"field": "beta_60d",
+                          "op":    ">=",
+                          "value": float(params["min_beta"])})
+        return rules
     # golden_cross_v1, keltner_breakout_v1: tuning happens via min_confidence
     # only — the strategies' published rules are kept intact.
     return []

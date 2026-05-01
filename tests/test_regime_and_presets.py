@@ -290,6 +290,49 @@ class TestEngineRegimeKwargs:
         ids = {m.id for m in list_models()}
         assert "leaders_breakout_v1" in ids
 
+    def test_macro_aware_leaders_registered_and_emits_columns(self):
+        """Macro-Aware Leaders strategy: must register AND emit all
+        13 derived columns the UI / Optuna param map references."""
+        import pandas as pd
+        from bot.models.registry import get_model, list_models
+
+        ids = {m.id for m in list_models()}
+        assert "macro_aware_leaders_v1" in ids
+
+        m = get_model("macro_aware_leaders_v1")
+        # Use a real on-disk parquet so the breadth proxy and SPY
+        # join exercise the real codepath (synthetic data wouldn't
+        # populate the macro_* columns since SPY join needs SPY data).
+        from pathlib import Path
+        from bot.config import DATA_DIR
+        sample = Path(DATA_DIR) / "AAPL_features.parquet"
+        if not sample.exists():
+            import pytest
+            pytest.skip("AAPL features parquet missing — run pipeline first")
+        df  = pd.read_parquet(sample)
+        out = m.predict_batch(df.copy())
+
+        for c in ("sma_10", "sma_20", "sma_50", "sma_200",
+                  "macd_hist", "atr_14",
+                  "liquidity_score", "beta_60d",
+                  "macro_spy_bullish", "macro_spy_exit",
+                  "macro_sector_bullish",
+                  "macro_breadth_bullish", "macro_breadth_exit",
+                  "breadth_pct"):
+            assert c in out.columns, f"missing {c}"
+
+        # Gate columns are 0/1 boolean
+        for c in ("macro_spy_bullish", "macro_spy_exit",
+                  "macro_breadth_bullish", "macro_breadth_exit"):
+            vals = set(out[c].dropna().unique())
+            assert vals.issubset({0.0, 1.0}), \
+                f"{c} non-boolean: {vals}"
+
+        # breadth_pct in [0, 1]
+        bp = out["breadth_pct"].dropna()
+        if not bp.empty:
+            assert (bp >= 0).all() and (bp <= 1).all()
+
     def test_sector_cap_limits_simultaneous_positions(self):
         """When max_per_sector is set, the simulator must never let
         more than N positions in the same sector be open at once.

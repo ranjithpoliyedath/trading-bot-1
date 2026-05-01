@@ -166,6 +166,8 @@ def apply_indicator_preset(preset_key, current_rows):
     State("bt-real-sector-cap", "value"),
     State("bt-real-vol-spike", "value"),
     State("bt-real-5d-return", "value"),
+    State("bt-macro-spy-gate", "value"),
+    State("bt-macro-breadth-gate", "value"),
     prevent_initial_call=True,
 )
 def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
@@ -175,7 +177,8 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
                 acct_cash, sizing_method, sizing_a, sizing_b, atr_stop,
                 exec_model, exec_delay, slip_bps, val_mode,
                 tax_pct, omit_top_n,
-                sector_cap, min_vol_spike, min_5d_return):
+                sector_cap, min_vol_spike, min_5d_return,
+                macro_spy_gate_on, macro_breadth_gate_on):
     ctx = callback_context.triggered[0]["prop_id"]
     if "bt-dd-saved" in ctx and saved_id:
         data = load_backtest(saved_id)
@@ -264,6 +267,19 @@ def run_or_load(n_run, saved_id, model, scope, max_syms, tf, period, conf,
             "field": "price_change_5d",
             "op":    ">=",
             "value": float(min_5d_return) / 100.0,
+        }]
+
+    # Macro-Aware Leaders entry gates — when toggled ON, append the
+    # corresponding filter row.  No-op for strategies that don't
+    # emit those columns (the engine's "field not in scored.columns"
+    # branch silently skips them).
+    if macro_spy_gate_on:
+        filters = list(filters) + [{
+            "field": "macro_spy_bullish", "op": "==", "value": 1,
+        }]
+    if macro_breadth_gate_on:
+        filters = list(filters) + [{
+            "field": "macro_breadth_bullish", "op": "==", "value": 1,
         }]
 
     # Walk-forward branch

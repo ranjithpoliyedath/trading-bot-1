@@ -592,6 +592,57 @@ def _realism_panel():
                     target="bt-real-5d-return-tip", placement="top",
                     style={"maxWidth": "380px", "fontSize": "12px"}),
             ], md=12),
+
+            # Macro-Aware Leaders entry gates.  Macro EXITS are
+            # always-on per the strategy spec (sell when SPY/breadth
+            # break), so these toggles only control the ENTRY gates.
+            dbc.Col([
+                html.Span("SPY entry gate  ·  Macro-Aware Leaders",
+                          id="bt-macro-spy-gate-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Checklist(
+                    id="bt-macro-spy-gate",
+                    options=[{"label": " Only enter when SPY > 10/20/50/200 SMA",
+                               "value": "on"}],
+                    value=[],   # default OFF (Optuna found this best)
+                    style={"fontSize": "12px", "marginTop": "4px"},
+                ),
+                dbc.Tooltip(
+                    "When ON, adds the filter row "
+                    "macro_spy_bullish == 1 — the strategy only "
+                    "enters new positions when SPY is above ALL of "
+                    "its 10/20/50/200 SMAs.  The exit trigger "
+                    "(SPY below 10 AND 20 AND 50 SMA → close all) "
+                    "is ALWAYS on regardless of this toggle.  "
+                    "Walk-forward tuning found OFF works better in "
+                    "the 2020–2026 window — exits alone are enough.",
+                    target="bt-macro-spy-gate-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
+            dbc.Col([
+                html.Span("Breadth entry gate  ·  Macro-Aware Leaders",
+                          id="bt-macro-breadth-gate-tip",
+                          style={"fontSize": "11px", "color": "#888"}),
+                dcc.Checklist(
+                    id="bt-macro-breadth-gate",
+                    options=[{"label": " Only enter when market breadth is bullish",
+                               "value": "on"}],
+                    value=[],
+                    style={"fontSize": "12px", "marginTop": "4px"},
+                ),
+                dbc.Tooltip(
+                    "When ON, adds the filter row "
+                    "macro_breadth_bullish == 1 — the strategy "
+                    "only enters when our breadth proxy "
+                    "(% of universe above 50-SMA) is itself above "
+                    "its own 10/20/50 SMAs.  Equivalent to "
+                    "$S5FI / $MMFI / $SPXA50R but computed from our "
+                    "1,500-symbol universe.  The breadth EXIT "
+                    "trigger (breadth below 10 AND 20 SMA → close "
+                    "all) is ALWAYS on regardless of this toggle.",
+                    target="bt-macro-breadth-gate-tip", placement="top",
+                    style={"maxWidth": "380px", "fontSize": "12px"}),
+            ], md=12),
         ], className="g-3"),
     ], style={**CARD, "marginTop": "12px"})
 

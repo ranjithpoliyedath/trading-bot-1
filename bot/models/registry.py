@@ -96,6 +96,8 @@ def _ensure_builtin_imports():
             quantitativo_mr_v1,
             # ── 2026-04-29: user-designed leaders breakout ──
             leaders_breakout_v1,
+            # ── 2026-04-29: macro-aware leaders ──
+            macro_aware_leaders_v1,
         )
     except ImportError as exc:
         logger.warning("Could not import built-in models: %s", exc)
